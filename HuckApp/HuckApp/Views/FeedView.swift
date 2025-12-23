@@ -27,7 +27,26 @@ struct StoryCellView: View {
     }
     
     var body: some View {
-        Text(observableStory.story?.title ?? "Title")
+        VStack(alignment: .leading) {
+            Text(observableStory.story?.title ?? "Title")
+            HStack {
+                Image(systemName: "arrow.up")
+                    .foregroundColor(.gray)
+                Text("\(observableStory.story?.score ?? 0)")
+                    .font(.footnote)
+                    .foregroundStyle(.gray)
+                Image(systemName: "bubble")
+                    .foregroundColor(.gray)
+                Text("\(observableStory.story?.kids.count ?? 0)")
+                    .font(.footnote)
+                    .foregroundStyle(.gray)
+                Image(systemName: "clock")
+                    .foregroundColor(.gray)
+                Text("\(observableStory.story?.time ?? 0)")
+                    .font(.footnote)
+                    .foregroundStyle(.gray)
+            }
+        }
         .task {
             await observableStory.getStory()
         }
@@ -86,6 +105,9 @@ func getStoryIdsAsync() async -> [Int] {
 
 struct Story: Codable {
     let title: String
+    let score: Int
+    let kids: [Int]
+    let time: Int
 }
 
 func getStoryAsync(id: Int) async -> Story? {
