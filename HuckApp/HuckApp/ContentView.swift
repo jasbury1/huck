@@ -14,16 +14,17 @@ struct ContentView: View {
                 FeedView()
             }
             Tab("Account", systemImage: "person.circle") {
-                FeedView()
+                AccountView()
             }
             
             Tab("Settings", systemImage: "gearshape.fill") {
-                FeedView()
+                SettingsView()
             }
-            Tab(role: .search) {}
+            Tab(role: .search) {
+                SearchView()
+            }
         }
         .tint(.orange)
-        
     }
 }
 

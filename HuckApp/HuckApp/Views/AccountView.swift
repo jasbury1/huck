@@ -9,6 +9,6 @@ import SwiftUI
 
 struct AccountView: View {
     var body: some View {
-        Text("Hello World from ViewA!")
+        Text("Account")
     }
 }
