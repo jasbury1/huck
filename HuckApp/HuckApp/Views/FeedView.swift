@@ -28,28 +28,42 @@ struct StoryCellView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            Text(observableStory.story?.title ?? "Title")
-            HStack {
-                Image(systemName: "arrow.up")
-                    .foregroundColor(.gray)
-                Text("\(observableStory.story?.score ?? 0)")
+            NavigationLink(destination: StoryWebView()) {
+                Text(observableStory.story?.title ?? "Title")
+            }
+            Text("")
+            VStack(alignment: .leading){
+                Text("\(observableStory.story?.by ?? "")")
                     .font(.footnote)
                     .foregroundStyle(.gray)
-                Image(systemName: "bubble")
-                    .foregroundColor(.gray)
-                Text("\(observableStory.story?.kids.count ?? 0)")
-                    .font(.footnote)
-                    .foregroundStyle(.gray)
-                Image(systemName: "clock")
-                    .foregroundColor(.gray)
-                Text("\(observableStory.story?.time ?? 0)")
-                    .font(.footnote)
-                    .foregroundStyle(.gray)
+                HStack {
+                    Image(systemName: "arrow.up")
+                        .foregroundColor(.gray)
+                    Text("\(observableStory.story?.score ?? 0)")
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                    Image(systemName: "bubble")
+                        .foregroundColor(.gray)
+                    Text("\(observableStory.story?.kids.count ?? 0)")
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                    Image(systemName: "clock")
+                        .foregroundColor(.gray)
+                    //Text("\(observableStory.story?.time ?? 0)")
+                    Text("1h")
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                    Image(systemName: "paperplane")
+                        .foregroundColor(.gray)
+                    Image(systemName: "bookmark")
+                        .foregroundColor(.gray)
+                }
             }
         }
         .task {
             await observableStory.getStory()
         }
+    
     }
 }
 
@@ -105,9 +119,11 @@ func getStoryIdsAsync() async -> [Int] {
 
 struct Story: Codable {
     let title: String
+    let by: String
     let score: Int
     let kids: [Int]
     let time: Int
+    let url: String
 }
 
 func getStoryAsync(id: Int) async -> Story? {
