@@ -6,14 +6,25 @@
 //
 
 import SwiftUI
+import LinkPresentation
+import UniformTypeIdentifiers
+
+enum ImageStatus {
+    case loading
+    case finished(Image)
+    case failed
+}
 
 struct StoryCellView: View {
     let storyId: Int
-    @State private var observableStory: StoryCellViewData
+    @State private var observableStory: StoryData
+    @State private var thumbnailStatus: ImageStatus = .loading
+    @State private var metadata: LPLinkMetadata? = nil
+    @State private var isValidUrl = true
     
     init(storyId: Int) {
         self.storyId = storyId
-        self.observableStory = StoryCellViewData(storyId: storyId)
+        self.observableStory = StoryData(storyId: storyId)
     }
     
     var body: some View {
@@ -56,22 +67,90 @@ struct StoryCellView: View {
             // The image thumbnail
             VStack() {
                 ZStack() {
-                    Color(.quaternaryLabel)
-                    Image(systemName: "safari")
-                        .resizable()
-                        .scaledToFit()
-                        .padding()
-                        .foregroundStyle(Color(.systemFill))
+                    switch thumbnailStatus {
+                    case .loading:
+                        ProgressView()
+
+                    case .finished(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+
+                    case .failed:
+                        Color(.quaternaryLabel)
+                        Image(systemName: "safari")
+                            .resizable()
+                            .scaledToFit()
+                            .padding()
+                            .foregroundStyle(Color(.systemFill))
+                    }
+                    
                 }
             }
             .clipped()
             .frame(width: 70, height: 70)
             .cornerRadius(15)
+            .task {
+                await fetchMetadata()
+            }
         }
         .task {
             await observableStory.getStory()
         }
     
+    }
+    
+    private func fetchMetadata() async {
+        let url = URL(string: observableStory.story?.url ?? "")
+        guard let url else {
+            isValidUrl = false
+            return
+        }
+
+        do {
+            metadata = try await LPMetadataProvider().startFetchingMetadata(for: url)
+            await loadThumbnail(from: metadata?.imageProvider)
+        }
+        catch {
+            print("Error fetching URL metadata: \(error.localizedDescription)")
+            isValidUrl = false
+        }
+    }
+    
+    private func loadThumbnail(from imageProvider: NSItemProvider?) async {
+        let imageType = UTType.image.identifier
+        do {
+            guard let imageProvider, imageProvider.hasItemConformingToTypeIdentifier(imageType) else {
+                thumbnailStatus = .failed
+                return
+            }
+
+            let item = try await imageProvider.loadItem(forTypeIdentifier: imageType)
+            if item is UIImage, let image = item as? UIImage {
+                thumbnailStatus = .finished(Image(uiImage: image))
+            }
+            else if item is URL {
+                guard let url = item as? URL,
+                      let data = try? Data(contentsOf: url),
+                      let image = UIImage(data: data)
+                else {
+                    thumbnailStatus = .failed
+                    return
+                }
+                thumbnailStatus = .finished(Image(uiImage: image))
+            }
+            else if item is Data {
+                guard let data = item as? Data, let image = UIImage(data: data) else {
+                    thumbnailStatus = .failed
+                    return
+                }
+                thumbnailStatus = .finished(Image(uiImage: image))
+            }
+        }
+        catch {
+            print("Error loading Image: \(error.localizedDescription)")
+            thumbnailStatus = .failed
+        }
     }
 }
 
@@ -102,7 +181,7 @@ class StoriesFeedData {
 }
 
 @Observable
-class StoryCellViewData {
+class StoryData {
     let storyId: Int
     var story: Story? = nil
     
