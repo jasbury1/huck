@@ -19,5 +19,9 @@ struct StoryWebView: View {
                     page.load(URLRequest(url: url))
                 }
             }
+            .ignoresSafeArea(.all, edges: .bottom)
+            .toolbar() {
+                Image(systemName: "safari")
+            }
     }
 }
