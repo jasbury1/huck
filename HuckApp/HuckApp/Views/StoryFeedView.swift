@@ -9,7 +9,7 @@ import SwiftUI
 
 struct StoryCellView: View {
     let storyId: Int
-    private let observableStory: StoryCellViewData
+    @State private var observableStory: StoryCellViewData
     
     init(storyId: Int) {
         self.storyId = storyId
@@ -17,38 +17,56 @@ struct StoryCellView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
-            NavigationLink(destination: StoryWebView(url: URL(string: observableStory.story?.url ?? ""))) {
-                Text(observableStory.story?.title ?? "Title")
-            }
-            Text("")
-            VStack(alignment: .leading){
-                Text("\(observableStory.story?.by ?? "")")
-                    .font(.footnote)
-                    .foregroundStyle(.gray)
-                HStack {
-                    Image(systemName: "arrow.up")
-                        .foregroundColor(.gray)
-                    Text("\(observableStory.story?.score ?? 0)")
+        HStack {
+            VStack(alignment: .leading) {
+                NavigationLink(destination: StoryWebView(url: URL(string: observableStory.story?.url ?? ""))) {
+                    Text(observableStory.story?.title ?? "\(storyId)")
+                }
+                .navigationLinkIndicatorVisibility(.hidden)
+                Text("")
+                VStack(alignment: .leading){
+                    Text("\(observableStory.story?.by ?? "")")
                         .font(.footnote)
                         .foregroundStyle(.gray)
-                    Image(systemName: "bubble")
-                        .foregroundColor(.gray)
-                    Text("\(observableStory.story?.kids.count ?? 0)")
-                        .font(.footnote)
-                        .foregroundStyle(.gray)
-                    Image(systemName: "clock")
-                        .foregroundColor(.gray)
-                    //Text("\(observableStory.story?.time ?? 0)")
-                    Text("1h")
-                        .font(.footnote)
-                        .foregroundStyle(.gray)
-                    Image(systemName: "paperplane")
-                        .foregroundColor(.gray)
-                    Image(systemName: "bookmark")
-                        .foregroundColor(.gray)
+                    HStack {
+                        Image(systemName: "arrow.up")
+                            .foregroundColor(.gray)
+                        Text("\(observableStory.story?.score ?? 0)")
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                        Image(systemName: "bubble")
+                            .foregroundColor(.gray)
+                        Text("\(observableStory.story?.kids.count ?? 0)")
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                        Image(systemName: "clock")
+                            .foregroundColor(.gray)
+                        //Text("\(observableStory.story?.time ?? 0)")
+                        Text("1h")
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                        Image(systemName: "paperplane")
+                            .foregroundColor(.gray)
+                        Image(systemName: "bookmark")
+                            .foregroundColor(.gray)
+                    }
                 }
             }
+            Spacer()
+            // The image thumbnail
+            VStack() {
+                ZStack() {
+                    Color(.quaternaryLabel)
+                    Image(systemName: "safari")
+                        .resizable()
+                        .scaledToFit()
+                        .padding()
+                        .foregroundStyle(Color(.systemFill))
+                }
+            }
+            .clipped()
+            .frame(width: 70, height: 70)
+            .cornerRadius(15)
         }
         .task {
             await observableStory.getStory()
