@@ -8,16 +8,16 @@
 import SwiftUI
 import WebKit
 
-struct StoryWebView: UIViewRepresentable {
-    var url: URL?
-    
-    func makeUIView(context: Context) -> WKWebView {
-        return WKWebView()
-    }
-    
-    func updateUIView(_ uiView: WKWebView, context: Context) {
-        if let url = url {
-            uiView.load(URLRequest(url: url))
-        }
+struct StoryWebView: View {
+    let url: URL?
+    @State private var page = WebPage()
+
+    var body: some View {
+        WebView(page)
+            .onAppear {
+                if let url = url {
+                    page.load(URLRequest(url: url))
+                }
+            }
     }
 }

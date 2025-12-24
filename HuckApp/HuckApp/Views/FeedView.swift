@@ -28,7 +28,7 @@ struct StoryCellView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            NavigationLink(destination: StoryWebView(url: URL(string: observableStory.story?.url ?? "")).ignoresSafeArea(edges: .bottom)) {
+            NavigationLink(destination: StoryWebView(url: URL(string: observableStory.story?.url ?? ""))) {
                 Text(observableStory.story?.title ?? "Title")
             }
             Text("")
