@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct FeedView: View {
+    let temp = ["post 1", "post 2", "post 3"]
     var body: some View {
         NavigationStack {
             VStack {
@@ -42,7 +43,9 @@ struct FeedView: View {
                     }
                     .listSectionSpacing(.custom(14))
                     Section(header: Text("Pinned")) {
-                        
+                        ForEach(temp, id: \.self) {entry in
+                            Text(entry)
+                        }
                     }
                     .headerProminence(.increased)
                 }
