@@ -17,37 +17,36 @@ enum ImageStatus {
 
 struct StoryCellView: View {
     let storyId: Int
-    @State private var observableStory: StoryData
+    @State private var story: Story?
     @State private var thumbnailStatus: ImageStatus = .loading
     @State private var metadata: LPLinkMetadata? = nil
     @State private var isValidUrl = true
     
     init(storyId: Int) {
         self.storyId = storyId
-        self.observableStory = StoryData(storyId: storyId)
     }
     
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                NavigationLink(destination: StoryWebView(url: URL(string: observableStory.story?.url ?? ""))) {
-                    Text(observableStory.story?.title ?? "\(storyId)")
+                NavigationLink(destination: StoryWebView(url: URL(string: story?.url ?? ""))) {
+                    Text(story?.title ?? "\(storyId)")
                 }
                 .navigationLinkIndicatorVisibility(.hidden)
                 Text("")
                 VStack(alignment: .leading){
-                    Text("\(observableStory.story?.by ?? "")")
+                    Text("\(story?.by ?? "")")
                         .font(.footnote)
                         .foregroundStyle(.gray)
                     HStack {
                         Image(systemName: "arrow.up")
                             .foregroundColor(.gray)
-                        Text("\(observableStory.story?.score ?? 0)")
+                        Text("\(story?.score ?? 0)")
                             .font(.footnote)
                             .foregroundStyle(.gray)
                         Image(systemName: "bubble")
                             .foregroundColor(.gray)
-                        Text("\(observableStory.story?.kids.count ?? 0)")
+                        Text("\(story?.kids.count ?? 0)")
                             .font(.footnote)
                             .foregroundStyle(.gray)
                         Image(systemName: "clock")
@@ -68,15 +67,14 @@ struct StoryCellView: View {
             VStack() {
                 ZStack() {
                     switch thumbnailStatus {
-                    case .loading:
-                        ProgressView()
-
+                    //case .loading:
+                        //ProgressView()
                     case .finished(let image):
                         image
                             .resizable()
                             .scaledToFill()
 
-                    case .failed:
+                    case .failed, .loading:
                         Color(.quaternaryLabel)
                         Image(systemName: "safari")
                             .resizable()
@@ -90,18 +88,20 @@ struct StoryCellView: View {
             .clipped()
             .frame(width: 70, height: 70)
             .cornerRadius(15)
-            .task {
-                await fetchMetadata()
-            }
         }
         .task {
-            await observableStory.getStory()
+            story = StoryCache.getStory(id: storyId)
+            await fetchThumbnail()
         }
+        // TODO: Only redraw the thumbnail if the story changes
+//        .task(id: story) {
+//            
+//        }
     
     }
     
-    private func fetchMetadata() async {
-        let url = URL(string: observableStory.story?.url ?? "")
+    private func fetchThumbnail() async {
+        let url = URL(string: story?.url ?? "")
         guard let url else {
             isValidUrl = false
             return
@@ -154,6 +154,7 @@ struct StoryCellView: View {
     }
 }
 
+// TODO: Construct with an enum for the type of story
 struct StoryFeedView: View {
     let observableStories = StoriesFeedData()
     
@@ -180,37 +181,13 @@ class StoriesFeedData {
     }
 }
 
-@Observable
-class StoryData {
-    let storyId: Int
-    var story: Story? = nil
-    
-    init(storyId: Int) {
-        self.storyId = storyId
-    }
-    
-    func getStory() async {
-        self.story = await getStoryAsync(id: self.storyId)
-    }
-}
-
 // TODO: eventually needs an enum for if we are sorting by top, best, or new
 func getStoryIdsAsync() async -> [Int] {
     let url = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
     guard let stories: [Int] = await WebService().downloadData(fromURL: url) else {
         return []
     }
-    print("Stories: \(stories)")
     return stories
-}
-
-struct Story: Codable {
-    let title: String
-    let by: String
-    let score: Int
-    let kids: [Int]
-    let time: Int
-    let url: String
 }
 
 func getStoryAsync(id: Int) async -> Story? {
@@ -218,6 +195,5 @@ func getStoryAsync(id: Int) async -> Story? {
     guard let story: Story = await WebService().downloadData(fromURL: url) else {
         return nil
     }
-    print("Story: \(story)")
     return story
 }

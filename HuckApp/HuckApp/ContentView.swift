@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+internal import Combine
 
 struct ContentView: View {
+    @StateObject var appController: ApplicationController = ApplicationController()
+    
     var body: some View {
         TabView {
             Tab("Feed", systemImage: "newspaper.fill") {
@@ -25,6 +28,22 @@ struct ContentView: View {
             }
         }
         .tint(.orange)
+        .onAppear(perform: startApp)
+    }
+    
+    func startApp() {
+        print("Initializing application")
+    }
+}
+
+class ApplicationController: ObservableObject {
+    @Published private(set) var temp = false;
+    
+    init() {
+        Task(priority: .medium){
+            let ids = await getStoryIdsAsync()
+            await StoryCache.setIds(from: ids)
+        }
     }
 }
 

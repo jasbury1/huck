@@ -20,7 +20,6 @@ class WebService {
         do {
             guard let url = URL(string: fromURL) else { throw NetworkError.badUrl }
             let (data, response) = try await URLSession.shared.data(from: url)
-            print("Data: \(data.debugDescription)")
             guard let response = response as? HTTPURLResponse else {
                 throw NetworkError.badResponse
             }
