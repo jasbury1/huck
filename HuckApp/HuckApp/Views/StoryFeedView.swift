@@ -34,6 +34,7 @@ class StoryCellData {
     let commentCount: Int
     // TODO: Thumbnail handling
     var thumbnail: Image?
+    var text: String?
     
     init(from story: Story) {
         if let url = story.url {
@@ -43,6 +44,7 @@ class StoryCellData {
         else {
             storyType = .text
             self.url = nil
+            self.text = story.text
         }
         self.title = story.title
         self.by = story.by
@@ -165,10 +167,20 @@ struct StoryCellView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                NavigationLink(destination: StoryWebView(url: storyData?.url)) {
-                    Text(storyData?.title ?? "")
+                if let story = storyData {
+                    switch story.storyType {
+                    case .link:
+                        NavigationLink(destination: StoryWebView(url: storyData?.url)) {
+                            Text(storyData?.title ?? "")
+                        }
+                        .navigationLinkIndicatorVisibility(.hidden)
+                    case .text:
+                        NavigationLink(destination: StoryTextView(storyId: storyId)) {
+                            Text(storyData?.title ?? "")
+                        }
+                        .navigationLinkIndicatorVisibility(.hidden)
+                    }
                 }
-                .navigationLinkIndicatorVisibility(.hidden)
                 Text("")
                 VStack(alignment: .leading){
                     Text("\(storyData?.by ?? "")")
