@@ -9,10 +9,11 @@ import SwiftUI
 import LinkPresentation
 import UniformTypeIdentifiers
 
-enum ImageStatus {
+enum ThumbnailType {
     case loading
-    case finished(Image)
+    case image(Image)
     case failed
+    case text
 }
 
 enum StoryType {
@@ -47,7 +48,7 @@ class StoryCellData {
         self.by = story.by
         self.timestamp = Date(timeIntervalSince1970: TimeInterval(story.time))
         self.score = story.score
-        self.commentCount = story.kids.count
+        self.commentCount = story.kids?.count ?? 0
     }
 }
 
@@ -153,7 +154,7 @@ struct StoryCellView: View {
     
     @State private var storyData: StoryCellData?
     
-    @State private var thumbnailStatus: ImageStatus = .loading
+    @State private var thumbnailStatus: ThumbnailType = .loading
     @State private var metadata: LPLinkMetadata? = nil
     @State private var isValidUrl = true
 
@@ -165,7 +166,7 @@ struct StoryCellView: View {
         HStack {
             VStack(alignment: .leading) {
                 NavigationLink(destination: StoryWebView(url: storyData?.url)) {
-                    Text(storyData?.title ?? "")
+                    Text(storyData?.title ?? "\(storyId)")
                 }
                 .navigationLinkIndicatorVisibility(.hidden)
                 Text("")
@@ -204,11 +205,17 @@ struct StoryCellView: View {
                     switch thumbnailStatus {
                     //case .loading:
                         //ProgressView()
-                    case .finished(let image):
+                    case .image(let image):
                         image
                             .resizable()
                             .scaledToFill()
-
+                    case .text:
+                        Color(.quaternaryLabel)
+                        Image(systemName: "text.alignleft")
+                            .resizable()
+                            .scaledToFit()
+                            .padding()
+                            .foregroundStyle(Color(.systemFill))
                     case .failed, .loading:
                         Color(.quaternaryLabel)
                         Image(systemName: "safari")
@@ -254,6 +261,9 @@ struct StoryCellView: View {
     private func loadThumbnail(from imageProvider: NSItemProvider?) async {
         let imageType = UTType.image.identifier
         do {
+            if storyData?.storyType != .link {
+                thumbnailStatus = .text
+            }
             guard let imageProvider, imageProvider.hasItemConformingToTypeIdentifier(imageType) else {
                 thumbnailStatus = .failed
                 return
@@ -261,7 +271,7 @@ struct StoryCellView: View {
 
             let item = try await imageProvider.loadItem(forTypeIdentifier: imageType)
             if item is UIImage, let image = item as? UIImage {
-                thumbnailStatus = .finished(Image(uiImage: image))
+                thumbnailStatus = .image(Image(uiImage: image))
             }
             else if item is URL {
                 guard let url = item as? URL,
@@ -271,14 +281,14 @@ struct StoryCellView: View {
                     thumbnailStatus = .failed
                     return
                 }
-                thumbnailStatus = .finished(Image(uiImage: image))
+                thumbnailStatus = .image(Image(uiImage: image))
             }
             else if item is Data {
                 guard let data = item as? Data, let image = UIImage(data: data) else {
                     thumbnailStatus = .failed
                     return
                 }
-                thumbnailStatus = .finished(Image(uiImage: image))
+                thumbnailStatus = .image(Image(uiImage: image))
             }
         }
         catch {

@@ -9,7 +9,7 @@ struct Story: Codable {
     let title: String
     let by: String
     let score: Int
-    let kids: [Int]
+    let kids: [Int]?
     let time: Int
     let url: String?
     let text: String?
