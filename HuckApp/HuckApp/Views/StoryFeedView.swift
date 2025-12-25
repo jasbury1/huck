@@ -166,7 +166,7 @@ struct StoryCellView: View {
         HStack {
             VStack(alignment: .leading) {
                 NavigationLink(destination: StoryWebView(url: storyData?.url)) {
-                    Text(storyData?.title ?? "\(storyId)")
+                    Text(storyData?.title ?? "")
                 }
                 .navigationLinkIndicatorVisibility(.hidden)
                 Text("")
@@ -210,7 +210,7 @@ struct StoryCellView: View {
                             .resizable()
                             .scaledToFill()
                     case .text:
-                        Color(.quaternaryLabel)
+                        Color(.systemGray6)
                         Image(systemName: "text.alignleft")
                             .resizable()
                             .scaledToFit()
@@ -242,6 +242,10 @@ struct StoryCellView: View {
     }
     
     private func fetchThumbnail() async {
+        if storyData?.storyType != .link {
+            thumbnailStatus = .text
+            return
+        }
         let url = storyData?.url
         guard let url else {
             isValidUrl = false
@@ -250,7 +254,7 @@ struct StoryCellView: View {
 
         do {
             metadata = try await LPMetadataProvider().startFetchingMetadata(for: url)
-            await loadThumbnail(from: metadata?.imageProvider)
+            await loadThumbnailImage(from: metadata?.imageProvider)
         }
         catch {
             print("Error fetching URL metadata: \(error.localizedDescription)")
@@ -258,12 +262,9 @@ struct StoryCellView: View {
         }
     }
     
-    private func loadThumbnail(from imageProvider: NSItemProvider?) async {
+    private func loadThumbnailImage(from imageProvider: NSItemProvider?) async {
         let imageType = UTType.image.identifier
         do {
-            if storyData?.storyType != .link {
-                thumbnailStatus = .text
-            }
             guard let imageProvider, imageProvider.hasItemConformingToTypeIdentifier(imageType) else {
                 thumbnailStatus = .failed
                 return
