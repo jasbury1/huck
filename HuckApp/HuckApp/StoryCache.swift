@@ -11,7 +11,7 @@ final class StoryCache {
     static let shared = StoryCache()
     
     private var storyIds = [Int]()
-    private var cache = [Int: Story]()
+    private var cache = [Int: StoryCellData]()
     
     private init(){}
     
@@ -20,7 +20,7 @@ final class StoryCache {
         let instance = StoryCache.shared
         let oldCache = instance.cache
         
-        instance.cache = [Int: Story]()
+        instance.cache = [Int: StoryCellData]()
         instance.storyIds = ids
         for id in ids {
             if let story = oldCache[id] {
@@ -28,15 +28,15 @@ final class StoryCache {
             }
             else {
                 let story = await fetchStory(id: id)
-                print("Fetched new story for id \(id)")
-                instance.cache[id] = story
+                if story != nil {
+                    instance.cache[id] = StoryCellData(from: story!)
+                }
             }
         }
         print("Done setting up the cache")
     }
     
-    static func getStory(id: Int) -> Story? {
-        print("Requested story for id \(id). Result: \(String(describing: StoryCache.shared.cache[id]))")
+    static func getStory(id: Int) -> StoryCellData? {
         return StoryCache.shared.cache[id]
     }
 }

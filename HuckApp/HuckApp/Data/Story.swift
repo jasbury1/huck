@@ -11,5 +11,6 @@ struct Story: Codable {
     let score: Int
     let kids: [Int]
     let time: Int
-    let url: String
+    let url: String?
+    let text: String?
 }

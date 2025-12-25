@@ -15,13 +15,148 @@ enum ImageStatus {
     case failed
 }
 
+enum StoryType {
+    case link
+    case text
+}
+
+// TODO: If this is observable, then just store these in our cache
+// In parallel, we update with a thumbnail, then the views get updated
+@Observable
+class StoryCellData {
+    let storyType: StoryType
+    let title: String
+    let by: String
+    let timestamp: Date
+    let score: Int
+    let url: URL?
+    let commentCount: Int
+    // TODO: Thumbnail handling
+    var thumbnail: Image?
+    
+    init(from story: Story) {
+        if let url = story.url {
+            storyType = .link
+            self.url = URL(string: url)
+        }
+        else {
+            storyType = .text
+            self.url = nil
+        }
+        self.title = story.title
+        self.by = story.by
+        self.timestamp = Date(timeIntervalSince1970: TimeInterval(story.time))
+        self.score = story.score
+        self.commentCount = story.kids.count
+    }
+}
+
+/*
+ struct StoryThumbnailView: View {
+     @State private var storyData: StoryCellData?
+     
+     @State private var metadata: LPLinkMetadata? = nil
+     @State private var isValidUrl = true
+     @State private var thumbnailStatus: ImageStatus = .loading
+     
+     init(data: StoryCellData?) {
+         storyData = data
+     }
+     
+     var body: some View {
+         VStack() {
+             ZStack() {
+                 switch thumbnailStatus {
+                 //case .loading:
+                     //ProgressView()
+                 case .finished(let image):
+                     image
+                         .resizable()
+                         .scaledToFill()
+
+                 case .failed, .loading:
+                     Color(.quaternaryLabel)
+                     Image(systemName: "safari")
+                         .resizable()
+                         .scaledToFit()
+                         .padding()
+                         .foregroundStyle(Color(.systemFill))
+                 }
+             }
+         }
+         .task {
+             print("Fetching thumbnail")
+             await fetchThumbnail()
+         }
+         .clipped()
+         .frame(width: 70, height: 70)
+         .cornerRadius(15)
+     }
+     
+     private func fetchThumbnail() async {
+         let url = storyData?.url
+         guard let url else {
+             isValidUrl = false
+             return
+         }
+
+         do {
+             metadata = try await LPMetadataProvider().startFetchingMetadata(for: url)
+             await loadThumbnail(from: metadata?.imageProvider)
+         }
+         catch {
+             print("Error fetching URL metadata: \(error.localizedDescription)")
+             isValidUrl = false
+         }
+     }
+     
+     private func loadThumbnail(from imageProvider: NSItemProvider?) async {
+         let imageType = UTType.image.identifier
+         do {
+             guard let imageProvider, imageProvider.hasItemConformingToTypeIdentifier(imageType) else {
+                 thumbnailStatus = .failed
+                 return
+             }
+
+             let item = try await imageProvider.loadItem(forTypeIdentifier: imageType)
+             if item is UIImage, let image = item as? UIImage {
+                 thumbnailStatus = .finished(Image(uiImage: image))
+             }
+             else if item is URL {
+                 guard let url = item as? URL,
+                       let data = try? Data(contentsOf: url),
+                       let image = UIImage(data: data)
+                 else {
+                     thumbnailStatus = .failed
+                     return
+                 }
+                 thumbnailStatus = .finished(Image(uiImage: image))
+             }
+             else if item is Data {
+                 guard let data = item as? Data, let image = UIImage(data: data) else {
+                     thumbnailStatus = .failed
+                     return
+                 }
+                 thumbnailStatus = .finished(Image(uiImage: image))
+             }
+         }
+         catch {
+             print("Error loading Image: \(error.localizedDescription)")
+             thumbnailStatus = .failed
+         }
+     }
+ }
+ */
+
 struct StoryCellView: View {
     let storyId: Int
-    @State private var story: Story?
+    
+    @State private var storyData: StoryCellData?
+    
     @State private var thumbnailStatus: ImageStatus = .loading
     @State private var metadata: LPLinkMetadata? = nil
     @State private var isValidUrl = true
-    
+
     init(storyId: Int) {
         self.storyId = storyId
     }
@@ -29,24 +164,24 @@ struct StoryCellView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                NavigationLink(destination: StoryWebView(url: URL(string: story?.url ?? ""))) {
-                    Text(story?.title ?? "\(storyId)")
+                NavigationLink(destination: StoryWebView(url: storyData?.url)) {
+                    Text(storyData?.title ?? "")
                 }
                 .navigationLinkIndicatorVisibility(.hidden)
                 Text("")
                 VStack(alignment: .leading){
-                    Text("\(story?.by ?? "")")
+                    Text("\(storyData?.by ?? "")")
                         .font(.footnote)
                         .foregroundStyle(.gray)
                     HStack {
                         Image(systemName: "arrow.up")
                             .foregroundColor(.gray)
-                        Text("\(story?.score ?? 0)")
+                        Text("\(storyData?.score ?? 0)")
                             .font(.footnote)
                             .foregroundStyle(.gray)
                         Image(systemName: "bubble")
                             .foregroundColor(.gray)
-                        Text("\(story?.kids.count ?? 0)")
+                        Text("\(storyData?.commentCount ?? 0)")
                             .font(.footnote)
                             .foregroundStyle(.gray)
                         Image(systemName: "clock")
@@ -90,18 +225,17 @@ struct StoryCellView: View {
             .cornerRadius(15)
         }
         .task {
-            story = StoryCache.getStory(id: storyId)
+            storyData = StoryCache.getStory(id: storyId)
             await fetchThumbnail()
         }
         // TODO: Only redraw the thumbnail if the story changes
 //        .task(id: story) {
 //            
 //        }
-    
     }
     
     private func fetchThumbnail() async {
-        let url = URL(string: story?.url ?? "")
+        let url = storyData?.url
         guard let url else {
             isValidUrl = false
             return
