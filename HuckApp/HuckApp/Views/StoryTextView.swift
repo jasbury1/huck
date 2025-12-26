@@ -9,45 +9,54 @@ import SwiftUI
 
 struct StoryTextView: View {
     let storyId: Int
-    @State private var storyData: StoryCellData?
+    
+    @State private var storyData: StoryData
+    
+    init(storyId: Int) {
+        self.storyId = storyId
+        self.storyData = StoryData(id: storyId)
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Divider()
-            Text(storyData?.title ?? "")
-                .font(.title2)
-                .fontWeight(.heavy)
-            Text(storyData?.text ?? "")
-            Text("By \(storyData?.by ?? "")")
-                .font(.callout)
-                .foregroundStyle(.gray)
-            HStack {
-                Image(systemName: "arrow.up")
-                    .foregroundColor(.gray)
-                Text("\(storyData?.score ?? 0)")
-                    .font(.footnote)
+        List {
+            VStack(alignment: .leading, spacing: 20) {
+                Text(storyData.title)
+                    .font(.title2)
+                    .fontWeight(.heavy)
+                Text(storyData.text ?? "")
+                Text("By \(storyData.by)")
+                    .font(.callout)
                     .foregroundStyle(.gray)
-                Image(systemName: "bubble")
-                    .foregroundColor(.gray)
-                Text("\(storyData?.commentCount ?? 0)")
-                    .font(.footnote)
-                    .foregroundStyle(.gray)
-                Image(systemName: "clock")
-                    .foregroundColor(.gray)
-                //Text("\(observableStory.story?.time ?? 0)")
-                Text("1h")
-                    .font(.footnote)
-                    .foregroundStyle(.gray)
-                Image(systemName: "paperplane")
-                    .foregroundColor(.gray)
-                Image(systemName: "bookmark")
-                    .foregroundColor(.gray)
+                HStack {
+                    Image(systemName: "arrow.up")
+                        .foregroundColor(.gray)
+                    Text("\(storyData.score)")
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                    Image(systemName: "bubble")
+                        .foregroundColor(.gray)
+                    Text("\(storyData.commentCount)")
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                    Image(systemName: "clock")
+                        .foregroundColor(.gray)
+                    //Text("\(observableStory.story?.time ?? 0)")
+                    Text("1h")
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                    Image(systemName: "paperplane")
+                        .foregroundColor(.gray)
+                    Image(systemName: "bookmark")
+                        .foregroundColor(.gray)
+                }
+                Divider()
+                //Spacer()
+                CommentView(storyId: storyId)
             }
-            Divider()
-            Spacer()
-        }.padding(.horizontal, 20)
+        }
+        .listStyle(.inset)
         .task {
-            //TODO: storyData = await StoryCache.getStory(id: storyId)
+            await storyData.fetchData()
         }
     }
 }

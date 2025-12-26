@@ -7,11 +7,20 @@
 
 import SwiftUI
 
-struct CommentView: View {
-    let threadLevel: Int
-    let commentText: String
+struct CommentCellView: View {
+    //@State private var commentData: CommentData
     
     var body: some View {
-        
+        Text("Comment")
+    }
+}
+
+struct CommentView: View {
+    let storyId: Int
+    
+    var body: some View {
+        ForEach([1, 2, 3, 4, 5], id: \.self) { id in
+            CommentCellView()
+        }
     }
 }

@@ -17,7 +17,7 @@ struct StoryThumbnailView: View {
     @State private var metadata: LPLinkMetadata? = nil
     @State private var isValidUrl = true
     
-    var storyData: StoryCellData
+    var storyData: StoryData
     
     var body: some View {
         VStack() {
