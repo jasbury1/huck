@@ -47,7 +47,7 @@ struct StoryTextView: View {
             Spacer()
         }.padding(.horizontal, 20)
         .task {
-            storyData = await StoryCache.getStory(id: storyId)
+            //TODO: storyData = await StoryCache.getStory(id: storyId)
         }
     }
 }
