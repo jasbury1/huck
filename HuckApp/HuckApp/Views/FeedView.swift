@@ -17,7 +17,7 @@ struct FeedView: View {
                         HStack {
                             Image(systemName: "book.pages.fill")
                                 .foregroundColor(.white)
-                            NavigationLink("Stories", destination: StoryFeedView())
+                            NavigationLink("Top Stories", destination: StoryFeedView(filter: .topStories))
                                 .foregroundColor(.white)
                                 .font(.headline)
                         }
@@ -28,17 +28,17 @@ struct FeedView: View {
                         HStack {
                             Image(systemName: "questionmark.message.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Ask", destination: StoryFeedView())
+                            NavigationLink("Ask", destination: StoryFeedView(filter: .askStories))
                         }
                         HStack {
                             Image(systemName: "eye.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Show", destination: StoryFeedView())
+                            NavigationLink("Show", destination: StoryFeedView(filter: .showStories))
                         }
                         HStack {
                             Image(systemName: "briefcase.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Jobs", destination: StoryFeedView())
+                            NavigationLink("Jobs", destination: StoryFeedView(filter: .jobStories))
                         }
                     }
                     .listSectionSpacing(.custom(14))

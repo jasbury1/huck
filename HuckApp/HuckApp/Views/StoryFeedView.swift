@@ -171,12 +171,12 @@ struct StoryCellView: View {
                     switch story.storyType {
                     case .link:
                         NavigationLink(destination: StoryWebView(url: storyData?.url)) {
-                            Text(storyData?.title ?? "")
+                            Text(storyData?.title ?? "\(storyId)")
                         }
                         .navigationLinkIndicatorVisibility(.hidden)
                     case .text:
                         NavigationLink(destination: StoryTextView(storyId: storyId)) {
-                            Text(storyData?.title ?? "")
+                            Text(storyData?.title ?? "\(storyId)")
                         }
                         .navigationLinkIndicatorVisibility(.hidden)
                     }
@@ -244,7 +244,7 @@ struct StoryCellView: View {
             .cornerRadius(15)
         }
         .task {
-            storyData = StoryCache.getStory(id: storyId)
+            storyData = await StoryCache.getStory(id: storyId)
             await fetchThumbnail()
         }
         // TODO: Only redraw the thumbnail if the story changes
@@ -313,7 +313,12 @@ struct StoryCellView: View {
 
 // TODO: Construct with an enum for the type of story
 struct StoryFeedView: View {
-    let observableStories = StoriesFeedData()
+    @State var storyFilter: StoryFilter
+    @State var observableStories = StoriesFeedData()
+    
+    init(filter: StoryFilter) {
+        storyFilter = filter
+    }
     
     var body: some View {
         List {
@@ -323,7 +328,7 @@ struct StoryFeedView: View {
         }
         .listStyle(.plain)
         .task {
-            await self.observableStories.fetchStoryIds()
+            await self.observableStories.fetchStoryIds(filter: storyFilter)
         }
     }
 }
@@ -332,25 +337,8 @@ struct StoryFeedView: View {
 class StoriesFeedData {
     var storyIds: [Int] = []
     
-    func fetchStoryIds() async {
-        let ids = await getStoryIdsAsync()
+    func fetchStoryIds(filter: StoryFilter) async {
+        let ids = await getStoryIdsAsync(filter: filter)
         self.storyIds = ids
     }
-}
-
-// TODO: eventually needs an enum for if we are sorting by top, best, or new
-func getStoryIdsAsync() async -> [Int] {
-    let url = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty"
-    guard let stories: [Int] = await WebService().downloadData(fromURL: url) else {
-        return []
-    }
-    return stories
-}
-
-func getStoryAsync(id: Int) async -> Story? {
-    let url = "https://hacker-news.firebaseio.com/v0/item/\(id).json?print=pretty"
-    guard let story: Story = await WebService().downloadData(fromURL: url) else {
-        return nil
-    }
-    return story
 }

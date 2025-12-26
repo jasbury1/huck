@@ -36,8 +36,20 @@ final class StoryCache {
         print("Done setting up the cache")
     }
     
-    static func getStory(id: Int) -> StoryCellData? {
-        return StoryCache.shared.cache[id]
+    static func getStory(id: Int) async -> StoryCellData? {
+        let instance = StoryCache.shared
+        if let story = StoryCache.shared.cache[id] {
+            return story
+        }
+        else {
+            let story = await fetchStory(id: id)
+            if story != nil {
+                instance.cache[id] = StoryCellData(from: story!)
+                let storyData = StoryCellData(from: story!)
+                return storyData
+            }
+        }
+        return nil
     }
 }
 

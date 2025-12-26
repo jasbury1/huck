@@ -41,7 +41,7 @@ class ApplicationController: ObservableObject {
     
     init() {
         Task(priority: .medium){
-            let ids = await getStoryIdsAsync()
+            let ids = await getStoryIdsAsync(filter: .topStories)
             await StoryCache.setIds(from: ids)
         }
     }
