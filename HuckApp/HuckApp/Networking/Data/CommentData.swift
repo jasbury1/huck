@@ -5,7 +5,7 @@
 //  Created by James Asbury on 12/25/25.
 //
 
-struct Comment: Codable {
+struct CommentData: Codable {
     let by: String
     let id: Int
     let kids: [Int]

@@ -1,8 +1,8 @@
 //
-//  Requests.swift
+//  HackerNewsAPIService.swift
 //  HuckApp
 //
-//  Created by James Asbury on 12/25/25.
+//  Created by James Asbury on 12/26/25.
 //
 
 enum StoryFilter {
@@ -16,13 +16,12 @@ enum StoryFilter {
 }
 
 // TODO: Finish using this class
-struct FirebaseRequestHandler {
+struct FirebaseAPIService {
     static let baseUri = "https://hacker-news.firebaseio.com"
     
     static let topStoriesRequest = "\(baseUri)/v0/topstories.json?print=pretty"
 }
 
-// TODO: eventually needs an enum for if we are sorting by top, best, or new
 func getStoryIdsAsync(filter: StoryFilter) async -> [Int] {
     let url = switch filter {
     case .topStories:
@@ -44,17 +43,18 @@ func getStoryIdsAsync(filter: StoryFilter) async -> [Int] {
     return stories
 }
 
-func getStoryAsync(id: Int) async -> Story? {
+func getStoryAsync(id: Int) async -> StoryData? {
     let url = "https://hacker-news.firebaseio.com/v0/item/\(id).json?print=pretty"
-    guard let story: Story = await WebService().downloadData(fromURL: url) else {
+    guard let story: StoryData = await WebService().downloadData(fromURL: url) else {
         return nil
     }
     return story
 }
 
-func getCommentAsync(id: Int) async -> Comment? {
+func getCommentAsync(id: Int) async -> CommentData? {
+    print("GEtting comment")
     let url = "https://hacker-news.firebaseio.com/v0/item/\(id).json?print=pretty"
-    guard let comment: Comment = await WebService().downloadData(fromURL: url) else {
+    guard let comment: CommentData = await WebService().downloadData(fromURL: url) else {
         return nil
     }
     return comment

@@ -16,7 +16,7 @@ enum StoryType {
 // TODO: If this is observable, then just store these in our cache
 // In parallel, we update with a thumbnail, then the views get updated
 @Observable
-class StoryData : Equatable {
+class StoryModel : Equatable {
     let id: Int
     var storyType: StoryType
     var title: String
@@ -60,7 +60,7 @@ class StoryData : Equatable {
         }
     }
     
-    static func ==(lhs: StoryData, rhs: StoryData) -> Bool {
+    static func ==(lhs: StoryModel, rhs: StoryModel) -> Bool {
         return lhs.title == rhs.title && lhs.id == rhs.id
     }
 }

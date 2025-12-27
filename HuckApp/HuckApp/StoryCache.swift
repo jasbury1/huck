@@ -11,7 +11,7 @@ final class StoryCache {
     static let shared = StoryCache()
     
     private var storyIds = [Int]()
-    private var cache = [Int: Story]()
+    private var cache = [Int: StoryData]()
     
     private init(){}
     
@@ -20,7 +20,7 @@ final class StoryCache {
         let instance = StoryCache.shared
         let oldCache = instance.cache
         
-        instance.cache = [Int: Story]()
+        instance.cache = [Int: StoryData]()
         instance.storyIds = ids
         for id in ids {
             if let story = oldCache[id] {
@@ -36,7 +36,7 @@ final class StoryCache {
         print("Done setting up the cache")
     }
     
-    static func getStory(id: Int) async -> Story? {
+    static func getStory(id: Int) async -> StoryData? {
         let instance = StoryCache.shared
         if let story = StoryCache.shared.cache[id] {
             return story
@@ -53,9 +53,9 @@ final class StoryCache {
 }
 
 // TODO: Move this
-func fetchStory(id: Int) async -> Story? {
+func fetchStory(id: Int) async -> StoryData? {
     let url = "https://hacker-news.firebaseio.com/v0/item/\(id).json?print=pretty"
-    guard let story: Story = await WebService().downloadData(fromURL: url) else {
+    guard let story: StoryData = await WebService().downloadData(fromURL: url) else {
         return nil
     }
     return story

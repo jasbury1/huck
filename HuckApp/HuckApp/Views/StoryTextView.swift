@@ -7,14 +7,30 @@
 
 import SwiftUI
 
+struct CommentCellView: View {
+    private var commentData: CommentModel
+    
+    init(commentData: CommentModel) {
+        self.commentData = commentData
+    }
+    
+    var body: some View {
+        Text("Comment ID: \(commentData.id)")
+            ForEach(commentData.children, id: \.id) { comment in
+                Text("Child")
+        }
+    }
+}
+
 struct StoryTextView: View {
     let storyId: Int
     
-    @State private var storyData: StoryData
+    @State private var storyData: StoryModel
+    @State private var rootComments: [CommentModel] = []
     
     init(storyId: Int) {
         self.storyId = storyId
-        self.storyData = StoryData(id: storyId)
+        self.storyData = StoryModel(id: storyId)
     }
     
     var body: some View {
@@ -51,13 +67,27 @@ struct StoryTextView: View {
                 }
                 Divider()
                 //Spacer()
-                CommentView(storyId: storyId)
+                //CommentView(storyId: storyId)
+                ForEach(rootComments, id: \.id) { commentData in
+                    CommentCellView(commentData: commentData)
+                }
             }
         }
         .listStyle(.inset)
         .task {
             await storyData.fetchData()
+            await rootComments = getRootComments(storyId: storyId)
         }
+    }
+}
+
+@Observable
+class CommentSectionData {
+    var storyIds: [Int] = []
+    
+    func fetchStoryIds(filter: StoryFilter) async {
+        let ids = await getStoryIdsAsync(filter: filter)
+        self.storyIds = ids
     }
 }
 

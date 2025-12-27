@@ -19,7 +19,7 @@ enum ThumbnailType {
 struct StoryCellView: View {
     let storyId: Int
     
-    @State private var storyData: StoryData
+    @State private var storyData: StoryModel
     
     @State private var thumbnailStatus: ThumbnailType = .loading
     @State private var metadata: LPLinkMetadata? = nil
@@ -27,7 +27,7 @@ struct StoryCellView: View {
     
     init(storyId: Int) {
         self.storyId = storyId
-        self.storyData = StoryData(id: storyId)
+        self.storyData = StoryModel(id: storyId)
     }
     
     var body: some View {
