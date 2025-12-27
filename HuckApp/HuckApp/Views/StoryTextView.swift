@@ -8,17 +8,30 @@
 import SwiftUI
 
 struct CommentCellView: View {
-    private var commentData: CommentModel
+    @State private var commentData: Comment
+    private var indentationLevel = 0
     
-    init(commentData: CommentModel) {
+    init(commentData: Comment) {
         self.commentData = commentData
+        indentationLevel = commentData.nestingLevel
     }
     
     var body: some View {
-        Text("Comment ID: \(commentData.id)")
-            ForEach(commentData.children, id: \.id) { comment in
-                Text("Child")
+        HStack{
+            ForEach(0..<indentationLevel, id:\.self) { _ in
+                Rectangle()
+                    .fill(Color.gray)
+                    .frame(width: 1)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text(commentData.author).font(.headline)
+                Text(commentData.text)
+                Divider()
+            }
+            Spacer()
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -26,11 +39,12 @@ struct StoryTextView: View {
     let storyId: Int
     
     @State private var storyData: StoryModel
-    @State private var rootComments: [CommentModel] = []
+    @State private var commentFetcher: CommentFetcher
     
     init(storyId: Int) {
         self.storyId = storyId
         self.storyData = StoryModel(id: storyId)
+        self.commentFetcher = CommentFetcher(id: storyId)
     }
     
     var body: some View {
@@ -67,16 +81,15 @@ struct StoryTextView: View {
                 }
                 Divider()
                 //Spacer()
-                //CommentView(storyId: storyId)
-                ForEach(rootComments, id: \.id) { commentData in
-                    CommentCellView(commentData: commentData)
+                ForEach(commentFetcher.comments, id: \.id) { comment in
+                    CommentCellView(commentData: comment)
                 }
             }
         }
         .listStyle(.inset)
         .task {
             await storyData.fetchData()
-            await rootComments = getRootComments(storyId: storyId)
+            await commentFetcher.fetchComments()
         }
     }
 }
@@ -92,6 +105,6 @@ class CommentSectionData {
 }
 
 #Preview {
-    StoryTextView(storyId: 123123)
+    StoryTextView(storyId: 46391572)
 }
 

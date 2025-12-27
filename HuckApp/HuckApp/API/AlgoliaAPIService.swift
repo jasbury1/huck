@@ -12,8 +12,10 @@ struct AlgoliaAPIService {
         //Ex: http://hn.algolia.com/api/v1/items/1
         let url = "\(baseUri)/items/\(id)"
         guard let item: ItemData = await WebService().downloadData(fromURL: url) else {
+            print("Algolia API returned nil")
             return nil
         }
+        print("Item: \(item.title ?? "No title")")
         return item
     }
 }
