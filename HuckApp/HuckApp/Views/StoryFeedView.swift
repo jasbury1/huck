@@ -67,7 +67,7 @@ struct StoryCellView: View {
                         Image(systemName: "clock")
                             .foregroundColor(.gray)
                         //Text("\(observableStory.story?.time ?? 0)")
-                        Text("1h")
+                        Text(storyData.timestamp.ageString())
                             .font(.footnote)
                             .foregroundStyle(.gray)
                         Image(systemName: "paperplane")

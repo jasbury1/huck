@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CommentCellView: View {
     @State private var commentData: Comment
+    
     private var indentationLevel = 0
     
     init(commentData: Comment) {
@@ -71,7 +72,7 @@ struct StoryTextView: View {
                     Image(systemName: "clock")
                         .foregroundColor(.gray)
                     //Text("\(observableStory.story?.time ?? 0)")
-                    Text("1h")
+                    Text(storyData.timestamp.ageString())
                         .font(.footnote)
                         .foregroundStyle(.gray)
                     Image(systemName: "paperplane")
@@ -80,10 +81,10 @@ struct StoryTextView: View {
                         .foregroundColor(.gray)
                 }
                 Divider()
-                //Spacer()
                 ForEach(commentFetcher.comments, id: \.id) { comment in
                     CommentCellView(commentData: comment)
                 }
+                Spacer()
             }
         }
         .listStyle(.inset)
