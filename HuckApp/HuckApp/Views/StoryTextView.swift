@@ -26,7 +26,13 @@ struct CommentCellView: View {
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                Text(commentData.author).font(.headline)
+                HStack {
+                    Text(commentData.author).font(.headline)
+                    Spacer()
+                    Text(commentData.timestamp.ageString())
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                }
                 Text(commentData.text)
                 Divider()
             }
@@ -71,7 +77,6 @@ struct StoryTextView: View {
                         .foregroundStyle(.gray)
                     Image(systemName: "clock")
                         .foregroundColor(.gray)
-                    //Text("\(observableStory.story?.time ?? 0)")
                     Text(storyData.timestamp.ageString())
                         .font(.footnote)
                         .foregroundStyle(.gray)
