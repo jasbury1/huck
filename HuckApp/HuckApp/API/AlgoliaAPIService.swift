@@ -9,6 +9,7 @@ struct AlgoliaAPIService {
     private static let baseUri = "https://hn.algolia.com/api/v1"
     
     static func getItemById(id: Int) async -> ItemData? {
+        print("Calling Algolia API")
         //Ex: http://hn.algolia.com/api/v1/items/1
         let url = "\(baseUri)/items/\(id)"
         guard let item: ItemData = await WebService().downloadData(fromURL: url) else {

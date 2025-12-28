@@ -60,7 +60,9 @@ struct StoryTextView: View {
                 Text(storyData.title)
                     .font(.title2)
                     .fontWeight(.heavy)
-                Text(storyData.text ?? "")
+                if storyData.text != nil {
+                    Text(storyData.text!)
+                }
                 Text("By \(storyData.by)")
                     .font(.callout)
                     .foregroundStyle(.gray)
