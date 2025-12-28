@@ -5,16 +5,6 @@
 //  Created by James Asbury on 12/26/25.
 //
 
-enum StoryFilter {
-    case topStories
-    case bestStories
-    case newStories
-    case askStories
-    case showStories
-    case jobStories
-    
-}
-
 // TODO: Finish using this class
 struct FirebaseAPIService {
     static let baseUri = "https://hacker-news.firebaseio.com"
