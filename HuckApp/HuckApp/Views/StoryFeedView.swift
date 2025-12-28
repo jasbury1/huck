@@ -176,7 +176,7 @@ struct StoryCellView: View {
 
 // TODO: Construct with an enum for the type of story
 struct StoryFeedView: View {
-    @State var storyFilter: StoryFilter
+    @State private var storyFilter: StoryFilter
     @State var observableStories = StoriesFeedData()
     
     init(filter: StoryFilter) {
@@ -190,7 +190,7 @@ struct StoryFeedView: View {
             }
         }
         .listStyle(.plain)
-        .task {
+        .task (id: storyFilter) {
             await self.observableStories.fetchStoryIds(filter: storyFilter)
         }
         .toolbar {
