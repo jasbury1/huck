@@ -10,17 +10,15 @@ import LinkPresentation
 import UniformTypeIdentifiers
 
 struct StoryFeedView: View {
-    @State private var storyFilter: StoryFilter
+    @State var storyFilter: StoryFilter
     @State var observableStories = StoriesFeedData()
     
-    init(filter: StoryFilter) {
-        storyFilter = filter
-    }
+    @Binding var path: NavigationPath
     
     var body: some View {
         List {
             ForEach(observableStories.storyIds, id: \.self) {item in
-                StoryCellView(storyId: item)
+                StoryCellView(storyId: item, path: $path)
             }
         }
         .listStyle(.plain)

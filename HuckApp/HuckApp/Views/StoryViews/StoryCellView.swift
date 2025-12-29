@@ -25,12 +25,12 @@ struct StoryCellView: View {
     @State private var metadata: LPLinkMetadata? = nil
     @State private var isValidUrl = true
     
-    @State private var showComments = false
-    @State private var showLink = false
+    @Binding var path: NavigationPath
     
-    init(storyId: Int) {
+    init(storyId: Int, path: Binding<NavigationPath>) {
         self.storyId = storyId
         self.storyData = StoryModel(id: storyId)
+        self._path = path
     }
     
     var body: some View {
@@ -38,19 +38,19 @@ struct StoryCellView: View {
             VStack(alignment: .leading) {
                 switch storyData.storyType {
                 case .link:
-                    Text(storyData.title)
-                        .onTapGesture {
-                            showLink.toggle()
-                        }
-                    NavigationLink(destination: StoryWebView(url: storyData.url), isActive: $showLink) { }
-                        .navigationLinkIndicatorVisibility(.hidden)
-                    NavigationLink(destination: StoryTextView(storyId: storyId), isActive: $showComments) { }
-                        .navigationLinkIndicatorVisibility(.hidden)
-                case .text:
-                    NavigationLink(destination: StoryTextView(storyId: storyId)) {
+                    Button(action: {
+                        path.append(ItemNavigation.linkStory(id: storyId, url: storyData.url!))
+                    }) {
                         Text(storyData.title)
                     }
-                    .navigationLinkIndicatorVisibility(.hidden)
+                    .buttonStyle(.plain)
+                case .text:
+                    Button(action: {
+                        path.append(ItemNavigation.textStory(id: storyId))
+                    }) {
+                        Text(storyData.title)
+                    }
+                    .buttonStyle(.plain)
                 case .unknown:
                     Text(storyData.title)
                 }
@@ -63,22 +63,34 @@ struct StoryCellView: View {
                     HStack {
                         Image(systemName: "arrow.up")
                             .foregroundColor(.gray)
-                        Image(systemName: "bubble")
-                            .foregroundColor(.gray)
-                            .onTapGesture {
-                                print("Toggle")
-                                showComments.toggle()
+                        
+                        // Button to view the comments
+                        Button(action: {
+                            print("Button for story")
+                            path.append(ItemNavigation.textStory(id: storyId))
+                        }) {
+                            HStack {
+                                Image(systemName: "bubble")
+                                    .foregroundColor(.gray)
+                                Text("\(storyData.commentCount)")
+                                    .font(.footnote)
+                                    .foregroundStyle(.gray)
                             }
-                        Text("\(storyData.commentCount)")
-                            .font(.footnote)
-                            .foregroundStyle(.gray)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        // Timestamp
                         Image(systemName: "clock")
                             .foregroundColor(.gray)
                         Text(storyData.timestamp.ageString())
                             .font(.footnote)
                             .foregroundStyle(.gray)
+                        
+                        // Share the post
                         Image(systemName: "paperplane")
                             .foregroundColor(.gray)
+                        
+                        // Bookmark the post
                         Image(systemName: "bookmark")
                             .foregroundColor(.gray)
                     }
@@ -121,6 +133,7 @@ struct StoryCellView: View {
             await storyData.fetchData()
             await fetchThumbnail()
         }
+        
     }
     
     private func fetchThumbnail() async {

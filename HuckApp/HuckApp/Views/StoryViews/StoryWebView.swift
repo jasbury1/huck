@@ -11,7 +11,7 @@ import WebKit
 struct StoryWebView: View {
     let url: URL?
     @State private var page = WebPage()
-
+    
     var body: some View {
         WebView(page)
             .onAppear {

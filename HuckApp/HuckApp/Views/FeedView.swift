@@ -8,16 +8,19 @@
 import SwiftUI
 
 struct FeedView: View {
+    @State private var path = NavigationPath()
+    
     let temp = ["post 1", "post 2", "post 3"]
+    
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             VStack {
                 List {
                     Section(header: Text("Feeds")) {
                         HStack {
                             Image(systemName: "book.pages.fill")
                                 .foregroundColor(.white)
-                            NavigationLink("Top Stories", destination: StoryFeedView(filter: .topStories))
+                            NavigationLink("Top Stories", value: StoryFilter.topStories)
                                 .foregroundColor(.white)
                                 .font(.headline)
                         }
@@ -28,17 +31,17 @@ struct FeedView: View {
                         HStack {
                             Image(systemName: "questionmark.message.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Ask", destination: StoryFeedView(filter: .askStories))
+                            NavigationLink("Ask", value: StoryFilter.askStories)
                         }
                         HStack {
                             Image(systemName: "eye.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Show", destination: StoryFeedView(filter: .showStories))
+                            NavigationLink("Show", value: StoryFilter.showStories)
                         }
                         HStack {
                             Image(systemName: "briefcase.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Jobs", destination: StoryFeedView(filter: .jobStories))
+                            NavigationLink("Jobs", value: StoryFilter.jobStories)
                         }
                     }
                     .listSectionSpacing(.custom(14))
@@ -54,7 +57,12 @@ struct FeedView: View {
             .toolbar() {
                 Image(systemName: "plus")
             }
+            .navigationDestination(for: StoryFilter.self) { input in
+                StoryFeedView(storyFilter: input, path: $path)
+            }
+            .navigationDestination(for: ItemNavigation.self) { navigation in
+                StoryDetailsView(from: navigation)
+            }
         }
     }
 }
-
