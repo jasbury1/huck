@@ -10,5 +10,9 @@ import SwiftUI
 struct AccountView: View {
     var body: some View {
         Text("Account")
+            .onAppear {
+                print("appearing")
+                login(username: "jasbury", password: "Password would go here")
+            }
     }
 }
