@@ -61,12 +61,22 @@ struct StoryCellView: View {
                         .font(.footnote)
                         .foregroundStyle(.gray)
                     HStack {
-                        Image(systemName: "arrow.up")
-                            .foregroundColor(.gray)
+                        // Button to upvote the post
+                        Button(action: {
+                            // TODO
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.up")
+                                    .foregroundColor(.gray)
+                                Text("\(storyData.score)")
+                                    .font(.footnote)
+                                    .foregroundStyle(.gray)
+                            }
+                        }
+                        .buttonStyle(.plain)
                         
                         // Button to view the comments
                         Button(action: {
-                            print("Button for story")
                             path.append(ItemNavigation.textStory(id: storyId))
                         }) {
                             HStack {
