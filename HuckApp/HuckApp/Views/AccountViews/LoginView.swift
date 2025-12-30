@@ -1,8 +1,8 @@
 //
-//  ViewA.swift
+//  LoginView.swift
 //  HuckApp
 //
-//  Created by James Asbury on 12/23/25.
+//  Created by James Asbury on 12/29/25.
 //
 
 import SwiftUI
@@ -13,7 +13,7 @@ enum LoginFocus {
     case none
 }
 
-struct AccountView: View {
+struct LoginView: View {
     
     @State private var name: String = ""
     @State private var password: String = ""
@@ -85,7 +85,7 @@ struct AccountView: View {
             .focused($focus, equals: .password)
             VStack {
                 Button {
-                    print("do login action")
+                    login(username: name, password: password)
                 } label: {
                     Text("Sign In")
                         .font(.title2)
@@ -96,7 +96,7 @@ struct AccountView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     signinButtonDisabled ?
-                    Color.secondary : Color.orange//Color(red: 40, green: 155, blue: 255)
+                    Color.secondary : Color.orange //Color(red: 40, green: 155, blue: 255)
                 )
                 .cornerRadius(40)
                 .disabled(signinButtonDisabled)
@@ -108,10 +108,13 @@ struct AccountView: View {
                 Spacer()
             }
         }
+        .onAppear() {
+            let cookies = readCookie(forURL: URL(string: "https://news.ycombinator.com/")!)
+            print("Existing cookies: \(cookies)")
+        }
     }
-    
 }
 
 #Preview {
-    AccountView()
+    LoginView()
 }

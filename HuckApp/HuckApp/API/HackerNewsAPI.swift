@@ -78,6 +78,11 @@ class HackerNewsAPI {
                         print("Cookie!!")
                         print(token)
                         
+                        let cookieStorage = HTTPCookieStorage.shared
+                        cookieStorage.setCookies([token],
+                                                 for: base,
+                                                 mainDocumentURL: nil)
+                        
                     } else {
                         cookieHandler(.failure(APIError.loginFailed))
                     }
