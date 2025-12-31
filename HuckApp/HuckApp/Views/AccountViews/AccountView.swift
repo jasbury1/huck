@@ -9,30 +9,22 @@ import SwiftUI
 import Foundation
 
 struct AccountView: View {
-    @State var session = UserSession.shared
+    //@State var session = UserSession.shared
     // TODO: Eventually some more advanced observable user state needs to be shared for the app
-    @State var currentUsername: String = ""
+    @State var authenticationTimestamp: Date? = nil
     
     var body: some View {
+        let session = UserSession.shared
+        let currentUsername = session?.username ?? ""
         if !currentUsername.isEmpty {
-            VStack {
-                Text("Hello \(currentUsername)")
-                Button("Logout") {
-                    logout(username: currentUsername)
-                    currentUsername = ""
-                }
-            }
-            .task {
-                session = UserSession.shared
-                currentUsername = session?.username ?? ""
-            }
+            UserView(username: currentUsername)
         } else {
-            LoginView(authenticatedUser: $currentUsername)
+            LoginView(authenticationTimestamp: $authenticationTimestamp)
         }
     }
 }
 
 #Preview {
-    AccountView(session: nil, currentUsername: "kasabali")
+    //AccountView(authenticatedUser: "jasbury")
 }
 

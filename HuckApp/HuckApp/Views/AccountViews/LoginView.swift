@@ -22,7 +22,7 @@ struct LoginView: View {
     
     @FocusState private var focus: LoginFocus?
     
-    @Binding var authenticatedUser: String
+    @Binding var authenticationTimestamp: Date?
     
     var signinButtonDisabled: Bool {
         [name, password].contains(where: \.isEmpty)
@@ -96,7 +96,7 @@ struct LoginView: View {
                     Task {
                         do {
                             try await login(username: name, password: password)
-                            authenticatedUser = name
+                            authenticationTimestamp = Date.now
                             print("everything worked")
                         }
                         catch {
