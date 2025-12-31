@@ -13,6 +13,8 @@ struct UserView: View {
     
     @State private var title = ""
     
+    @State private var isHovered = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 20){
             Text(username)
@@ -22,24 +24,39 @@ struct UserView: View {
             Text(user?.about ?? "")
             
             Divider()
-            
             HStack{
                 Button(action: {
                 }, label : {
-                    Text("Posts")
-                        .frame(maxWidth: .infinity)    // << !!
+                    VStack{
+                        Text("Posts")
+                            .frame(maxWidth: .infinity)
+                        Rectangle()
+                            .fill(.red)
+                            .frame(maxWidth: .infinity, maxHeight: 4)
+                    }
                 })
                 Button(action: {
                 }, label : {
-                    Text("Comments")
-                        .frame(maxWidth: .infinity)    // << !!
+                    VStack{
+                        Text("Comments")
+                            .frame(maxWidth: .infinity)
+                        Rectangle()
+                            .fill(.red)
+                            .frame(maxWidth: .infinity, maxHeight: 4)
+                    }
                 })
                 Button(action: {
                 }, label : {
-                    Text("Favorites")
-                        .frame(maxWidth: .infinity)    // << !!
+                    VStack{
+                        Text("Favorites")
+                            .frame(maxWidth: .infinity)
+                        Rectangle()
+                            .fill(.red)
+                            .frame(maxWidth: .infinity, maxHeight: 4)
+                    }
                 })
             }
+            Divider()
             TabView {
                 Tab("Account", systemImage: "person.circle") {
                     //AccountView()
@@ -55,7 +72,7 @@ struct UserView: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .automatic)) // Creates swipable pages
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .indexViewStyle(.page(backgroundDisplayMode: .never))
             Spacer()
             
         }
