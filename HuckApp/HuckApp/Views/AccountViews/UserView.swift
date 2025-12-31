@@ -16,11 +16,13 @@ struct UserView: View {
     @State private var isHovered = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20){
+        VStack(alignment: .leading){
             Text(username)
                 .font(.largeTitle)
+                .fontWeight(.bold)
             Text("Karma: \(user?.karma ?? 0)")
-                .   foregroundColor(.secondary)
+                .foregroundColor(.secondary)
+            Text("")
             Text(user?.about ?? "")
             
             Divider()
@@ -30,9 +32,10 @@ struct UserView: View {
                     VStack{
                         Text("Posts")
                             .frame(maxWidth: .infinity)
+                            .fontWeight(.bold)
                         Rectangle()
-                            .fill(.red)
-                            .frame(maxWidth: .infinity, maxHeight: 4)
+                            .fill(.orange)
+                            .frame(maxWidth: .infinity, maxHeight: 2)
                     }
                 })
                 Button(action: {
@@ -40,9 +43,10 @@ struct UserView: View {
                     VStack{
                         Text("Comments")
                             .frame(maxWidth: .infinity)
+                            .fontWeight(.bold)
                         Rectangle()
-                            .fill(.red)
-                            .frame(maxWidth: .infinity, maxHeight: 4)
+                            .fill(.orange)
+                            .frame(maxWidth: .infinity, maxHeight: 2)
                     }
                 })
                 Button(action: {
@@ -50,12 +54,14 @@ struct UserView: View {
                     VStack{
                         Text("Favorites")
                             .frame(maxWidth: .infinity)
+                            .fontWeight(.bold)
                         Rectangle()
-                            .fill(.red)
-                            .frame(maxWidth: .infinity, maxHeight: 4)
+                            .fill(.orange)
+                            .frame(maxWidth: .infinity, maxHeight: 2)
                     }
                 })
             }
+            .tint(.primary)
             Divider()
             TabView {
                 Tab("Account", systemImage: "person.circle") {
