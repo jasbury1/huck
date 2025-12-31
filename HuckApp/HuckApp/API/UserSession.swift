@@ -52,3 +52,17 @@ class UserSession {
         return UserSession(username: "\(username)", expiration: sortedCookies[0].expiresDate!)
     }
 }
+
+func readCookie(forURL url: URL) -> [HTTPCookie] {
+    let cookieStorage = HTTPCookieStorage.shared
+    let cookies = cookieStorage.cookies(for: url) ?? []
+    return cookies
+}
+
+
+func storeCookies(_ cookies: [HTTPCookie], forURL url: URL) {
+    let cookieStorage = HTTPCookieStorage.shared
+    cookieStorage.setCookies(cookies,
+                             for: url,
+                             mainDocumentURL: nil)
+}

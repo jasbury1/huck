@@ -18,8 +18,11 @@ struct LoginView: View {
     @State private var name: String = ""
     @State private var password: String = ""
     @State private var hidePassword: Bool = true
+    @State private var passwordFailed: Bool = false
     
     @FocusState private var focus: LoginFocus?
+    
+    @Binding var authenticatedUser: String
     
     var signinButtonDisabled: Bool {
         [name, password].contains(where: \.isEmpty)
@@ -50,6 +53,7 @@ struct LoginView: View {
             }
             .focused($focus, equals: .username)
             .disableAutocorrection(true)
+            .autocapitalization(.none)
             
             ZStack(alignment: .trailing) {
                 Group {
@@ -64,6 +68,7 @@ struct LoginView: View {
                     }
                 }
                 .disableAutocorrection(true)
+                .autocapitalization(.none)
                 // Changes the size of the text box for password
                 .padding(10)
                 .overlay {
@@ -84,8 +89,23 @@ struct LoginView: View {
             .padding(.horizontal)
             .focused($focus, equals: .password)
             VStack {
+                if (passwordFailed) {
+                    Text("Incorrect username and/or password")
+                }
                 Button {
-                    login(username: name, password: password)
+                    Task {
+                        do {
+                            try await login(username: name, password: password)
+                            authenticatedUser = name
+                            print("everything worked")
+                        }
+                        catch {
+                            print("Catch block")
+                            password = ""
+                            passwordFailed = true
+                        }
+                    }
+                    
                 } label: {
                     Text("Sign In")
                         .font(.title2)
@@ -113,8 +133,4 @@ struct LoginView: View {
             print("Existing cookies: \(cookies)")
         }
     }
-}
-
-#Preview {
-    LoginView()
 }

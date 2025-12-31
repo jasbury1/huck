@@ -9,19 +9,6 @@ import Foundation
 
 typealias CookieHandler = (Result<HTTPCookie, Error>) -> Void
 
-//TODO: Replace this
-public enum APIError: Error, LocalizedError {
-    case loginFailed
-    case unknown
-    
-    public var errorDescription: String? {
-        switch self {
-        case .loginFailed: return "Login Failed."
-        case .unknown: return "Unknown Error."
-        }
-    }
-}
-
 extension URLSession {
     static func nonRedirectingEphemeralSession() -> URLSession {
         let configuration = URLSessionConfiguration.ephemeral
@@ -31,19 +18,20 @@ extension URLSession {
     }
 }
 
-class RedirectBlocker: NSObject, URLSessionTaskDelegate {
+class RedirectBlocker: NSObject, URLSessionTaskDelegate, URLSessionDataDelegate {
     public func urlSession(
         _ session: URLSession, task: URLSessionTask,
         willPerformHTTPRedirection response: HTTPURLResponse,
         newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void
     ) {
         // Prevent re-direction by calling handler with nil
+        print("Redirect blocked")
         completionHandler(nil)
     }
 }
 
 class HackerNewsAPI {
-    let baseUri = URL(string: "https://news.ycombinator.com/")
+    let baseUri = URL(string: "https://news.ycombinator.com/")!
     
     func loginUri(username: String, password: String) -> URL {
         var components = URLComponents()
@@ -55,60 +43,78 @@ class HackerNewsAPI {
         return url
     }
     
-    func login(username: String, password: String, cookieHandler: @escaping CookieHandler) {
+    func login(username: String, password: String, cookieHandler: @escaping CookieHandler) async throws {
         let session = URLSession.nonRedirectingEphemeralSession()
         let uri = loginUri(username: username, password: password)
-        let dataTask = session.dataTask(with: uri, completionHandler: loginCompletionHandler(cookieHandler))
-        dataTask.resume()
-    }
-    
-    func loginCompletionHandler(_ cookieHandler: @escaping CookieHandler) -> (
-        Data?, URLResponse?, Error?
-    ) -> Void {
+        let request = URLRequest(url: uri)
         
-        let loginAction = { (data: Data?, response: URLResponse?, error: Error?) in
-            if let data = data, let response = response as? HTTPURLResponse {
-                if response.statusCode >= 400 && response.statusCode < 500 {
-                    print("Failed here 1")
-                } else {
-                    let headerFields = response.allHeaderFields as! [String: String]
-                    let base = self.baseUri!
-                    let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: base)
-                    if let token = cookies.first(where: { $0.name == "user" }) {
-                        print("Cookie!!")
-                        print(token)
-                        
-                        let cookieStorage = HTTPCookieStorage.shared
-                        cookieStorage.setCookies([token],
-                                                 for: base,
-                                                 mainDocumentURL: nil)
-                        
-                    } else {
-                        cookieHandler(.failure(APIError.loginFailed))
-                    }
-                }
-            } else if let error = error {
-                print("Failed here 2")
+        // Do not use request.httpMethod = "POST". It skips the redirect delegate
+        do {
+            // TODO: Move this all to web service
+            let (_, response) = try await session.data(for: request, delegate: RedirectBlocker())
+            guard let response = response as? HTTPURLResponse else {
+                print("Bad response: \(response)")
+                throw NetworkError.badResponse
+            }
+            let headerFields = response.allHeaderFields as! [String: String]
+            let base = self.baseUri
+            let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: base)
+            if let token = cookies.first(where: { $0.name == "user" }) {
+                print("Success. Calling cookie handler")
+                cookieHandler(.success(token))
             } else {
-                preconditionFailure("Data and Error can't both be nil")
+                print("Failure. Calling cookie handler")
+                cookieHandler(.failure(APIError.loginFailed))
             }
         }
-        return loginAction
+        catch {
+            // TODO: Re-wrap in a login specific error
+            throw error
+        }
+    }
+    
+    func logout(username: String) {
+        let cookies = readCookie(forURL: baseUri)
+            .filter{ $0.name == "user" && $0.value.contains(username)}
+        print("User cookies: \(cookies)")
+        for cookie in cookies {
+            HTTPCookieStorage.shared.deleteCookie(cookie)
+        }
     }
 }
 
-func login(username: String, password: String) {
+func logout(username: String) {
     let api = HackerNewsAPI()
-    api.login(username: username, password: password) {
-        result in
-        switch result {
-        case .success(let token):
-            print("We got cookie: \(token)")
-        case .failure(let error):
-            print("We don't got cookie")
+    api.logout(username: username)
+}
+
+// TODO: Eventually these wrappers will be able to pull dummy data with a MOC API handler.
+// We should be able to set the HackerNewsAPI to be something different
+func login(username: String, password: String) async throws {
+    let api = HackerNewsAPI()
+    var loginError: Error?
+    do {
+        try await api.login(username: username, password: password) {
+            result in
+            switch result {
+            case .success(let token):
+                print("Storing cookie.")
+                let cookieStorage = HTTPCookieStorage.shared
+                cookieStorage.setCookies([token],
+                                         for: api.baseUri,
+                                         mainDocumentURL: nil)
+            case let .failure(error):
+                print("Will not store cookie. Failed to log in.")
+                loginError = error
+            }
+        }
+        if loginError != nil {
+            throw loginError!
         }
     }
-    
+    catch {
+        throw error
+    }
 }
 
 func getComments(for id: Int) async -> [Comment]{
