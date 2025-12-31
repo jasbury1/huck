@@ -20,7 +20,7 @@ class Comment {
     init(item: ItemData) {
         self.id = item.id
         self.nestingLevel = 0
-        self.text = item.text ?? ""
+        self.text = item.text?.normalizeHtmlText() ?? ""
         self.points = item.points ?? 0
         self.author = item.author
         self.parent = nil

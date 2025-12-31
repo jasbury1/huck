@@ -33,7 +33,8 @@ struct CommentCellView: View {
                         .font(.footnote)
                         .foregroundStyle(.gray)
                 }
-                Text(commentData.text)
+                Text(try! AttributedString(markdown: commentData.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+                //Text(commentData.text)
                 Divider()
             }
             Spacer()
@@ -61,7 +62,8 @@ struct StoryTextView: View {
                     .font(.title2)
                     .fontWeight(.heavy)
                 if storyData.text != nil {
-                    Text(storyData.text!)
+                    Text(try! AttributedString(markdown: storyData.text!, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+                    //Text(storyData.text!)
                 }
                 Text("By \(storyData.by)")
                     .font(.callout)

@@ -17,7 +17,8 @@ struct ContentView: View {
                 FeedView()
             }
             Tab("Account", systemImage: "person.circle") {
-                AccountView()
+                //AccountView()
+                UserView(username: "zdw")
             }
             
             Tab("Settings", systemImage: "gearshape.fill") {

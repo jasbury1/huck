@@ -33,6 +33,6 @@ struct AccountView: View {
 }
 
 #Preview {
-    AccountView(session: nil, currentUsername: "jasbury")
+    AccountView(session: nil, currentUsername: "kasabali")
 }
 

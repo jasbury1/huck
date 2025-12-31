@@ -74,7 +74,7 @@ class StoryModel : Equatable {
             else {
                 storyType = .text
                 self.url = nil
-                self.text = story.text
+                self.text = story.text?.normalizeHtmlText() ?? ""
             }
             self.title = story.title
             self.by = story.by

@@ -19,5 +19,13 @@ struct AlgoliaAPIService {
         print("Item: \(item.title ?? "No title")")
         return item
     }
+    
+    static func getUserData(_ username: String) async -> UserData? {
+        let url = "\(baseUri)/users/\(username)"
+        guard let user: UserData = await WebService().downloadData(fromURL: url) else {
+            return nil
+        }
+        return user
+    }
 }
 

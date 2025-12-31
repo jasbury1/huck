@@ -130,6 +130,14 @@ func getComments(for id: Int) async -> [Comment]{
     return commentThread
 }
 
+func getUser(for username: String) async -> User? {
+    let userdata = await AlgoliaAPIService.getUserData(username)
+    if let userdata = userdata {
+        return User(from: userdata)
+    }
+    return nil
+}
+
 private func getChildComments(nestLevel: Int, itemData: ItemData, comments: inout[Comment]) {
     let comment = Comment(item: itemData)
     comment.nestingLevel = nestLevel
