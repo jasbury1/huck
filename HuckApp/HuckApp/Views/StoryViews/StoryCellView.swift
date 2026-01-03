@@ -56,10 +56,17 @@ struct StoryCellView: View {
                 }
                 
                 Text("")
+                // Clicking the username takes you to that user's page
                 VStack(alignment: .leading){
-                    Text("\(storyData.by)")
-                        .font(.footnote)
-                        .foregroundStyle(.gray)
+                    Button(action: {
+                        path.append(ItemNavigation.userProfile(user: storyData.by))
+                    }) {
+                        Text("\(storyData.by)")
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                    }
+                    .buttonStyle(.plain)
+                    
                     HStack {
                         // Button to upvote the post
                         Button(action: {
