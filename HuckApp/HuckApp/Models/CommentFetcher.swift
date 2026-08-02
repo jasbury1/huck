@@ -18,6 +18,6 @@ class CommentFetcher {
     
     func fetchComments() async {
         print("Fetching Comments")
-        comments = await getComments(for: id)
+        comments = await HackerNewsAPI.getComments(for: id)
     }
 }

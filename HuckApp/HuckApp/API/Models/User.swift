@@ -20,7 +20,7 @@ class User {
         self.about = about
     }
     
-    init(from userdata: UserData) {
+    init(from userdata: AlgoliaUserData) {
         self.username = userdata.username
         self.about = userdata.about?.normalizeHtmlText() ?? ""
         self.karma = userdata.karma ?? 0

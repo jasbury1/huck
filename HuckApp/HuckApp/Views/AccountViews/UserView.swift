@@ -24,7 +24,7 @@ struct UserView: View {
     @State private var hasMorePages = false
     @State private var isLoadingMore = false
 
-    @State private var userComments: [UserCommentResult] = []
+    @State private var userComments: [UserComment] = []
     @State private var commentPage = 0
     @State private var hasMoreComments = false
     @State private var isLoadingMoreComments = false
@@ -57,9 +57,9 @@ struct UserView: View {
         .navigationTitle(username)
         .navigationBarTitleDisplayMode(.large)
         .task {
-            async let fetchedUser = getUser(for: username)
-            async let firstPage = AlgoliaAPIService.getUserStoryIds(username: username, page: 0)
-            async let firstCommentPage = AlgoliaAPIService.getUserComments(username: username, page: 0)
+            async let fetchedUser = HackerNewsAPI.getUser(for: username)
+            async let firstPage = HackerNewsAPI.getUserStories(username: username, page: 0)
+            async let firstCommentPage = HackerNewsAPI.getUserComments(username: username, page: 0)
             let (u, storyResult, commentResult) = await (fetchedUser, firstPage, firstCommentPage)
             user = u
             userStoryIds = storyResult.ids
@@ -181,7 +181,7 @@ struct UserView: View {
         guard !isLoadingMore && hasMorePages else { return }
         isLoadingMore = true
         let nextPage = currentPage + 1
-        let result = await AlgoliaAPIService.getUserStoryIds(username: username, page: nextPage)
+        let result = await HackerNewsAPI.getUserStories(username: username, page: nextPage)
         userStoryIds.append(contentsOf: result.ids)
         currentPage = nextPage
         hasMorePages = result.hasMore
@@ -192,7 +192,7 @@ struct UserView: View {
         guard !isLoadingMoreComments && hasMoreComments else { return }
         isLoadingMoreComments = true
         let nextPage = commentPage + 1
-        let result = await AlgoliaAPIService.getUserComments(username: username, page: nextPage)
+        let result = await HackerNewsAPI.getUserComments(username: username, page: nextPage)
         userComments.append(contentsOf: result.comments)
         commentPage = nextPage
         hasMoreComments = result.hasMore
@@ -201,7 +201,7 @@ struct UserView: View {
 }
 
 struct UserCommentRow: View {
-    let comment: UserCommentResult
+    let comment: UserComment
     @Binding var path: NavigationPath
 
     var body: some View {

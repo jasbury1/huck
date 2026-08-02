@@ -30,121 +30,125 @@ class RedirectBlocker: NSObject, URLSessionTaskDelegate, URLSessionDataDelegate 
     }
 }
 
+/// The single entry point the rest of the app uses to talk to Hacker News.
+///
+/// `HackerNewsAPI` is an abstraction layer over the underlying API services
+/// (Algolia, Firebase, and the reverse-engineered auth endpoints). Callers
+/// never interact with those services directly, and every method here returns
+/// domain types (`Comment`, `User`, `UserComment`, …) rather than
+/// service-specific response objects.
 class HackerNewsAPI {
-    let baseUri = URL(string: "https://news.ycombinator.com/")!
-    
-    func loginUri(username: String, password: String) -> URL {
-        var components = URLComponents()
-        components.path += "login"
-        components.queryItems = [
-            URLQueryItem(name: "acct", value: username), URLQueryItem(name: "pw", value: password),
-        ]
-        let url = components.url(relativeTo: baseUri)!
-        return url
+    static let baseUri = URL(string: "https://news.ycombinator.com/")!
+
+    // MARK: - Stories
+
+    static func getStoryIds(filter: StoryFilter) async -> [Int] {
+        await FirebaseAPIService.getStoryIdsAsync(filter: filter)
     }
-    
-    func login(username: String, password: String, cookieHandler: @escaping CookieHandler) async throws {
-        let session = URLSession.nonRedirectingEphemeralSession()
-        let uri = loginUri(username: username, password: password)
-        let request = URLRequest(url: uri)
-        
-        // Do not use request.httpMethod = "POST". It skips the redirect delegate
-        do {
-            // TODO: Move this all to web service
-            let (_, response) = try await session.data(for: request, delegate: RedirectBlocker())
-            guard let response = response as? HTTPURLResponse else {
-                print("Bad response: \(response)")
-                throw NetworkError.badResponse
-            }
-            let headerFields = response.allHeaderFields as! [String: String]
-            let base = self.baseUri
-            let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: base)
-            if let token = cookies.first(where: { $0.name == "user" }) {
-                print("Success. Calling cookie handler")
-                cookieHandler(.success(token))
-            } else {
-                print("Failure. Calling cookie handler")
-                cookieHandler(.failure(APIError.loginFailed))
+
+    // MARK: - Comments
+
+    static func getComments(for id: Int) async -> [Comment] {
+        var commentThread = [Comment]()
+        guard let rootItem = await AlgoliaAPIService.getItemById(id: id) else {
+            return commentThread
+        }
+        if let children = rootItem.children {
+            for child in children {
+                getChildComments(nestLevel: 0, itemData: child, comments: &commentThread)
             }
         }
-        catch {
-            // TODO: Re-wrap in a login specific error
-            throw error
+        return commentThread
+    }
+
+    private static func getChildComments(nestLevel: Int, itemData: AlgoliaItemData, comments: inout [Comment]) {
+        let comment = Comment(item: itemData)
+        comment.nestingLevel = nestLevel
+        comments.append(comment)
+        if let children = itemData.children {
+            for child in children {
+                getChildComments(nestLevel: nestLevel + 1, itemData: child, comments: &comments)
+            }
         }
     }
-    
-    func logout(username: String) {
-        let cookies = readCookie(forURL: baseUri)
-            .filter{ $0.name == "user" && $0.value.contains(username)}
-        print("User cookies: \(cookies)")
-        for cookie in cookies {
-            HTTPCookieStorage.shared.deleteCookie(cookie)
+
+    // MARK: - Users
+
+    static func getUser(for username: String) async -> User? {
+        guard let userdata = await AlgoliaAPIService.getUserData(username) else {
+            return nil
         }
+        return User(from: userdata)
     }
-}
 
-func logout(username: String) {
-    let api = HackerNewsAPI()
-    api.logout(username: username)
-}
+    static func getUserStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+        await AlgoliaAPIService.getUserStoryIds(username: username, page: page)
+    }
 
-// TODO: Eventually these wrappers will be able to pull dummy data with a MOC API handler.
-// We should be able to set the HackerNewsAPI to be something different
-func login(username: String, password: String) async throws {
-    let api = HackerNewsAPI()
-    var loginError: Error?
-    do {
-        try await api.login(username: username, password: password) {
-            result in
+    static func getUserComments(username: String, page: Int = 0) async -> (comments: [UserComment], hasMore: Bool) {
+        await AlgoliaAPIService.getUserComments(username: username, page: page)
+    }
+
+    // MARK: - Authentication
+
+    // TODO: Eventually these will be able to pull dummy data with a mock API handler.
+    static func login(username: String, password: String) async throws {
+        var loginError: Error?
+        try await requestLoginCookie(username: username, password: password) { result in
             switch result {
             case .success(let token):
                 print("Storing cookie.")
-                let cookieStorage = HTTPCookieStorage.shared
-                cookieStorage.setCookies([token],
-                                         for: api.baseUri,
-                                         mainDocumentURL: nil)
+                HTTPCookieStorage.shared.setCookies([token],
+                                                    for: baseUri,
+                                                    mainDocumentURL: nil)
             case let .failure(error):
                 print("Will not store cookie. Failed to log in.")
                 loginError = error
             }
         }
-        if loginError != nil {
-            throw loginError!
+        if let loginError {
+            throw loginError
         }
     }
-    catch {
-        throw error
-    }
-}
 
-func getComments(for id: Int) async -> [Comment]{
-    var commentThread = [Comment]()
-    guard let rootItem = await AlgoliaAPIService.getItemById(id: id) else {
-        return commentThread
-    }
-    if let children = rootItem.children {
-        for child in children {
-            getChildComments(nestLevel: 0, itemData: child, comments: &commentThread)
+    static func logout(username: String) {
+        let cookies = readCookie(forURL: baseUri)
+            .filter { $0.name == "user" && $0.value.contains(username) }
+        print("User cookies: \(cookies)")
+        for cookie in cookies {
+            HTTPCookieStorage.shared.deleteCookie(cookie)
         }
     }
-    return commentThread
-}
 
-func getUser(for username: String) async -> User? {
-    let userdata = await AlgoliaAPIService.getUserData(username)
-    if let userdata = userdata {
-        return User(from: userdata)
+    private static func loginUri(username: String, password: String) -> URL {
+        var components = URLComponents()
+        components.path += "login"
+        components.queryItems = [
+            URLQueryItem(name: "acct", value: username), URLQueryItem(name: "pw", value: password),
+        ]
+        return components.url(relativeTo: baseUri)!
     }
-    return nil
-}
 
-private func getChildComments(nestLevel: Int, itemData: ItemData, comments: inout[Comment]) {
-    let comment = Comment(item: itemData)
-    comment.nestingLevel = nestLevel
-    comments.append(comment)
-    if let children = itemData.children {
-        for child in children {
-            getChildComments(nestLevel: nestLevel + 1, itemData: child, comments: &comments)
+    private static func requestLoginCookie(username: String, password: String, cookieHandler: @escaping CookieHandler) async throws {
+        let session = URLSession.nonRedirectingEphemeralSession()
+        let uri = loginUri(username: username, password: password)
+        let request = URLRequest(url: uri)
+
+        // Do not use request.httpMethod = "POST". It skips the redirect delegate
+        // TODO: Move this all to web service
+        let (_, response) = try await session.data(for: request, delegate: RedirectBlocker())
+        guard let response = response as? HTTPURLResponse else {
+            print("Bad response: \(response)")
+            throw NetworkError.badResponse
+        }
+        let headerFields = response.allHeaderFields as! [String: String]
+        let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: baseUri)
+        if let token = cookies.first(where: { $0.name == "user" }) {
+            print("Success. Calling cookie handler")
+            cookieHandler(.success(token))
+        } else {
+            print("Failure. Calling cookie handler")
+            cookieHandler(.failure(APIError.loginFailed))
         }
     }
 }

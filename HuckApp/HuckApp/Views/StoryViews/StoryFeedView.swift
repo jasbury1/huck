@@ -80,7 +80,7 @@ class StoriesFeedData {
     var storyIds: [Int] = []
     
     func fetchStoryIds(filter: StoryFilter) async {
-        let ids = await getStoryIdsAsync(filter: filter)
+        let ids = await HackerNewsAPI.getStoryIds(filter: filter)
         self.storyIds = ids
     }
 }

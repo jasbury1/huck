@@ -95,7 +95,7 @@ struct LoginView: View {
                 Button {
                     Task {
                         do {
-                            try await login(username: name, password: password)
+                            try await HackerNewsAPI.login(username: name, password: password)
                             authenticationTimestamp = Date.now
                             print("everything worked")
                         }

@@ -17,7 +17,7 @@ class Comment {
     var parent: Comment?
     var children: [Comment]
     
-    init(item: ItemData) {
+    init(item: AlgoliaItemData) {
         self.id = item.id
         self.nestingLevel = 0
         self.text = item.text?.normalizeHtmlText() ?? ""

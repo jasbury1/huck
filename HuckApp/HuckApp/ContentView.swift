@@ -42,7 +42,7 @@ class ApplicationController: ObservableObject {
     
     init() {
         Task(priority: .medium){
-            let ids = await getStoryIdsAsync(filter: .topStories)
+            let ids = await HackerNewsAPI.getStoryIds(filter: .topStories)
             await StoryCache.setIds(from: ids)
         }
     }

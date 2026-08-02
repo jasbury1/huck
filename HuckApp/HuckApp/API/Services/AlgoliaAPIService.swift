@@ -7,6 +7,44 @@
 
 import Foundation
 
+// MARK: - Algolia Response Data
+
+/// A single item (story or comment) as returned by the Algolia `items` endpoint.
+struct AlgoliaItemData: Codable {
+    let id: Int
+    let createdAt: String
+    let createdAtI: Int
+    let author: String
+    let title: String?
+    let url: String?
+    let text: String?
+    let points: Int?
+    let parentId: Int?
+    let children: [AlgoliaItemData]?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case createdAt = "created_at"
+        case createdAtI = "created_at_i"
+        case author
+        case title
+        case url
+        case text
+        case points
+        case parentId = "parent_id"
+        case children
+    }
+}
+
+/// A user profile as returned by the Algolia `users` endpoint.
+struct AlgoliaUserData: Codable {
+    let username: String
+    let about: String?
+    let karma: Int?
+    let created: Int?
+    let submitted: [Int]?
+}
+
 private struct AlgoliaSearchResponse: Codable {
     let hits: [AlgoliaHit]
     let nbPages: Int
@@ -37,22 +75,16 @@ private struct AlgoliaCommentHit: Codable {
     }
 }
 
-struct UserCommentResult: Identifiable {
-    let id: Int
-    let text: String
-    let storyTitle: String?
-    let storyId: Int?
-    let timestamp: Date
-}
+// MARK: - Service
 
 struct AlgoliaAPIService {
     private static let baseUri = "https://hn.algolia.com/api/v1"
 
-    static func getItemById(id: Int) async -> ItemData? {
+    static func getItemById(id: Int) async -> AlgoliaItemData? {
         print("Calling Algolia API")
         //Ex: http://hn.algolia.com/api/v1/items/1
         let url = "\(baseUri)/items/\(id)"
-        guard let item: ItemData = await WebService().downloadData(fromURL: url) else {
+        guard let item: AlgoliaItemData = await WebService().downloadData(fromURL: url) else {
             print("Algolia API returned nil")
             return nil
         }
@@ -60,9 +92,9 @@ struct AlgoliaAPIService {
         return item
     }
 
-    static func getUserData(_ username: String) async -> UserData? {
+    static func getUserData(_ username: String) async -> AlgoliaUserData? {
         let url = "\(baseUri)/users/\(username)"
-        guard let user: UserData = await WebService().downloadData(fromURL: url) else {
+        guard let user: AlgoliaUserData = await WebService().downloadData(fromURL: url) else {
             return nil
         }
         return user
@@ -78,15 +110,15 @@ struct AlgoliaAPIService {
         return (ids, page + 1 < response.nbPages)
     }
 
-    static func getUserComments(username: String, page: Int = 0) async -> (comments: [UserCommentResult], hasMore: Bool) {
+    static func getUserComments(username: String, page: Int = 0) async -> (comments: [UserComment], hasMore: Bool) {
         let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? username
         let url = "\(baseUri)/search?tags=comment,author_\(encoded)&hitsPerPage=20&page=\(page)"
         guard let response: AlgoliaCommentSearchResponse = await WebService().downloadData(fromURL: url) else {
             return ([], false)
         }
-        let comments = response.hits.compactMap { hit -> UserCommentResult? in
+        let comments = response.hits.compactMap { hit -> UserComment? in
             guard let id = Int(hit.objectID), let text = hit.commentText else { return nil }
-            return UserCommentResult(
+            return UserComment(
                 id: id,
                 text: text.normalizeHtmlText(),
                 storyTitle: hit.storyTitle,
@@ -97,4 +129,3 @@ struct AlgoliaAPIService {
         return (comments, page + 1 < response.nbPages)
     }
 }
-
