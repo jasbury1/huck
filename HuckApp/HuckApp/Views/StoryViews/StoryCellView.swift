@@ -6,8 +6,6 @@
 //
 
 import SwiftUI
-import LinkPresentation
-import UniformTypeIdentifiers
 
 enum ThumbnailType {
     case loading
@@ -22,9 +20,7 @@ struct StoryCellView: View {
     @State private var storyData: StoryModel
     
     @State private var thumbnailStatus: ThumbnailType = .loading
-    @State private var metadata: LPLinkMetadata? = nil
-    @State private var isValidUrl = true
-    
+
     @Binding var path: NavigationPath
     
     init(storyId: Int, path: Binding<NavigationPath>) {
@@ -154,58 +150,21 @@ struct StoryCellView: View {
     }
     
     private func fetchThumbnail() async {
-        if storyData.storyType != .link {
+        guard storyData.storyType == .link else {
             thumbnailStatus = .text
             return
         }
-        let url = storyData.url
-        guard let url else {
-            isValidUrl = false
+        guard let url = storyData.url else {
+            thumbnailStatus = .failed
             return
         }
-        
-        do {
-            metadata = try await LPMetadataProvider().startFetchingMetadata(for: url)
-            await loadThumbnailImage(from: metadata?.imageProvider)
-        }
-        catch {
-            print("Error fetching URL metadata: \(error.localizedDescription)")
-            isValidUrl = false
-        }
-    }
-    
-    private func loadThumbnailImage(from imageProvider: NSItemProvider?) async {
-        let imageType = UTType.image.identifier
-        do {
-            guard let imageProvider, imageProvider.hasItemConformingToTypeIdentifier(imageType) else {
-                thumbnailStatus = .failed
-                return
-            }
-            
-            let item = try await imageProvider.loadItem(forTypeIdentifier: imageType)
-            if item is UIImage, let image = item as? UIImage {
-                thumbnailStatus = .image(Image(uiImage: image))
-            }
-            else if item is URL {
-                guard let url = item as? URL,
-                      let data = try? Data(contentsOf: url),
-                      let image = UIImage(data: data)
-                else {
-                    thumbnailStatus = .failed
-                    return
-                }
-                thumbnailStatus = .image(Image(uiImage: image))
-            }
-            else if item is Data {
-                guard let data = item as? Data, let image = UIImage(data: data) else {
-                    thumbnailStatus = .failed
-                    return
-                }
-                thumbnailStatus = .image(Image(uiImage: image))
-            }
-        }
-        catch {
-            print("Error loading Image: \(error.localizedDescription)")
+
+        // ThumbnailCache fetches the page's Open Graph image (favicon fallback)
+        // with a plain URLSession and caches the result, so scrolling never
+        // re-fetches. It replaces the heavyweight LPMetadataProvider path.
+        if let image = await ThumbnailCache.shared.thumbnail(for: url) {
+            thumbnailStatus = .image(Image(uiImage: image))
+        } else {
             thumbnailStatus = .failed
         }
     }
