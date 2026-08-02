@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import ImageIO
 
 /// A thread-safe, in-memory cache of story thumbnail images, keyed by page URL.
 ///
@@ -20,6 +21,13 @@ import UIKit
 /// at once can never race on the underlying storage. It mirrors `StoryCache`:
 ///  - **Request coalescing:** concurrent requests for the same URL share a
 ///    single network fetch (tracked in `inFlight`).
+///  - **Bounded concurrency:** at most `maxConcurrentFetches` network fetches
+///    run at once (via `gate`). This matters because a paged `TabView`
+///    (e.g. the profile screen) realises its whole list at once, so every cell
+///    would otherwise fire a fetch simultaneously and flood the network.
+///  - **Off-main downsampling:** fetched images are decoded and shrunk to the
+///    thumbnail's pixel size *here*, off the main thread, so SwiftUI never
+///    decodes a full-size image at draw time (which was freezing the UI).
 ///  - **Detached fetches:** the work runs in an unstructured `Task`, so a cell
 ///    scrolling off-screen (which cancels its `.task`) does not cancel or waste
 ///    the fetch — it completes and is cached for the next appearance.
@@ -28,7 +36,7 @@ import UIKit
 actor ThumbnailCache {
     static let shared = ThumbnailCache()
 
-    /// Completed thumbnail images.
+    /// Completed thumbnail images (already downsampled and decoded).
     private var entries: [URL: UIImage] = [:]
     /// Recency order for `entries`; most-recently-used URL is last.
     private var lru: [URL] = []
@@ -68,19 +76,37 @@ actor ThumbnailCache {
     // MARK: - Fetching
 
     /// A shared session with short timeouts, tuned for fetching small assets.
+    /// Timeouts are intentionally low so dead or slow hosts fail fast rather
+    /// than leaving a cell spinning for tens of seconds.
     private static let session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 10
-        config.timeoutIntervalForResource = 20
+        config.timeoutIntervalForRequest = 8
+        config.timeoutIntervalForResource = 12
         config.requestCachePolicy = .returnCacheDataElseLoad
+        config.waitsForConnectivity = false
         return URLSession(configuration: config)
     }()
+
+    /// Caps how many fetches touch the network at once, so realising a whole
+    /// list of cells simultaneously doesn't launch dozens of parallel requests.
+    private static let gate = AsyncSemaphore(value: 6)
+
+    /// Target thumbnail size in pixels (70pt cell at ~2x). Images are downsampled
+    /// to this so we never hold or decode a full-resolution asset.
+    private static let thumbnailMaxPixelSize = 140
 
     /// A desktop-ish User-Agent; some sites omit Open Graph tags otherwise.
     private static let userAgent =
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 
     private static func fetchThumbnail(for pageURL: URL) async -> UIImage? {
+        await gate.wait()
+        let image = await loadThumbnail(for: pageURL)
+        await gate.signal()
+        return image
+    }
+
+    private static func loadThumbnail(for pageURL: URL) async -> UIImage? {
         // 1. Prefer the page's Open Graph / Twitter card image.
         if let imageURL = await openGraphImageURL(for: pageURL),
            let image = await downloadImage(from: imageURL) {
@@ -142,11 +168,32 @@ actor ThumbnailCache {
 
         guard let (data, response) = try? await session.data(for: request),
               let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode),
-              let image = UIImage(data: data) else {
+              (200..<300).contains(http.statusCode) else {
             return nil
         }
-        return image
+        // Downsample + decode here, off the main thread.
+        return downsampledImage(from: data)
+    }
+
+    /// Decodes `data` into a thumbnail-sized, fully-decoded `UIImage` using
+    /// ImageIO. Downsampling keeps memory tiny and, crucially,
+    /// `kCGImageSourceShouldCacheImmediately` forces the decode to happen now
+    /// (on this background executor) rather than lazily on the main thread when
+    /// SwiftUI draws the image.
+    private static func downsampledImage(from data: Data) -> UIImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
+            return nil
+        }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: thumbnailMaxPixelSize
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return nil
+        }
+        return UIImage(cgImage: cgImage)
     }
 
     // MARK: - HTML parsing
@@ -214,6 +261,33 @@ actor ThumbnailCache {
         while entries.count > capacity, let oldest = lru.first {
             lru.removeFirst()
             entries[oldest] = nil
+        }
+    }
+}
+
+/// A minimal FIFO async semaphore used to bound concurrent thumbnail fetches.
+/// Callers `wait()` before starting work and `signal()` when done.
+private actor AsyncSemaphore {
+    private var available: Int
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    init(value: Int) {
+        available = value
+    }
+
+    func wait() async {
+        if available > 0 {
+            available -= 1
+            return
+        }
+        await withCheckedContinuation { waiters.append($0) }
+    }
+
+    func signal() {
+        if waiters.isEmpty {
+            available += 1
+        } else {
+            waiters.removeFirst().resume()
         }
     }
 }
