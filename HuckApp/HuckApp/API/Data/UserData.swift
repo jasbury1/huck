@@ -9,4 +9,6 @@ struct UserData: Codable {
     let username: String
     let about: String?
     let karma: Int?
+    let created: Int?
+    let submitted: [Int]?
 }

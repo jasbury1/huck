@@ -16,14 +16,19 @@ import SwiftUI
 struct UserView: View {
     @State var username: String
     @State var user: User?
-    
+    @Binding var path: NavigationPath
+
     @State private var currentTab: UserTab = .posts
-    
+    @State private var userStoryIds: [Int] = []
+    @State private var currentPage = 0
+    @State private var hasMorePages = false
+    @State private var isLoadingMore = false
+
     private let topId = "tab_bar_top"
-    
+
     @Namespace private var namespace
     private let systemBackgroundColor = Color(UIColor.systemBackground)
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // No header, but provides a safe area to prevent seeing content scroll.
@@ -52,7 +57,12 @@ struct UserView: View {
             }
         }
         .task {
-            await user = getUser(for: username)
+            async let fetchedUser = getUser(for: username)
+            async let firstPage = AlgoliaAPIService.getUserStoryIds(username: username, page: 0)
+            let (u, result) = await (fetchedUser, firstPage)
+            user = u
+            userStoryIds = result.ids
+            hasMorePages = result.hasMore
         }
     }
     
@@ -129,15 +139,37 @@ struct UserView: View {
     }
     
     // MARK: - Tab Content
-    
+
     var homeTab: some View {
-        VStack {
-            ForEach(0..<50) { i in
-                Text("Home \(i)")
+        LazyVStack(spacing: 0) {
+            ForEach(userStoryIds, id: \.self) { storyId in
+                StoryCellView(storyId: storyId, path: $path)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                Divider()
+            }
+            if hasMorePages {
+                ProgressView()
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .onAppear {
+                        Task { await loadMorePosts() }
+                    }
             }
         }
     }
-    
+
+    private func loadMorePosts() async {
+        guard !isLoadingMore && hasMorePages else { return }
+        isLoadingMore = true
+        let nextPage = currentPage + 1
+        let result = await AlgoliaAPIService.getUserStoryIds(username: username, page: nextPage)
+        userStoryIds.append(contentsOf: result.ids)
+        currentPage = nextPage
+        hasMorePages = result.hasMore
+        isLoadingMore = false
+    }
+
     var infoTab: some View {
         VStack {
             Text("You've got some info!")
@@ -198,5 +230,5 @@ struct UserNavigationTabView: View {
 }
 
 #Preview {
-    UserView(username: "zdw")
+    UserView(username: "zdw", path: .constant(NavigationPath()))
 }

@@ -15,11 +15,13 @@ enum ItemNavigation: Hashable {
 
 struct StoryDetailsView: View {
     let navigation: ItemNavigation
-    
-    init(from navigation: ItemNavigation) {
+    @Binding var path: NavigationPath
+
+    init(from navigation: ItemNavigation, path: Binding<NavigationPath>) {
         self.navigation = navigation
+        self._path = path
     }
-    
+
     var body: some View {
         switch navigation {
         case let .linkStory(_, url):
@@ -27,7 +29,7 @@ struct StoryDetailsView: View {
         case let .textStory(id):
             StoryTextView(storyId: id)
         case let .userProfile(user):
-            UserView(username: user)
+            UserView(username: user, path: $path)
         }
     }
 }

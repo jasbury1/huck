@@ -24,6 +24,7 @@ class WebService {
                 throw NetworkError.badResponse
             }
             guard response.statusCode >= 200 && response.statusCode < 300 else {
+                print("Statys: \(response.statusCode)")
                 throw NetworkError.badStatus
             }
             guard let decodedResponse = try? JSONDecoder().decode(T.self, from: data) else {

@@ -61,7 +61,7 @@ struct FeedView: View {
                 StoryFeedView(storyFilter: input, path: $path)
             }
             .navigationDestination(for: ItemNavigation.self) { navigation in
-                StoryDetailsView(from: navigation)
+                StoryDetailsView(from: navigation, path: $path)
             }
         }
     }
