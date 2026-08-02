@@ -5,12 +5,6 @@
 //  Created by James Asbury on 12/30/25.
 //
 
-/*
- Credit: https://stackoverflow.com/a/79353832
- and https://bdewey.com/til/2023/03/01/swiftui-and-tabview-height/
- for height preserving tab view help
- */
-
 import SwiftUI
 
 struct UserView: View {
@@ -29,33 +23,44 @@ struct UserView: View {
     @State private var hasMoreComments = false
     @State private var isLoadingMoreComments = false
 
-    private let topId = "tab_bar_top"
+    // Collapsing-header state. Each tab reports its own vertical scroll offset,
+    // so switching tabs reflects that tab's scroll position. The measured heights
+    // define how far the header travels and how tall each scroll's top spacer is.
+    @State private var scrollOffsets: [UserTab: CGFloat] = [:]
+    @State private var collapsibleHeight: CGFloat = 0
+    @State private var tabBarHeight: CGFloat = 0
 
     @Namespace private var namespace
     private let systemBackgroundColor = Color(UIColor.systemBackground)
 
+    // MARK: - Collapse math
+
+    /// Vertical scroll offset of the currently-visible tab (0 at the top).
+    private var currentOffset: CGFloat { scrollOffsets[currentTab] ?? 0 }
+    /// How far the header is translated up, capped so the tab bar pins at the top.
+    private var collapseAmount: CGFloat { min(max(currentOffset, 0), collapsibleHeight) }
+    /// 0 when the header is fully expanded, 1 when fully collapsed.
+    private var collapseProgress: CGFloat {
+        collapsibleHeight > 0 ? collapseAmount / collapsibleHeight : 0
+    }
+    /// Total header height, used as the top spacer inside each tab's scroll.
+    private var headerHeight: CGFloat { collapsibleHeight + tabBarHeight }
+
     var body: some View {
-        ScrollViewReader { scrollProxy in
-            ScrollView {
-                userSummary
-                Divider()
-                Spacer().frame(height: 0).id(topId)
-                LazyVStack(spacing: 1, pinnedViews: [.sectionHeaders]) {
-                    Section {
-                        tabViewContent
-                            .frame(minHeight: 1, maxHeight: .infinity)
-                            .padding(.top)
-                    } header: {
-                        tabBarButtons
-                    }
-                }
-            }
-            .onChange(of: currentTab) {
-                scrollProxy.scrollTo(topId)
-            }
+        ZStack(alignment: .top) {
+            tabPager
+            collapsingHeader
         }
         .navigationTitle(username)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                // The small nav-bar username fades in as the large one collapses.
+                Text(username)
+                    .font(.headline)
+                    .opacity(collapseProgress)
+            }
+        }
         .task {
             async let fetchedUser = HackerNewsAPI.getUser(for: username)
             async let firstPage = HackerNewsAPI.getUserStories(username: username, page: 0)
@@ -69,6 +74,35 @@ struct UserView: View {
         }
     }
 
+    // MARK: - Header
+
+    /// The header overlaid on top of the paged tabs. Its collapsible portion
+    /// (large username + karma/about) translates up and fades as the active tab
+    /// scrolls, until only the tab bar remains pinned at the top.
+    var collapsingHeader: some View {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(username)
+                    .font(.largeTitle)
+                    .bold()
+                userSummary
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .opacity(1 - collapseProgress)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { collapsibleHeight = $0 }
+
+            VStack(spacing: 0) {
+                tabBarButtons
+                Divider()
+            }
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tabBarHeight = $0 }
+        }
+        .background(systemBackgroundColor)
+        .offset(y: -collapseAmount)
+    }
+
     var userSummary: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Karma: \(user?.karma ?? 0)")
@@ -78,31 +112,40 @@ struct UserView: View {
                     .padding(.top, 4)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    var tabViewContent: some View {
-        HeightPreservingTabView(selection: $currentTab) {
-            ForEach(UserTab.allCases, id: \.self) { tab in
-                VStack(spacing: 0) {
-                    switch tab {
-                    case .posts:
-                        homeTab
-                    case .comments:
-                        commentsTab
-                    case .favorites:
-                        favoritesTab
-                    }
-                    Spacer().frame(minHeight: 0)
-                }
-                .tag(tab)
+    // MARK: - Tabs
+
+    /// Horizontally-paged tab content. Each page is its own vertical lazy scroll,
+    /// so only the rows currently on screen are realised — and only those cells
+    /// fetch their story data and thumbnail. Both swiping between pages and
+    /// tapping a tab drive `currentTab`.
+    var tabPager: some View {
+        TabView(selection: $currentTab) {
+            tabScroll(for: .posts) { postsList }
+            tabScroll(for: .comments) { commentsList }
+            tabScroll(for: .favorites) { favoritesContent }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+    }
+
+    /// Wraps a tab's content in a scroll view that clears space for the header
+    /// and reports its offset back so the header collapses in step.
+    @ViewBuilder
+    func tabScroll<Content: View>(for tab: UserTab, @ViewBuilder content: () -> Content) -> some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                Color.clear.frame(height: headerHeight)
+                content()
             }
         }
-        .frame(minHeight: 1) // `minHeight` must start as non-zero or `HeightPreservingTabView` won't measure the interior content height
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .animation(.default, value: currentTab)
-        .transition(.slide)
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top
+        } action: { _, offset in
+            scrollOffsets[tab] = offset
+        }
+        .tag(tab)
     }
 
     var tabBarButtons: some View {
@@ -114,7 +157,7 @@ struct UserView: View {
                     .foregroundStyle(selected ? Color.primary : Color.secondary)
                     .padding(.vertical, 8)
                     .onTapGesture {
-                        currentTab = tab
+                        withAnimation(.easeInOut) { currentTab = tab }
                     }
                     .background {
                         if selected {
@@ -130,11 +173,13 @@ struct UserView: View {
         .padding(.horizontal)
         .padding(.top, 4)
         .background(systemBackgroundColor)
+        // Animate the underline for swipe-driven selection changes too.
+        .animation(.easeInOut, value: currentTab)
     }
 
     // MARK: - Tab Content
 
-    var homeTab: some View {
+    var postsList: some View {
         LazyVStack(spacing: 0) {
             ForEach(userStoryIds, id: \.self) { storyId in
                 StoryCellView(storyId: storyId, path: $path)
@@ -153,7 +198,7 @@ struct UserView: View {
         }
     }
 
-    var commentsTab: some View {
+    var commentsList: some View {
         LazyVStack(spacing: 0) {
             ForEach(userComments) { comment in
                 UserCommentRow(comment: comment, path: $path)
@@ -170,7 +215,7 @@ struct UserView: View {
         }
     }
 
-    var favoritesTab: some View {
+    var favoritesContent: some View {
         Text("Favorites are not publicly available")
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity)
