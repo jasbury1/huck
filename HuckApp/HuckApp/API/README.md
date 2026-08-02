@@ -7,6 +7,7 @@ This directory contains everything Huck uses to talk to Hacker News.
 ```
 HackerNewsAPI  ← the facade: the ONLY type the rest of the app calls
    │
+   ├── Cache/StoryCache              (actor; caches stories behind the facade)
    ├── Services/AlgoliaAPIService    (historic data, whole comment threads, user search)
    └── Services/FirebaseAPIService   (realtime story lists and items)
              │
@@ -52,8 +53,12 @@ The types the app actually works with, decoupled from any single API:
 
 ## Notes
 
-- Story fetching is cached: `StoryModel.fetchData()` reads through
-  `StoryCache` (defined outside this directory), which fetches missing stories
-  via `FirebaseAPIService`.
+- Story fetching is cached behind the facade. `StoryModel.fetchData()` calls
+  `HackerNewsAPI.getStory(id:)`, and startup warming goes through
+  `HackerNewsAPI.prefetchStories(ids:)`. Both are backed by `Cache/StoryCache`,
+  an `actor` that fetches missing stories via `FirebaseAPIService`. The cache
+  coalesces concurrent requests for the same id into one fetch, prefetches in
+  parallel with bounded concurrency, and bounds its size with LRU eviction.
+  Nothing outside the API layer touches `StoryCache` directly.
 - Session state (the logged-in user derived from cookies) lives in
   `UserSession`, outside this directory.

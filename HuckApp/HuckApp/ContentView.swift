@@ -43,7 +43,7 @@ class ApplicationController: ObservableObject {
     init() {
         Task(priority: .medium){
             let ids = await HackerNewsAPI.getStoryIds(filter: .topStories)
-            await StoryCache.setIds(from: ids)
+            await HackerNewsAPI.prefetchStories(ids: ids)
         }
     }
 }

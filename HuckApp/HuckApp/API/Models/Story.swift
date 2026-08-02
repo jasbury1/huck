@@ -66,7 +66,7 @@ class StoryModel : Equatable {
     }
     
     func fetchData() async {
-        if let story = await StoryCache.getStory(id: id) {
+        if let story = await HackerNewsAPI.getStory(id: id) {
             if let url = story.url {
                 storyType = .link
                 self.url = URL(string: url)

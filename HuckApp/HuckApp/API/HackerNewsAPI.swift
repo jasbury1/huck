@@ -46,6 +46,21 @@ class HackerNewsAPI {
         await FirebaseAPIService.getStoryIdsAsync(filter: filter)
     }
 
+    /// Returns a single story, served from the cache when available.
+    ///
+    /// Note: this returns `FirebaseStoryData` (a service type) rather than a
+    /// domain type. `StoryModel` is the story's mapping layer and is the only
+    /// intended caller; fully hiding this behind a domain type is deferred to
+    /// the API-injection work.
+    static func getStory(id: Int) async -> FirebaseStoryData? {
+        await StoryCache.shared.story(id: id)
+    }
+
+    /// Warms the cache for the given story ids ahead of display.
+    static func prefetchStories(ids: [Int]) async {
+        await StoryCache.shared.prefetch(ids: ids)
+    }
+
     // MARK: - Comments
 
     static func getComments(for id: Int) async -> [Comment] {
