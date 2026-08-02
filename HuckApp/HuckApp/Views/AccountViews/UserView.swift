@@ -24,70 +24,64 @@ struct UserView: View {
     @State private var hasMorePages = false
     @State private var isLoadingMore = false
 
+    @State private var userComments: [UserCommentResult] = []
+    @State private var commentPage = 0
+    @State private var hasMoreComments = false
+    @State private var isLoadingMoreComments = false
+
     private let topId = "tab_bar_top"
 
     @Namespace private var namespace
     private let systemBackgroundColor = Color(UIColor.systemBackground)
 
     var body: some View {
-        VStack(spacing: 0) {
-            // No header, but provides a safe area to prevent seeing content scroll.
-            // TODO: Eventually change this to show the username, but only when the summary disappears
-            Text("")
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-            ScrollViewReader { scrollProxy in
-                ScrollView {
-                    userSummary
-                    Divider()
-                    Spacer().frame(height: 0).id(topId)
-                    LazyVStack(spacing: 1, pinnedViews: [.sectionHeaders]) {
-                        Section {
-                            tabViewContent
-                                .frame(minHeight: 1, maxHeight: .infinity)
-                                .padding(.top)
-                        } header: {
-                            tabBarButtons
-                        }
+        ScrollViewReader { scrollProxy in
+            ScrollView {
+                userSummary
+                Divider()
+                Spacer().frame(height: 0).id(topId)
+                LazyVStack(spacing: 1, pinnedViews: [.sectionHeaders]) {
+                    Section {
+                        tabViewContent
+                            .frame(minHeight: 1, maxHeight: .infinity)
+                            .padding(.top)
+                    } header: {
+                        tabBarButtons
                     }
                 }
-                .onChange(of: currentTab) {
-                    scrollProxy.scrollTo(topId)
-                }
+            }
+            .onChange(of: currentTab) {
+                scrollProxy.scrollTo(topId)
             }
         }
+        .navigationTitle(username)
+        .navigationBarTitleDisplayMode(.large)
         .task {
             async let fetchedUser = getUser(for: username)
             async let firstPage = AlgoliaAPIService.getUserStoryIds(username: username, page: 0)
-            let (u, result) = await (fetchedUser, firstPage)
+            async let firstCommentPage = AlgoliaAPIService.getUserComments(username: username, page: 0)
+            let (u, storyResult, commentResult) = await (fetchedUser, firstPage, firstCommentPage)
             user = u
-            userStoryIds = result.ids
-            hasMorePages = result.hasMore
+            userStoryIds = storyResult.ids
+            hasMorePages = storyResult.hasMore
+            userComments = commentResult.comments
+            hasMoreComments = commentResult.hasMore
         }
     }
-    
+
     var userSummary: some View {
-        VStack(alignment: .leading){
-            Text(username)
-                .font(.largeTitle)
-                .fontWeight(.bold)
+        VStack(alignment: .leading, spacing: 4) {
             Text("Karma: \(user?.karma ?? 0)")
-                .foregroundColor(.secondary)
-            Text("")
-            Text(user?.about ?? "")
+                .foregroundStyle(.secondary)
+            if let about = user?.about, !about.isEmpty {
+                Text(about)
+                    .padding(.top, 4)
+            }
         }
-        .frame(
-              minWidth: 0,
-              maxWidth: .infinity,
-              minHeight: 0,
-              maxHeight: .infinity,
-              alignment: .topLeading
-            )
-        //.frame(minWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .padding(14)
-        
     }
-    
+
     var tabViewContent: some View {
         HeightPreservingTabView(selection: $currentTab) {
             ForEach(UserTab.allCases, id: \.self) { tab in
@@ -96,9 +90,9 @@ struct UserView: View {
                     case .posts:
                         homeTab
                     case .comments:
-                        infoTab
+                        commentsTab
                     case .favorites:
-                        Color.clear // TBD
+                        favoritesTab
                     }
                     Spacer().frame(minHeight: 0)
                 }
@@ -137,7 +131,7 @@ struct UserView: View {
         .padding(.top, 4)
         .background(systemBackgroundColor)
     }
-    
+
     // MARK: - Tab Content
 
     var homeTab: some View {
@@ -159,6 +153,30 @@ struct UserView: View {
         }
     }
 
+    var commentsTab: some View {
+        LazyVStack(spacing: 0) {
+            ForEach(userComments) { comment in
+                UserCommentRow(comment: comment, path: $path)
+                Divider()
+            }
+            if hasMoreComments {
+                ProgressView()
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .onAppear {
+                        Task { await loadMoreComments() }
+                    }
+            }
+        }
+    }
+
+    var favoritesTab: some View {
+        Text("Favorites are not publicly available")
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 40)
+    }
+
     private func loadMorePosts() async {
         guard !isLoadingMore && hasMorePages else { return }
         isLoadingMore = true
@@ -170,65 +188,53 @@ struct UserView: View {
         isLoadingMore = false
     }
 
-    var infoTab: some View {
-        VStack {
-            Text("You've got some info!")
-            ForEach(0..<10) { i in
-                Text("Info \(i)")
-            }
-        }
+    private func loadMoreComments() async {
+        guard !isLoadingMoreComments && hasMoreComments else { return }
+        isLoadingMoreComments = true
+        let nextPage = commentPage + 1
+        let result = await AlgoliaAPIService.getUserComments(username: username, page: nextPage)
+        userComments.append(contentsOf: result.comments)
+        commentPage = nextPage
+        hasMoreComments = result.hasMore
+        isLoadingMoreComments = false
     }
 }
 
+struct UserCommentRow: View {
+    let comment: UserCommentResult
+    @Binding var path: NavigationPath
 
-
-struct UserNavigationTabView: View {
     var body: some View {
-        VStack {
-            Divider()
-            HStack{
-                Button(action: {
-                }, label : {
-                    VStack{
-                        Text("Posts")
-                            .frame(maxWidth: .infinity)
-                            .fontWeight(.bold)
-                        Rectangle()
-                            .fill(.orange)
-                            .frame(maxWidth: .infinity, maxHeight: 2)
+        VStack(alignment: .leading, spacing: 4) {
+            if let title = comment.storyTitle, let storyId = comment.storyId {
+                Button {
+                    path.append(ItemNavigation.textStory(id: storyId))
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.turn.up.left")
+                            .font(.caption2)
+                        Text(title)
+                            .font(.footnote)
+                            .lineLimit(1)
                     }
-                })
-                Button(action: {
-                }, label : {
-                    VStack{
-                        Text("Comments")
-                            .frame(maxWidth: .infinity)
-                            .fontWeight(.bold)
-                        Rectangle()
-                            .fill(.orange)
-                            .frame(maxWidth: .infinity, maxHeight: 2)
-                    }
-                })
-                Button(action: {
-                }, label : {
-                    VStack{
-                        Text("Favorites")
-                            .frame(maxWidth: .infinity)
-                            .fontWeight(.bold)
-                        Rectangle()
-                            .fill(.orange)
-                            .frame(maxWidth: .infinity, maxHeight: 2)
-                    }
-                })
+                    .foregroundStyle(.orange)
+                }
+                .buttonStyle(.plain)
             }
-            Divider()
+            Text(comment.text)
+                .font(.body)
+                .lineLimit(4)
+            Text(comment.timestamp.ageString())
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
-        .tint(.primary)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 }
 
 #Preview {
-    UserView(username: "zdw", path: .constant(NavigationPath()))
+    NavigationStack {
+        UserView(username: "zdw", path: .constant(NavigationPath()))
+    }
 }
