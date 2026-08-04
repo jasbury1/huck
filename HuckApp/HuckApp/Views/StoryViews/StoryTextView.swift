@@ -18,14 +18,18 @@ struct CommentCellView: View {
     }
     
     var body: some View {
-        HStack{
+        HStack(spacing: 8) {
+            // Full-height indentation rails. Because the row has no vertical
+            // insets (see `.listRowInsets` in StoryTextView), a rail reaches the
+            // top and bottom edges of its row, so rails on adjacent same-level
+            // comments meet to form one continuous line.
             ForEach(0..<indentationLevel, id:\.self) { _ in
                 Rectangle()
                     .fill(Color.gray)
                     .frame(width: 1)
             }
-            
-            VStack(alignment: .leading, spacing: 8) {
+
+            VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(commentData.author).font(.headline)
                     Spacer()
@@ -34,9 +38,12 @@ struct CommentCellView: View {
                         .foregroundStyle(.gray)
                 }
                 Text(try! AttributedString(markdown: commentData.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+                    .font(.callout)
                 //Text(commentData.text)
                 Divider()
             }
+            // Padding lives inside the text column so the rails stay full-height.
+            .padding(.top, 8)
             Spacer()
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -57,43 +64,54 @@ struct StoryTextView: View {
     
     var body: some View {
         List {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(storyData.title)
-                    .font(.title2)
-                    .fontWeight(.heavy)
-                if storyData.text != nil {
-                    Text(try! AttributedString(markdown: storyData.text!, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
-                    //Text(storyData.text!)
+            Section {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text(storyData.title)
+                        .font(.title2)
+                        .fontWeight(.heavy)
+                    if storyData.text != nil {
+                        Text(try! AttributedString(markdown: storyData.text!, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+                        //Text(storyData.text!)
+                    }
+                    Text("By \(storyData.by)")
+                        .font(.callout)
+                        .foregroundStyle(.gray)
+                    HStack {
+                        Image(systemName: "arrow.up")
+                            .foregroundColor(.gray)
+                        Text("\(storyData.score)")
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                        Image(systemName: "bubble")
+                            .foregroundColor(.gray)
+                        Text("\(storyData.commentCount)")
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                        Image(systemName: "clock")
+                            .foregroundColor(.gray)
+                        Text(storyData.timestamp.ageString())
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                        Image(systemName: "paperplane")
+                            .foregroundColor(.gray)
+                        Image(systemName: "bookmark")
+                            .foregroundColor(.gray)
+                    }
                 }
-                Text("By \(storyData.by)")
-                    .font(.callout)
-                    .foregroundStyle(.gray)
-                HStack {
-                    Image(systemName: "arrow.up")
-                        .foregroundColor(.gray)
-                    Text("\(storyData.score)")
-                        .font(.footnote)
-                        .foregroundStyle(.gray)
-                    Image(systemName: "bubble")
-                        .foregroundColor(.gray)
-                    Text("\(storyData.commentCount)")
-                        .font(.footnote)
-                        .foregroundStyle(.gray)
-                    Image(systemName: "clock")
-                        .foregroundColor(.gray)
-                    Text(storyData.timestamp.ageString())
-                        .font(.footnote)
-                        .foregroundStyle(.gray)
-                    Image(systemName: "paperplane")
-                        .foregroundColor(.gray)
-                    Image(systemName: "bookmark")
-                        .foregroundColor(.gray)
-                }
-                Divider()
+            }
+
+            Section {
                 ForEach(commentFetcher.comments, id: \.id) { comment in
                     CommentCellView(commentData: comment)
+                        // The cell draws its own Divider; hide the List's
+                        // built-in row separator so lines don't double up.
+                        .listRowSeparator(.hidden)
+                        // No vertical inset, so rows meet edge-to-edge and the
+                        // indentation rails connect between comments.
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                 }
-                Spacer()
+            } header: {
+                commentsHeader
             }
         }
         .listStyle(.inset)
@@ -101,6 +119,31 @@ struct StoryTextView: View {
             await storyData.fetchData()
             await commentFetcher.fetchComments()
         }
+    }
+
+    /// Pinned section header for the comments. Plain/inset list styles keep
+    /// section headers stuck to the top while their section scrolls.
+    private var commentsHeader: some View {
+        HStack {
+            Text("Comments")
+                .font(.headline)
+                .foregroundStyle(.primary)
+            Spacer()
+            Menu {
+                Button("Hot") {}
+                Button("Newest") {}
+            } label: {
+                Image(systemName: "arrow.up.arrow.down")
+            }
+            Button {
+                // TODO: More options
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .padding(.leading, 12)
+        }
+        // Section headers are uppercased by default; keep the title as written.
+        .textCase(nil)
     }
 }
 
