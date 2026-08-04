@@ -9,11 +9,13 @@ import SwiftUI
 
 struct CommentCellView: View {
     @State private var commentData: Comment
-    
+    @Binding var path: NavigationPath
+
     private var indentationLevel = 0
-    
-    init(commentData: Comment) {
+
+    init(commentData: Comment, path: Binding<NavigationPath>) {
         self.commentData = commentData
+        self._path = path
         indentationLevel = commentData.nestingLevel
     }
     
@@ -31,7 +33,17 @@ struct CommentCellView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text(commentData.author).font(.headline)
+                    // A Button (not a NavigationLink) keeps only the username
+                    // tappable; a NavigationLink in a List row makes the whole
+                    // row the tap target.
+                    Button {
+                        path.append(ItemNavigation.userProfile(user: commentData.author))
+                    } label: {
+                        Text(commentData.author)
+                            .font(.callout)
+                            .fontWeight(.semibold)
+                    }
+                    .buttonStyle(.plain)
                     Spacer()
                     Text(commentData.timestamp.ageString())
                         .font(.footnote)
@@ -55,13 +67,25 @@ struct StoryTextView: View {
     
     @State private var storyData: StoryModel
     @State private var commentFetcher: CommentFetcher
-    
-    init(storyId: Int) {
+    @Binding var path: NavigationPath
+
+    /// Height of the large in-content title and how far the list has scrolled,
+    /// used to fade the small nav-bar title in as the large one scrolls off.
+    @State private var titleHeight: CGFloat = 0
+    @State private var scrollOffset: CGFloat = 0
+
+    /// 0 while the large title is fully visible, 1 once it has scrolled off.
+    private var titleCollapseProgress: CGFloat {
+        titleHeight > 0 ? min(max(scrollOffset / titleHeight, 0), 1) : 0
+    }
+
+    init(storyId: Int, path: Binding<NavigationPath>) {
         self.storyId = storyId
         self.storyData = StoryModel(id: storyId)
         self.commentFetcher = CommentFetcher(id: storyId)
+        self._path = path
     }
-    
+
     var body: some View {
         List {
             Section {
@@ -69,6 +93,7 @@ struct StoryTextView: View {
                     Text(storyData.title)
                         .font(.title2)
                         .fontWeight(.heavy)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { titleHeight = $0 }
                     if storyData.text != nil {
                         Text(try! AttributedString(markdown: storyData.text!, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
                         //Text(storyData.text!)
@@ -102,7 +127,7 @@ struct StoryTextView: View {
 
             Section {
                 ForEach(commentFetcher.comments, id: \.id) { comment in
-                    CommentCellView(commentData: comment)
+                    CommentCellView(commentData: comment, path: $path)
                         // The cell draws its own Divider; hide the List's
                         // built-in row separator so lines don't double up.
                         .listRowSeparator(.hidden)
@@ -116,6 +141,21 @@ struct StoryTextView: View {
         }
         .listStyle(.inset)
         .navigationBarTitleDisplayMode(.inline)
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top
+        } action: { _, offset in
+            scrollOffset = offset
+        }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                // The small nav-bar title fades in as the large one scrolls off,
+                // matching the username on the user page.
+                Text(storyData.title)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .opacity(titleCollapseProgress)
+            }
+        }
         .task {
             await storyData.fetchData()
             await commentFetcher.fetchComments()
@@ -160,6 +200,6 @@ class CommentSectionData {
 }
 
 #Preview {
-    StoryTextView(storyId: 46391572)
+    StoryTextView(storyId: 46391572, path: .constant(NavigationPath()))
 }
 
