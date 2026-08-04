@@ -115,14 +115,16 @@ struct StoryTextView: View {
             }
         }
         .listStyle(.inset)
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             await storyData.fetchData()
             await commentFetcher.fetchComments()
         }
     }
 
-    /// Pinned section header for the comments. Plain/inset list styles keep
-    /// section headers stuck to the top while their section scrolls.
+    /// Section header shown between the post details and the comments. The inset
+    /// list style pins it to the top once scrolled past. Holds the sort and
+    /// more-options buttons inline with the title.
     private var commentsHeader: some View {
         HStack {
             Text("Comments")
