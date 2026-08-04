@@ -26,22 +26,13 @@ struct StoryCellView: View {
         HStack {
             VStack(alignment: .leading) {
                 switch storyData.storyType {
-                case .link:
-                    Button(action: {
-                        path.append(ItemNavigation.linkStory(id: storyId, url: storyData.url!))
-                    }) {
-                        Text(storyData.title)
-                    }
-                    .buttonStyle(.plain)
-                case .text:
-                    Button(action: {
-                        path.append(ItemNavigation.textStory(id: storyId))
-                    }) {
-                        Text(storyData.title)
-                    }
-                    .buttonStyle(.plain)
                 case .unknown:
                     Text(storyData.title)
+                case .link, .text:
+                    Button(action: openStory) {
+                        Text(storyData.title)
+                    }
+                    .buttonStyle(.plain)
                 }
                 
                 Text("")
@@ -103,40 +94,65 @@ struct StoryCellView: View {
                 }
             }
             Spacer()
-            // The image thumbnail
-            VStack() {
-                ZStack() {
-                    switch storyData.thumbnailStatus {
-                        //case .loading:
-                        //ProgressView()
-                    case .image(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .text:
-                        Color(.systemGray6)
-                        Image(systemName: "text.alignleft")
-                            .resizable()
-                            .scaledToFit()
-                            .padding()
-                            .foregroundStyle(Color(.systemFill))
-                    case .failed, .loading:
-                        Color(.quaternaryLabel)
-                        Image(systemName: "safari")
-                            .resizable()
-                            .scaledToFit()
-                            .padding()
-                            .foregroundStyle(Color(.systemFill))
-                    }
-                    
+            // The thumbnail navigates to the story just like the title does.
+            switch storyData.storyType {
+            case .unknown:
+                thumbnail
+            case .link, .text:
+                Button(action: openStory) {
+                    thumbnail
                 }
+                .buttonStyle(.plain)
             }
-            .clipped()
-            .frame(width: 70, height: 70)
-            .cornerRadius(15)
         }
         .task {
             await storyData.fetchData()
+        }
+    }
+
+    /// The image thumbnail (or its placeholder while loading / for text posts).
+    private var thumbnail: some View {
+        ZStack {
+            switch storyData.thumbnailStatus {
+                //case .loading:
+                //ProgressView()
+            case .image(let image):
+                image
+                    .resizable()
+                    .scaledToFill()
+            case .text:
+                Color(.systemGray6)
+                Image(systemName: "text.alignleft")
+                    .resizable()
+                    .scaledToFit()
+                    .padding()
+                    .foregroundStyle(Color(.systemFill))
+            case .failed, .loading:
+                Color(.quaternaryLabel)
+                Image(systemName: "safari")
+                    .resizable()
+                    .scaledToFit()
+                    .padding()
+                    .foregroundStyle(Color(.systemFill))
+            }
+        }
+        .clipped()
+        .frame(width: 70, height: 70)
+        .cornerRadius(15)
+    }
+
+    /// Navigates to the story: the linked page for link posts, the comments
+    /// view for text posts. Shared by the title and the thumbnail.
+    private func openStory() {
+        switch storyData.storyType {
+        case .link:
+            if let url = storyData.url {
+                path.append(ItemNavigation.linkStory(id: storyId, url: url))
+            }
+        case .text:
+            path.append(ItemNavigation.textStory(id: storyId))
+        case .unknown:
+            break
         }
     }
 }
