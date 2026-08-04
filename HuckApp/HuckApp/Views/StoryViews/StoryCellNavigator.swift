@@ -27,7 +27,7 @@ struct StoryDetailsView: View {
         case let .linkStory(_, url):
             StoryWebView(url: url)
         case let .textStory(id):
-            StoryTextView(storyId: id)
+            StoryTextView(storyId: id, path: $path)
         case let .userProfile(user):
             UserView(username: user, path: $path)
         }

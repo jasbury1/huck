@@ -7,48 +7,32 @@
 
 import SwiftUI
 
-enum ThumbnailType {
-    case loading
-    case image(Image)
-    case failed
-    case text
-}
-
 struct StoryCellView: View {
-    let storyId: Int
-    
-    @State private var storyData: StoryModel
-    
-    @State private var thumbnailStatus: ThumbnailType = .loading
+    /// The story's model, owned and retained by `StoriesFeedData`. Reading its
+    /// `@Observable` properties in the body keeps the row in sync, and because
+    /// the same instance survives recycling the row never resets to a placeholder.
+    let storyData: StoryModel
 
     @Binding var path: NavigationPath
-    
-    init(storyId: Int, path: Binding<NavigationPath>) {
-        self.storyId = storyId
-        self.storyData = StoryModel(id: storyId)
+
+    private var storyId: Int { storyData.id }
+
+    init(model: StoryModel, path: Binding<NavigationPath>) {
+        self.storyData = model
         self._path = path
     }
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
                 switch storyData.storyType {
-                case .link:
-                    Button(action: {
-                        path.append(ItemNavigation.linkStory(id: storyId, url: storyData.url!))
-                    }) {
-                        Text(storyData.title)
-                    }
-                    .buttonStyle(.plain)
-                case .text:
-                    Button(action: {
-                        path.append(ItemNavigation.textStory(id: storyId))
-                    }) {
-                        Text(storyData.title)
-                    }
-                    .buttonStyle(.plain)
                 case .unknown:
                     Text(storyData.title)
+                case .link, .text:
+                    Button(action: openStory) {
+                        Text(storyData.title)
+                    }
+                    .buttonStyle(.plain)
                 }
                 
                 Text("")
@@ -110,62 +94,65 @@ struct StoryCellView: View {
                 }
             }
             Spacer()
-            // The image thumbnail
-            VStack() {
-                ZStack() {
-                    switch thumbnailStatus {
-                        //case .loading:
-                        //ProgressView()
-                    case .image(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .text:
-                        Color(.systemGray6)
-                        Image(systemName: "text.alignleft")
-                            .resizable()
-                            .scaledToFit()
-                            .padding()
-                            .foregroundStyle(Color(.systemFill))
-                    case .failed, .loading:
-                        Color(.quaternaryLabel)
-                        Image(systemName: "safari")
-                            .resizable()
-                            .scaledToFit()
-                            .padding()
-                            .foregroundStyle(Color(.systemFill))
-                    }
-                    
+            // The thumbnail navigates to the story just like the title does.
+            switch storyData.storyType {
+            case .unknown:
+                thumbnail
+            case .link, .text:
+                Button(action: openStory) {
+                    thumbnail
                 }
+                .buttonStyle(.plain)
             }
-            .clipped()
-            .frame(width: 70, height: 70)
-            .cornerRadius(15)
         }
         .task {
             await storyData.fetchData()
-            await fetchThumbnail()
         }
-        
     }
-    
-    private func fetchThumbnail() async {
-        guard storyData.storyType == .link else {
-            thumbnailStatus = .text
-            return
-        }
-        guard let url = storyData.url else {
-            thumbnailStatus = .failed
-            return
-        }
 
-        // ThumbnailCache fetches the page's Open Graph image (favicon fallback)
-        // with a plain URLSession and caches the result, so scrolling never
-        // re-fetches. It replaces the heavyweight LPMetadataProvider path.
-        if let image = await ThumbnailCache.shared.thumbnail(for: url) {
-            thumbnailStatus = .image(Image(uiImage: image))
-        } else {
-            thumbnailStatus = .failed
+    /// The image thumbnail (or its placeholder while loading / for text posts).
+    private var thumbnail: some View {
+        ZStack {
+            switch storyData.thumbnailStatus {
+                //case .loading:
+                //ProgressView()
+            case .image(let image):
+                image
+                    .resizable()
+                    .scaledToFill()
+            case .text:
+                Color(.systemGray6)
+                Image(systemName: "text.alignleft")
+                    .resizable()
+                    .scaledToFit()
+                    .padding()
+                    .foregroundStyle(Color(.systemFill))
+            case .failed, .loading:
+                Color(.quaternaryLabel)
+                Image(systemName: "safari")
+                    .resizable()
+                    .scaledToFit()
+                    .padding()
+                    .foregroundStyle(Color(.systemFill))
+            }
+        }
+        .clipped()
+        .frame(width: 70, height: 70)
+        .cornerRadius(15)
+    }
+
+    /// Navigates to the story: the linked page for link posts, the comments
+    /// view for text posts. Shared by the title and the thumbnail.
+    private func openStory() {
+        switch storyData.storyType {
+        case .link:
+            if let url = storyData.url {
+                path.append(ItemNavigation.linkStory(id: storyId, url: url))
+            }
+        case .text:
+            path.append(ItemNavigation.textStory(id: storyId))
+        case .unknown:
+            break
         }
     }
 }
