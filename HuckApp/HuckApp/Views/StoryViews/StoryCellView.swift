@@ -7,28 +7,21 @@
 
 import SwiftUI
 
-enum ThumbnailType {
-    case loading
-    case image(Image)
-    case failed
-    case text
-}
-
 struct StoryCellView: View {
-    let storyId: Int
-    
-    @State private var storyData: StoryModel
-    
-    @State private var thumbnailStatus: ThumbnailType = .loading
+    /// The story's model, owned and retained by `StoriesFeedData`. Reading its
+    /// `@Observable` properties in the body keeps the row in sync, and because
+    /// the same instance survives recycling the row never resets to a placeholder.
+    let storyData: StoryModel
 
     @Binding var path: NavigationPath
-    
-    init(storyId: Int, path: Binding<NavigationPath>) {
-        self.storyId = storyId
-        self.storyData = StoryModel(id: storyId)
+
+    private var storyId: Int { storyData.id }
+
+    init(model: StoryModel, path: Binding<NavigationPath>) {
+        self.storyData = model
         self._path = path
     }
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
@@ -113,7 +106,7 @@ struct StoryCellView: View {
             // The image thumbnail
             VStack() {
                 ZStack() {
-                    switch thumbnailStatus {
+                    switch storyData.thumbnailStatus {
                         //case .loading:
                         //ProgressView()
                     case .image(let image):
@@ -144,28 +137,6 @@ struct StoryCellView: View {
         }
         .task {
             await storyData.fetchData()
-            await fetchThumbnail()
-        }
-        
-    }
-    
-    private func fetchThumbnail() async {
-        guard storyData.storyType == .link else {
-            thumbnailStatus = .text
-            return
-        }
-        guard let url = storyData.url else {
-            thumbnailStatus = .failed
-            return
-        }
-
-        // ThumbnailCache fetches the page's Open Graph image (favicon fallback)
-        // with a plain URLSession and caches the result, so scrolling never
-        // re-fetches. It replaces the heavyweight LPMetadataProvider path.
-        if let image = await ThumbnailCache.shared.thumbnail(for: url) {
-            thumbnailStatus = .image(Image(uiImage: image))
-        } else {
-            thumbnailStatus = .failed
         }
     }
 }

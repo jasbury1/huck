@@ -17,8 +17,8 @@ struct StoryFeedView: View {
     
     var body: some View {
         List {
-            ForEach(observableStories.storyIds, id: \.self) {item in
-                StoryCellView(storyId: item, path: $path)
+            ForEach(observableStories.storyIds, id: \.self) { id in
+                StoryCellView(model: observableStories.model(for: id), path: $path)
             }
         }
         .listStyle(.plain)
@@ -77,10 +77,36 @@ struct StoryFeedView: View {
 
 @Observable
 class StoriesFeedData {
-    var storyIds: [Int] = []
-    
+    private(set) var storyIds: [Int] = []
+
+    /// Populated view models, retained across cell recycling and keyed by story
+    /// id. Because a recycled row reads its already-populated model from here
+    /// (synchronously) rather than rebuilding an empty one and awaiting the
+    /// cache, scrolling back to a story shows its content immediately instead
+    /// of flashing the placeholder.
+    private var models: [Int: StoryModel] = [:]
+
+    /// The retained model for a story id. Every id in `storyIds` has an entry,
+    /// created in `fetchStoryIds`, so this is a pure synchronous read.
+    func model(for id: Int) -> StoryModel {
+        models[id] ?? StoryModel(id: id)
+    }
+
     func fetchStoryIds(filter: StoryFilter) async {
         let ids = await HackerNewsAPI.getStoryIds(filter: filter)
-        self.storyIds = ids
+
+        // Create a model per id up front (reusing any we already hold), so rows
+        // always find a retained instance. Set models before storyIds so the
+        // list never reads an id that has no model yet.
+        var updated: [Int: StoryModel] = [:]
+        for id in ids {
+            updated[id] = models[id] ?? StoryModel(id: id)
+        }
+        models = updated
+        storyIds = ids
+
+        // Warm the raw story cache ahead of display so the per-cell fetch is a
+        // fast cache hit rather than a network round-trip.
+        await HackerNewsAPI.prefetchStories(ids: ids)
     }
 }

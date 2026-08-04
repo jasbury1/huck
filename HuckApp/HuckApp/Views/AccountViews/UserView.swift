@@ -14,6 +14,10 @@ struct UserView: View {
 
     @State private var currentTab: UserTab = .posts
     @State private var userStoryIds: [Int] = []
+    /// Retained story models keyed by id, so a post cell that scrolls back into
+    /// view renders from its already-populated instance instead of flashing the
+    /// placeholder. Mirrors `StoriesFeedData` in the main feed.
+    @State private var storyModels: [Int: StoryModel] = [:]
     @State private var currentPage = 0
     @State private var hasMorePages = false
     @State private var isLoadingMore = false
@@ -67,6 +71,7 @@ struct UserView: View {
             async let firstCommentPage = HackerNewsAPI.getUserComments(username: username, page: 0)
             let (u, storyResult, commentResult) = await (fetchedUser, firstPage, firstCommentPage)
             user = u
+            registerStoryModels(for: storyResult.ids)
             userStoryIds = storyResult.ids
             hasMorePages = storyResult.hasMore
             userComments = commentResult.comments
@@ -182,7 +187,7 @@ struct UserView: View {
     var postsList: some View {
         LazyVStack(spacing: 0) {
             ForEach(userStoryIds, id: \.self) { storyId in
-                StoryCellView(storyId: storyId, path: $path)
+                StoryCellView(model: model(for: storyId), path: $path)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                 Divider()
@@ -222,11 +227,25 @@ struct UserView: View {
             .padding(.top, 40)
     }
 
+    /// Creates a retained `StoryModel` for any id that doesn't have one yet.
+    private func registerStoryModels(for ids: [Int]) {
+        for id in ids where storyModels[id] == nil {
+            storyModels[id] = StoryModel(id: id)
+        }
+    }
+
+    /// The retained model for a story id. Ids are registered as pages load, so
+    /// this is a pure synchronous read.
+    private func model(for id: Int) -> StoryModel {
+        storyModels[id] ?? StoryModel(id: id)
+    }
+
     private func loadMorePosts() async {
         guard !isLoadingMore && hasMorePages else { return }
         isLoadingMore = true
         let nextPage = currentPage + 1
         let result = await HackerNewsAPI.getUserStories(username: username, page: nextPage)
+        registerStoryModels(for: result.ids)
         userStoryIds.append(contentsOf: result.ids)
         currentPage = nextPage
         hasMorePages = result.hasMore
