@@ -292,6 +292,9 @@ struct UserCommentRow: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+        // The enclosing LazyVStack centers its rows, so a short comment would
+        // otherwise appear indented. Fill the width and pin content leading.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
