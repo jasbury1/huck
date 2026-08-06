@@ -19,6 +19,11 @@ struct StoryFeedView: View {
         List {
             ForEach(observableStories.storyIds, id: \.self) { id in
                 StoryCellView(model: observableStories.model(for: id), path: $path)
+                    // As each row appears, warm the thumbnails of the rows just
+                    // below it so they are ready before they scroll into view.
+                    .onAppear {
+                        Task { await observableStories.prefetchThumbnailsAhead(after: id) }
+                    }
             }
         }
         .listStyle(.plain)
@@ -92,6 +97,17 @@ class StoriesFeedData {
         models[id] ?? StoryModel(id: id)
     }
 
+    /// Warms thumbnails for the window of stories following `id`. Called as each
+    /// row appears; already-cached or in-flight thumbnails are skipped, so the
+    /// overlapping windows from adjacent rows stay cheap.
+    func prefetchThumbnailsAhead(after id: Int) async {
+        guard let index = storyIds.firstIndex(of: id) else { return }
+        let start = index + 1
+        guard start < storyIds.count else { return }
+        let end = min(start + HackerNewsAPI.thumbnailPrefetchWindow, storyIds.count)
+        await HackerNewsAPI.prefetchThumbnails(ids: Array(storyIds[start..<end]))
+    }
+
     func fetchStoryIds(filter: StoryFilter) async {
         let ids = await HackerNewsAPI.getStoryIds(filter: filter)
 
@@ -105,8 +121,17 @@ class StoriesFeedData {
         models = updated
         storyIds = ids
 
-        // Warm the raw story cache ahead of display so the per-cell fetch is a
-        // fast cache hit rather than a network round-trip.
+        // Prioritise the first screen: warm its details, then its thumbnails,
+        // before touching the rest of the feed. Story details all share
+        // URLSession.shared's ~6 connections per host, so warming the whole feed
+        // first would saturate them and starve the visible rows' own fetches —
+        // and a thumbnail can't start until its story's URL has been fetched.
+        let firstWindow = Array(ids.prefix(HackerNewsAPI.thumbnailPrefetchWindow))
+        await HackerNewsAPI.prefetchStories(ids: firstWindow)
+        await HackerNewsAPI.prefetchThumbnails(ids: firstWindow)
+
+        // With the top of the feed responsive, warm the remaining story details
+        // in the background. Already-cached ids (the first window) are skipped.
         await HackerNewsAPI.prefetchStories(ids: ids)
     }
 }

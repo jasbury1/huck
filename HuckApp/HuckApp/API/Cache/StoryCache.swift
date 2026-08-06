@@ -33,7 +33,7 @@ actor StoryCache {
     private var inFlight: [Int: Task<FirebaseStoryData?, Never>] = [:]
 
     /// Maximum number of completed entries to retain.
-    private let capacity = 200
+    private let capacity = 500
     /// Maximum number of concurrent fetches during a prefetch pass.
     private let maxConcurrentPrefetches = 8
 

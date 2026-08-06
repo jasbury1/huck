@@ -43,6 +43,13 @@ class ApplicationController: ObservableObject {
     init() {
         Task(priority: .medium){
             let ids = await HackerNewsAPI.getStoryIds(filter: .topStories)
+
+            // Warm the first screen's details *and* thumbnails at launch, so the
+            // very first visit to Top Stories is already populated instead of
+            // fetching thumbnails on appear. Then warm the rest of the details.
+            let firstWindow = Array(ids.prefix(HackerNewsAPI.thumbnailPrefetchWindow))
+            await HackerNewsAPI.prefetchStories(ids: firstWindow)
+            await HackerNewsAPI.prefetchThumbnails(ids: firstWindow)
             await HackerNewsAPI.prefetchStories(ids: ids)
         }
     }

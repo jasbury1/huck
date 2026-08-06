@@ -40,6 +40,11 @@ class RedirectBlocker: NSObject, URLSessionTaskDelegate, URLSessionDataDelegate 
 class HackerNewsAPI {
     static let baseUri = URL(string: "https://news.ycombinator.com/")!
 
+    /// How many of a feed's leading stories to warm thumbnails for — roughly one
+    /// screen's worth. Shared by the launch warm-up and the feed's own prefetch
+    /// so they stay in agreement.
+    static let thumbnailPrefetchWindow = 15
+
     // MARK: - Stories
 
     static func getStoryIds(filter: StoryFilter) async -> [Int] {
@@ -59,6 +64,21 @@ class HackerNewsAPI {
     /// Warms the cache for the given story ids ahead of display.
     static func prefetchStories(ids: [Int]) async {
         await StoryCache.shared.prefetch(ids: ids)
+    }
+
+    /// Warms thumbnails for the given story ids ahead of display. Resolves each
+    /// story's page URL from the cache (a fast hit once `prefetchStories` has
+    /// run) and hands the link URLs to the thumbnail cache. Text posts, which
+    /// have no URL, are skipped.
+    static func prefetchThumbnails(ids: [Int]) async {
+        var urls: [URL] = []
+        for id in ids {
+            guard let story = await StoryCache.shared.story(id: id),
+                  let urlString = story.url,
+                  let url = URL(string: urlString) else { continue }
+            urls.append(url)
+        }
+        await ThumbnailCache.shared.prefetch(urls: urls)
     }
 
     // MARK: - Comments

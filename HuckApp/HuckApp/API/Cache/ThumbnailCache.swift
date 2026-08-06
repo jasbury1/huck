@@ -73,6 +73,17 @@ actor ThumbnailCache {
         return image
     }
 
+    /// Warms the cache for the given page URLs ahead of display without blocking
+    /// the caller. Each URL flows through the same coalescing and gated path as
+    /// `thumbnail(for:)`, so this never exceeds the concurrency cap nor duplicates
+    /// a fetch already cached or in flight. Because the gate is LIFO, this
+    /// prefetch work yields to any thumbnail a visible cell requests afterward.
+    func prefetch(urls: [URL]) {
+        for url in urls where entries[url] == nil && inFlight[url] == nil {
+            Task { _ = await self.thumbnail(for: url) }
+        }
+    }
+
     // MARK: - Fetching
 
     /// A shared session with short timeouts, tuned for fetching small assets.
@@ -265,8 +276,16 @@ actor ThumbnailCache {
     }
 }
 
-/// A minimal FIFO async semaphore used to bound concurrent thumbnail fetches.
+/// A minimal LIFO async semaphore used to bound concurrent thumbnail fetches.
 /// Callers `wait()` before starting work and `signal()` when done.
+///
+/// Waiters are resumed most-recent-first. When the user scrolls fast, every
+/// passed cell queues a fetch; serving newest-first means the rows now on screen
+/// (whose requests arrived last) get the network ahead of the stale backlog of
+/// cells already scrolled past — and prefetch-ahead work naturally yields to a
+/// row scrolling into view. The trade-off is that the oldest waiters can be
+/// starved while requests keep arriving, which is acceptable here: those are
+/// off-screen fetches, and once scrolling stops the whole backlog drains.
 private actor AsyncSemaphore {
     private var available: Int
     private var waiters: [CheckedContinuation<Void, Never>] = []
@@ -287,7 +306,7 @@ private actor AsyncSemaphore {
         if waiters.isEmpty {
             available += 1
         } else {
-            waiters.removeFirst().resume()
+            waiters.removeLast().resume()
         }
     }
 }

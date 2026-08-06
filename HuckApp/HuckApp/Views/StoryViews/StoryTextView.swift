@@ -20,7 +20,7 @@ struct CommentCellView: View {
     }
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             // Full-height indentation rails. Because the row has no vertical
             // insets (see `.listRowInsets` in StoryTextView), a rail reaches the
             // top and bottom edges of its row, so rails on adjacent same-level
@@ -56,7 +56,9 @@ struct CommentCellView: View {
             }
             // Padding lives inside the text column so the rails stay full-height.
             .padding(.top, 8)
-            Spacer()
+            // Fill the trailing edge instead of a Spacer so the HStack's spacing
+            // only sits between the rails and the text, not to the right of it.
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -160,15 +162,16 @@ struct StoryTextView: View {
     }
 
     /// The story's headline. For a link post reached via its comments, the
-    /// thumbnail is shown above the title and the whole header is tappable,
-    /// navigating to the linked page — mirroring the story cell's behavior.
+    /// thumbnail is shown to the left of the title and the whole header is
+    /// tappable, navigating to the linked page — mirroring the story cell's
+    /// behavior.
     @ViewBuilder
     private var storyHeader: some View {
         if storyData.storyType == .link, let url = storyData.url {
             Button {
                 path.append(ItemNavigation.linkStory(id: storyId, url: url))
             } label: {
-                VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
                     StoryThumbnailView(status: storyData.thumbnailStatus)
                     titleView
                 }
