@@ -8,7 +8,6 @@
 import SwiftUI
 
 enum ItemNavigation: Hashable {
-    case linkStory(id: Int, url: URL)
     case textStory(id: Int)
     case userProfile(user: String)
 }
@@ -24,8 +23,6 @@ struct StoryDetailsView: View {
 
     var body: some View {
         switch navigation {
-        case let .linkStory(_, url):
-            StoryWebView(url: url)
         case let .textStory(id):
             StoryTextView(storyId: id, path: $path)
         case let .userProfile(user):

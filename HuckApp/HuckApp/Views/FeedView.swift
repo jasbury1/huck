@@ -64,5 +64,6 @@ struct FeedView: View {
                 StoryDetailsView(from: navigation, path: $path)
             }
         }
+        .inAppBrowser()
     }
 }

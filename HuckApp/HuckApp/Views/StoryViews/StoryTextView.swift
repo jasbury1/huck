@@ -71,6 +71,9 @@ struct StoryTextView: View {
     @State private var commentFetcher: CommentFetcher
     @Binding var path: NavigationPath
 
+    /// Opens the linked page in the standardized in-app Safari browser.
+    @Environment(\.openInAppBrowser) private var openInAppBrowser
+
     /// Height of the large in-content title and how far the list has scrolled,
     /// used to fade the small nav-bar title in as the large one scrolls off.
     @State private var titleHeight: CGFloat = 0
@@ -169,7 +172,7 @@ struct StoryTextView: View {
     private var storyHeader: some View {
         if storyData.storyType == .link, let url = storyData.url {
             Button {
-                path.append(ItemNavigation.linkStory(id: storyId, url: url))
+                openInAppBrowser(url)
             } label: {
                 HStack(spacing: 12) {
                     StoryThumbnailView(status: storyData.thumbnailStatus)

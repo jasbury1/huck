@@ -32,6 +32,7 @@ struct AccountView: View {
                 StoryDetailsView(from: navigation, path: $path)
             }
         }
+        .inAppBrowser()
     }
 
     /// The signed-in user's name, derived from the stored auth cookie via

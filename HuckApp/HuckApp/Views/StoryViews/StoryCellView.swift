@@ -15,6 +15,9 @@ struct StoryCellView: View {
 
     @Binding var path: NavigationPath
 
+    /// Opens link posts in the standardized in-app Safari browser.
+    @Environment(\.openInAppBrowser) private var openInAppBrowser
+
     private var storyId: Int { storyData.id }
 
     init(model: StoryModel, path: Binding<NavigationPath>) {
@@ -115,13 +118,14 @@ struct StoryCellView: View {
         StoryThumbnailView(status: storyData.thumbnailStatus)
     }
 
-    /// Navigates to the story: the linked page for link posts, the comments
-    /// view for text posts. Shared by the title and the thumbnail.
+    /// Navigates to the story: the linked page opens in the in-app Safari
+    /// browser, a text post pushes the comments view. Shared by the title and
+    /// the thumbnail.
     private func openStory() {
         switch storyData.storyType {
         case .link:
             if let url = storyData.url {
-                path.append(ItemNavigation.linkStory(id: storyId, url: url))
+                openInAppBrowser(url)
             }
         case .text:
             path.append(ItemNavigation.textStory(id: storyId))
