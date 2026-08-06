@@ -90,10 +90,7 @@ struct StoryTextView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text(storyData.title)
-                        .font(.title2)
-                        .fontWeight(.heavy)
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { titleHeight = $0 }
+                    storyHeader
                     if storyData.text != nil {
                         Text(try! AttributedString(markdown: storyData.text!, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
                         //Text(storyData.text!)
@@ -160,6 +157,35 @@ struct StoryTextView: View {
             await storyData.fetchData()
             await commentFetcher.fetchComments()
         }
+    }
+
+    /// The story's headline. For a link post reached via its comments, the
+    /// thumbnail is shown above the title and the whole header is tappable,
+    /// navigating to the linked page — mirroring the story cell's behavior.
+    @ViewBuilder
+    private var storyHeader: some View {
+        if storyData.storyType == .link, let url = storyData.url {
+            Button {
+                path.append(ItemNavigation.linkStory(id: storyId, url: url))
+            } label: {
+                VStack(alignment: .leading, spacing: 12) {
+                    StoryThumbnailView(status: storyData.thumbnailStatus)
+                    titleView
+                }
+            }
+            .buttonStyle(.plain)
+        } else {
+            titleView
+        }
+    }
+
+    /// The large in-content title. Its measured height drives the fade-in of the
+    /// small nav-bar title as it scrolls off.
+    private var titleView: some View {
+        Text(storyData.title)
+            .font(.title2)
+            .fontWeight(.heavy)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { titleHeight = $0 }
     }
 
     /// Section header shown between the post details and the comments. The inset

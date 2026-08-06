@@ -112,33 +112,7 @@ struct StoryCellView: View {
 
     /// The image thumbnail (or its placeholder while loading / for text posts).
     private var thumbnail: some View {
-        ZStack {
-            switch storyData.thumbnailStatus {
-                //case .loading:
-                //ProgressView()
-            case .image(let image):
-                image
-                    .resizable()
-                    .scaledToFill()
-            case .text:
-                Color(.systemGray6)
-                Image(systemName: "text.alignleft")
-                    .resizable()
-                    .scaledToFit()
-                    .padding()
-                    .foregroundStyle(Color(.systemFill))
-            case .failed, .loading:
-                Color(.quaternaryLabel)
-                Image(systemName: "safari")
-                    .resizable()
-                    .scaledToFit()
-                    .padding()
-                    .foregroundStyle(Color(.systemFill))
-            }
-        }
-        .clipped()
-        .frame(width: 70, height: 70)
-        .cornerRadius(15)
+        StoryThumbnailView(status: storyData.thumbnailStatus)
     }
 
     /// Navigates to the story: the linked page for link posts, the comments

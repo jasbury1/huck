@@ -15,8 +15,11 @@ struct AccountView: View {
     @State private var path = NavigationPath()
 
     var body: some View {
-        let session = UserSession.shared
-        let currentUsername = session?.username ?? ""
+        // Derive the signed-in user from the stored auth cookie. We pass
+        // `authenticationTimestamp` (which login/logout updates) so that reading
+        // it here creates a body dependency — otherwise SwiftUI never re-runs
+        // this branch when the auth state changes and the login screen sticks.
+        let currentUsername = sessionUsername(after: authenticationTimestamp)
         NavigationStack(path: $path) {
             Group {
                 if !currentUsername.isEmpty {
@@ -29,6 +32,14 @@ struct AccountView: View {
                 StoryDetailsView(from: navigation, path: $path)
             }
         }
+    }
+
+    /// The signed-in user's name, derived from the stored auth cookie via
+    /// `UserSession`. The `timestamp` parameter isn't used for the lookup — it
+    /// exists so `body` reads `authenticationTimestamp` and re-evaluates when
+    /// login/logout changes it.
+    private func sessionUsername(after timestamp: Date?) -> String {
+        UserSession.shared?.username ?? ""
     }
 }
 
