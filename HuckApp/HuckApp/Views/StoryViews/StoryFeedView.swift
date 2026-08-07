@@ -12,7 +12,10 @@ import UniformTypeIdentifiers
 struct StoryFeedView: View {
     @State var storyFilter: StoryFilter
     @State var observableStories = StoriesFeedData()
-    
+
+    /// Backing text for the search field revealed by pulling the feed down.
+    @State private var searchText = ""
+
     @Binding var path: NavigationPath
     
     var body: some View {
@@ -66,6 +69,18 @@ struct StoryFeedView: View {
             }
         }
         .listStyle(.plain)
+        // A small pull-down reveals the search field (it stays hidden while
+        // scrolled, per the drawer's automatic display mode); pulling further
+        // triggers the refresh below.
+        .searchable(
+            text: $searchText,
+            placement: .navigationBarDrawer(displayMode: .automatic),
+            prompt: "Search \(storyFilter.searchName)"
+        )
+        // Pull-to-refresh re-fetches the current filter's story ids.
+        .refreshable {
+            await observableStories.fetchStoryIds(filter: storyFilter)
+        }
         .task (id: storyFilter) {
             await self.observableStories.fetchStoryIds(filter: storyFilter)
         }

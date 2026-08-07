@@ -31,6 +31,24 @@ enum StoryFilter {
             return "Job Listings"
         }
     }
+
+    /// Short name used in the feed's search field prompt, e.g. "Search Jobs".
+    var searchName: String {
+        switch self {
+        case .topStories:
+            return "Top Stories"
+        case .bestStories:
+            return "Best Stories"
+        case .newStories:
+            return "New Stories"
+        case .askStories:
+            return "Ask HN"
+        case .showStories:
+            return "Show HN"
+        case .jobStories:
+            return "Jobs"
+        }
+    }
 }
 
 enum StoryType {
