@@ -136,22 +136,72 @@ struct StoryFeedView: View {
         }
     }
 
-    /// The options list shown by the "More" swipe action's popover.
+    /// The options shown by the "More" swipe action's popover. Options are laid
+    /// out as capsule rows — a leading label and a trailing SF Symbol — with
+    /// related actions grouped into a single rounded card divided by separators,
+    /// mirroring the action rows in Apple's Mail app, because I like the way that
+    /// looks.
     private func moreOptionsMenu(for story: StoryModel) -> some View {
-        List {
-            Button {
-                // Link posts copy the article URL; text posts (no URL) fall
-                // back to the story's Hacker News discussion page.
-                UIPasteboard.general.url = story.url
-                    ?? URL(string: "https://news.ycombinator.com/item?id=\(story.id)")
-                moreOptionsStory = nil
-            } label: {
-                Label("Copy Link", systemImage: "link")
+        VStack(spacing: 12) {
+            // Copy Link stands on its own.
+            moreOptionGroup {
+                moreOptionRow("Copy Link", systemImage: "link") {
+                    // Link posts copy the article URL; text posts (no URL) fall
+                    // back to the story's Hacker News discussion page.
+                    UIPasteboard.general.url = story.url
+                        ?? URL(string: "https://news.ycombinator.com/item?id=\(story.id)")
+                }
+            }
+            // Save and Add to Collection are grouped as one card.
+            moreOptionGroup {
+                moreOptionRow("Save", systemImage: "bookmark") {
+                    // TODO: Save this story
+                }
+                Divider()
+                moreOptionRow("Add to Collection...", systemImage: "plus.rectangle.on.rectangle") {
+                    // TODO: Add this story to a collection
+                }
             }
         }
-        .listStyle(.plain)
-        .frame(minWidth: 260, minHeight: 60)
-        .presentationDetents([.height(120)])
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .top)
+        .presentationDetents([.height(240)])
+    }
+
+    /// Wraps one or more option rows in a single rounded card, so grouped rows
+    /// share a background with dividers between them (like Mail's action group).
+    private func moreOptionGroup<Content: View>(
+        @ViewBuilder _ content: () -> Content
+    ) -> some View {
+        VStack(spacing: 0) {
+            content()
+        }
+        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    /// A single option row: leading label, trailing icon. Running the action
+    /// also dismisses the popover. Meant to sit inside a `moreOptionGroup`.
+    private func moreOptionRow(
+        _ title: LocalizedStringKey,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            action()
+            moreOptionsStory = nil
+        } label: {
+            HStack {
+                Text(title)
+                Spacer()
+                Image(systemName: systemImage)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.primary)
     }
 }
 
