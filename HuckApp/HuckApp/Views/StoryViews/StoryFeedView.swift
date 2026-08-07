@@ -31,42 +31,27 @@ struct StoryFeedView: View {
             await self.observableStories.fetchStoryIds(filter: storyFilter)
         }
         .toolbar {
-            if storyFilter == .topStories || storyFilter == .bestStories || storyFilter == .newStories {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu(content: {
-                        Picker(selection: $storyFilter,
-                               label: Text("Sorting options")) {
-                            Text("Top").tag(StoryFilter.topStories)
-                            Text("Best").tag(StoryFilter.bestStories)
-                            Text("New").tag(StoryFilter.newStories)
-                            
-                        }
-                    }, label: {
-                        switch storyFilter {
-                        case .topStories: Image(systemName: "arrow.up")
-                                .foregroundColor(.yellow)
-                        case .bestStories: Image(systemName: "trophy")
-                                .foregroundColor(.yellow)
-                        case .newStories: Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
-                                .foregroundColor(.yellow)
-                        default:
-                            EmptyView()
-                        }
-                        
-                    })
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    // No action for now
+                } label: {
+                    Image(systemName: "ellipsis")
                 }
             }
         }
         .navigationTitle(storyFilter.displayName())
         .navigationBarTitleDisplayMode(.inline)
         .toolbarTitleMenu {
-            Button("Stories", systemImage: "newspaper") {
-                // Changing the view to stories only applies if we are not on some type of story view
-                // If we are not on a story view, default to top stories
-                if storyFilter != .topStories && storyFilter != .bestStories && storyFilter != .newStories {
-                    storyFilter = .topStories
-                }
+            Button("Top", systemImage: "arrow.up") {
+                storyFilter = .topStories
             }
+            Button("Best", systemImage: "trophy") {
+                storyFilter = .bestStories
+            }
+            Button("New", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90") {
+                storyFilter = .newStories
+            }
+            Divider()
             Button("Ask Hacker News", systemImage: "questionmark.bubble") {
                 storyFilter = .askStories
             }
