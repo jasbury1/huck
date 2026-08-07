@@ -24,6 +24,45 @@ struct StoryFeedView: View {
                     .onAppear {
                         Task { await observableStories.prefetchThumbnailsAhead(after: id) }
                     }
+                    // Leading swipe hides or marks the story read; a full swipe
+                    // hides it. Hide is listed first so it's the full-swipe
+                    // action. Behavior is stubbed for now.
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button {
+                            // TODO: Hide this story
+                        } label: {
+                            Label("Hide", systemImage: "eye.slash")
+                        }
+                        .tint(.gray)
+                        Button {
+                            // TODO: Mark this story read
+                        } label: {
+                            Label("Mark Read", systemImage: "checkmark.circle")
+                        }
+                        .tint(.indigo)
+                    }
+                    // Trailing swipe exposes Upvote, Save, and More. Upvote is
+                    // listed first so a full swipe triggers it. All stubbed.
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button {
+                            // TODO: Upvote this story
+                        } label: {
+                            Label("Upvote", systemImage: "arrow.up")
+                        }
+                        .tint(.orange)
+                        Button {
+                            // TODO: Save this story
+                        } label: {
+                            Label("Save", systemImage: "bookmark")
+                        }
+                        .tint(.green)
+                        Button {
+                            // TODO: More options
+                        } label: {
+                            Label("More", systemImage: "ellipsis")
+                        }
+                        .tint(.gray)
+                    }
             }
         }
         .listStyle(.plain)
