@@ -8,6 +8,7 @@
 import SwiftUI
 import LinkPresentation
 import UniformTypeIdentifiers
+import UIKit
 
 struct StoryFeedView: View {
     @State var storyFilter: StoryFilter
@@ -15,6 +16,10 @@ struct StoryFeedView: View {
 
     /// Backing text for the search field revealed by pulling the feed down.
     @State private var searchText = ""
+
+    /// The story whose "More" swipe action was tapped, driving the options
+    /// pop-up. Non-nil while the confirmation dialog is presented.
+    @State private var moreOptionsStory: StoryModel?
 
     @Binding var path: NavigationPath
     
@@ -60,7 +65,7 @@ struct StoryFeedView: View {
                         }
                         .tint(.green)
                         Button {
-                            // TODO: More options
+                            moreOptionsStory = observableStories.model(for: id)
                         } label: {
                             Label("More", systemImage: "ellipsis")
                         }
@@ -69,6 +74,19 @@ struct StoryFeedView: View {
             }
         }
         .listStyle(.plain)
+        // "More" swipe action pop-up. Rendered as a floating popover on iPad
+        // and adapts to a sheet on iPhone. Presenting the tapped story lets
+        // each action operate on it directly.
+        .popover(
+            isPresented: Binding(
+                get: { moreOptionsStory != nil },
+                set: { if !$0 { moreOptionsStory = nil } }
+            )
+        ) {
+            if let story = moreOptionsStory {
+                moreOptionsMenu(for: story)
+            }
+        }
         // A small pull-down reveals the search field (it stays hidden while
         // scrolled, per the drawer's automatic display mode); pulling further
         // triggers the refresh below.
@@ -116,6 +134,24 @@ struct StoryFeedView: View {
                 storyFilter = .jobStories
             }
         }
+    }
+
+    /// The options list shown by the "More" swipe action's popover.
+    private func moreOptionsMenu(for story: StoryModel) -> some View {
+        List {
+            Button {
+                // Link posts copy the article URL; text posts (no URL) fall
+                // back to the story's Hacker News discussion page.
+                UIPasteboard.general.url = story.url
+                    ?? URL(string: "https://news.ycombinator.com/item?id=\(story.id)")
+                moreOptionsStory = nil
+            } label: {
+                Label("Copy Link", systemImage: "link")
+            }
+        }
+        .listStyle(.plain)
+        .frame(minWidth: 260, minHeight: 60)
+        .presentationDetents([.height(120)])
     }
 }
 
