@@ -27,25 +27,28 @@ struct UserView: View {
     @State private var hasMoreComments = false
     @State private var isLoadingMoreComments = false
 
-    // Collapsing-header state. Each tab reports its own vertical scroll offset,
-    // so switching tabs reflects that tab's scroll position. The measured heights
-    // define how far the header travels and how tall each scroll's top spacer is.
+    // Collapsing-header state. `collapse` is the single source of truth for how
+    // far the header is translated up; only the visible tab drives it. Because it
+    // persists across tab switches, the header (and its pinned tab bar) never
+    // jumps — the incoming tab is instead scrolled to meet it. The measured
+    // heights define how far the header travels and each scroll's top spacer.
+    @State private var collapse: CGFloat = 0
     @State private var scrollOffsets: [UserTab: CGFloat] = [:]
+    @State private var scrollPositions: [UserTab: ScrollPosition] = [:]
     @State private var collapsibleHeight: CGFloat = 0
     @State private var tabBarHeight: CGFloat = 0
+    /// True while an incoming tab is being scrolled to meet the header. Its
+    /// interim offsets are ignored so they can't drag `collapse` back to the top.
+    @State private var isSyncing = false
 
     @Namespace private var namespace
     private let systemBackgroundColor = Color(UIColor.systemBackground)
 
     // MARK: - Collapse math
 
-    /// Vertical scroll offset of the currently-visible tab (0 at the top).
-    private var currentOffset: CGFloat { scrollOffsets[currentTab] ?? 0 }
-    /// How far the header is translated up, capped so the tab bar pins at the top.
-    private var collapseAmount: CGFloat { min(max(currentOffset, 0), collapsibleHeight) }
     /// 0 when the header is fully expanded, 1 when fully collapsed.
     private var collapseProgress: CGFloat {
-        collapsibleHeight > 0 ? collapseAmount / collapsibleHeight : 0
+        collapsibleHeight > 0 ? collapse / collapsibleHeight : 0
     }
     /// Total header height, used as the top spacer inside each tab's scroll.
     private var headerHeight: CGFloat { collapsibleHeight + tabBarHeight }
@@ -105,7 +108,7 @@ struct UserView: View {
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tabBarHeight = $0 }
         }
         .background(systemBackgroundColor)
-        .offset(y: -collapseAmount)
+        .offset(y: -collapse)
     }
 
     var userSummary: some View {
@@ -133,10 +136,40 @@ struct UserView: View {
             tabScroll(for: .favorites) { favoritesContent }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .onChange(of: currentTab) { _, newTab in
+            syncCollapse(to: newTab)
+        }
+    }
+
+    /// Keeps the header (and its pinned tab bar) still when switching tabs. The
+    /// header never moves on a switch; instead the incoming tab is scrolled —
+    /// up or down, without animation — to meet the current `collapse`. The one
+    /// exception is when the header is already fully collapsed and the incoming
+    /// tab is also scrolled past full collapse: the header looks identical either
+    /// way, so we leave that tab's deeper scroll position untouched. Every tab's
+    /// `headerHeight` top spacer guarantees the room needed to reach `collapse`.
+    private func syncCollapse(to newTab: UserTab) {
+        let incoming = scrollOffsets[newTab] ?? 0
+        if collapse >= collapsibleHeight && incoming >= collapsibleHeight {
+            isSyncing = false
+            return
+        }
+        guard abs(incoming - collapse) > 0.5 else {
+            isSyncing = false
+            return
+        }
+        isSyncing = true
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            var position = scrollPositions[newTab] ?? ScrollPosition()
+            position.scrollTo(y: collapse)
+            scrollPositions[newTab] = position
+        }
     }
 
     /// Wraps a tab's content in a scroll view that clears space for the header
-    /// and reports its offset back so the header collapses in step.
+    /// and, while it's the visible tab, drives the header's collapse.
     @ViewBuilder
     func tabScroll<Content: View>(for tab: UserTab, @ViewBuilder content: () -> Content) -> some View {
         ScrollView {
@@ -145,12 +178,30 @@ struct UserView: View {
                 content()
             }
         }
+        .scrollPosition(scrollPositionBinding(for: tab))
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
         } action: { _, offset in
             scrollOffsets[tab] = offset
+            guard tab == currentTab else { return }
+            if isSyncing {
+                // Ignore the interim offsets from a programmatic sync; only
+                // release once the incoming tab has reached the header.
+                if abs(offset - collapse) < 0.5 { isSyncing = false }
+                return
+            }
+            collapse = min(max(offset, 0), collapsibleHeight)
         }
         .tag(tab)
+    }
+
+    /// A binding into a tab's scroll position, used to drive it programmatically
+    /// when bringing it to meet the header on a tab switch.
+    private func scrollPositionBinding(for tab: UserTab) -> Binding<ScrollPosition> {
+        Binding(
+            get: { scrollPositions[tab] ?? ScrollPosition() },
+            set: { scrollPositions[tab] = $0 }
+        )
     }
 
     var tabBarButtons: some View {
