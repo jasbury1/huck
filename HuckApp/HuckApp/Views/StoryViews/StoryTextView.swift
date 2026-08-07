@@ -136,6 +136,32 @@ struct StoryTextView: View {
                         // No vertical inset, so rows meet edge-to-edge and the
                         // indentation rails connect between comments.
                         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                        // Leading swipe hides/collapses the comment; a full swipe
+                        // triggers it. Behavior is stubbed for now.
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                // TODO: Hide/collapse this comment thread
+                            } label: {
+                                Label("Hide", systemImage: "eye.slash")
+                            }
+                            .tint(.gray)
+                        }
+                        // Trailing swipe exposes Upvote and Reply. Upvote is
+                        // listed first so a full swipe triggers it. Both stubbed.
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button {
+                                // TODO: Upvote this comment
+                            } label: {
+                                Label("Upvote", systemImage: "arrow.up")
+                            }
+                            .tint(.green)
+                            Button {
+                                // TODO: Reply to this comment
+                            } label: {
+                                Label("Reply", systemImage: "arrowshape.turn.up.left")
+                            }
+                            .tint(.blue)
+                        }
                 }
             } header: {
                 commentsHeader
