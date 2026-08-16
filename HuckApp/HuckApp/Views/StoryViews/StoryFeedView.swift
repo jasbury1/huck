@@ -61,11 +61,11 @@ struct StoryFeedView: View {
                         }
                         .tint(.orange)
                         Button {
-                            // TODO: Save this story
+                            // TODO: Favorite this story
                         } label: {
-                            Label("Save", systemImage: "bookmark")
+                            Label("Favorite", systemImage: "heart")
                         }
-                        .tint(.green)
+                        .tint(.red)
                         Button {
                             moreOptionsStory = observableStories.model(for: id)
                         } label: {

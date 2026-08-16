@@ -11,12 +11,12 @@ import SwiftUI
 /// (e.g. an orange upvote arrow). Assembled on demand from `InteractionStore`.
 struct StoryInteraction {
     var isUpvoted = false
-    var isSaved = false
+    var isFavorited = false
     var isHidden = false
 }
 
 /// The single source of truth for per-story user interactions (upvoted, and later
-/// saved/hidden), keyed by story id.
+/// favorited/hidden), keyed by story id.
 ///
 /// This lives apart from `StoryModel` on purpose: the same story appears as
 /// *different* `StoryModel` instances across the feed, the comments view, and
@@ -56,7 +56,7 @@ class InteractionStore {
     func interaction(for id: Int) -> StoryInteraction {
         StoryInteraction(
             isUpvoted: interactions.upvoted.contains(id),
-            isSaved: interactions.saved.contains(id),
+            isFavorited: interactions.favorited.contains(id),
             isHidden: interactions.hidden.contains(id)
         )
     }
@@ -104,6 +104,20 @@ class InteractionStore {
     func replaceUpvoted(with ids: Set<Int>) {
         interactions.upvoted = ids
         persist()
+    }
+
+    /// A page of the current user's liked (upvoted) stories for display (most-recent
+    /// first). The `/upvoted` list is authoritative proof these are upvoted, so this
+    /// also reconciles the store — keeping that invariant here, in the owner of
+    /// upvote state, rather than at each call site. No score delta is applied: the
+    /// fetched score already reflects these votes.
+    func likedStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+        let result = await HackerNewsAPI.getLikedStories(page: page)
+        if !result.ids.isEmpty {
+            interactions.upvoted.formUnion(result.ids)
+            persist()
+        }
+        return result
     }
 
     // MARK: - Helpers

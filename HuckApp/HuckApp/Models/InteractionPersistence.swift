@@ -9,12 +9,12 @@ import Foundation
 
 /// The user's per-story interaction state, in the shape we persist to disk.
 ///
-/// Only `upvoted` is used today; `saved` and `hidden` are here so those features
+/// Only `upvoted` is used today; `favorited` and `hidden` are here so those features
 /// can be added later without a storage migration — an older file simply decodes
-/// them as empty sets.
+/// them as empty sets. (A separate `saved` concept is planned for the future.)
 struct PersistedInteractions: Codable {
     var upvoted: Set<Int> = []
-    var saved: Set<Int> = []
+    var favorited: Set<Int> = []
     var hidden: Set<Int> = []
 }
 

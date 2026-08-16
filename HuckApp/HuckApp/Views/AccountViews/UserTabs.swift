@@ -11,7 +11,8 @@ enum UserTab: CaseIterable, Hashable, Equatable {
     case posts
     case comments
     case favorites
-    
+    case liked
+
     var title: LocalizedStringKey {
         return switch self {
         case .posts:
@@ -20,6 +21,8 @@ enum UserTab: CaseIterable, Hashable, Equatable {
             "Comments"
         case .favorites:
             "Favorites"
+        case .liked:
+            "Liked"
         }
     }
 }

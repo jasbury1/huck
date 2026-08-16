@@ -102,8 +102,8 @@ struct StoryCellView: View {
                         Image(systemName: "paperplane")
                             .foregroundColor(.gray)
                         
-                        // Bookmark the post
-                        Image(systemName: "bookmark")
+                        // Favorite the post
+                        Image(systemName: "heart")
                             .foregroundColor(.gray)
                     }
                 }

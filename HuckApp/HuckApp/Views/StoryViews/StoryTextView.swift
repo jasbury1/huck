@@ -144,7 +144,7 @@ struct StoryTextView: View {
                             .foregroundStyle(.gray)
                         Image(systemName: "paperplane")
                             .foregroundColor(.gray)
-                        Image(systemName: "bookmark")
+                        Image(systemName: "heart")
                             .foregroundColor(.gray)
                     }
                 }

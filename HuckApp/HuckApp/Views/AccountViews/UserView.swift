@@ -12,6 +12,10 @@ struct UserView: View {
     @State var user: User?
     @Binding var path: NavigationPath
 
+    /// Owns upvote state and vends the current user's liked (upvoted) list — the
+    /// source for the Liked tab, which also keeps upvote arrows in sync.
+    @Environment(InteractionStore.self) private var interactionStore
+
     @State private var currentTab: UserTab = .posts
     @State private var userStoryIds: [Int] = []
     /// Retained story models keyed by id, so a post cell that scrolls back into
@@ -26,6 +30,11 @@ struct UserView: View {
     @State private var commentPage = 0
     @State private var hasMoreComments = false
     @State private var isLoadingMoreComments = false
+
+    @State private var likedStoryIds: [Int] = []
+    @State private var likedPage = 0
+    @State private var hasMoreLiked = false
+    @State private var isLoadingMoreLiked = false
 
     // Collapsing-header state. `collapse` is the single source of truth for how
     // far the header is translated up; only the visible tab drives it. Because it
@@ -43,6 +52,21 @@ struct UserView: View {
 
     @Namespace private var namespace
     private let systemBackgroundColor = Color(UIColor.systemBackground)
+
+    // MARK: - Tabs available
+
+    /// Whether this profile belongs to the logged-in user. The "Liked" list is
+    /// private to its owner, so its tab only appears here.
+    private var isCurrentUser: Bool {
+        username == UserSession.shared?.username
+    }
+
+    /// The tabs to show, in order. "Liked" is appended only for the current user.
+    private var availableTabs: [UserTab] {
+        var tabs: [UserTab] = [.posts, .comments, .favorites]
+        if isCurrentUser { tabs.append(.liked) }
+        return tabs
+    }
 
     // MARK: - Collapse math
 
@@ -79,6 +103,15 @@ struct UserView: View {
             hasMorePages = storyResult.hasMore
             userComments = commentResult.comments
             hasMoreComments = commentResult.hasMore
+
+            // The Liked (upvoted) list is private to its owner, so only load it
+            // for the current user's own profile.
+            if isCurrentUser {
+                let likedResult = await interactionStore.likedStories(page: 0)
+                registerStoryModels(for: likedResult.ids)
+                likedStoryIds = likedResult.ids
+                hasMoreLiked = likedResult.hasMore
+            }
         }
     }
 
@@ -131,9 +164,9 @@ struct UserView: View {
     /// tapping a tab drive `currentTab`.
     var tabPager: some View {
         TabView(selection: $currentTab) {
-            tabScroll(for: .posts) { postsList }
-            tabScroll(for: .comments) { commentsList }
-            tabScroll(for: .favorites) { favoritesContent }
+            ForEach(availableTabs, id: \.self) { tab in
+                tabScroll(for: tab) { content(for: tab) }
+            }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .onChange(of: currentTab) { _, newTab in
@@ -206,7 +239,7 @@ struct UserView: View {
 
     var tabBarButtons: some View {
         HStack(spacing: 20) {
-            ForEach(UserTab.allCases, id: \.self) { tab in
+            ForEach(availableTabs, id: \.self) { tab in
                 let selected = currentTab == tab
                 Text(tab.title)
                     .font(.body)
@@ -234,6 +267,17 @@ struct UserView: View {
     }
 
     // MARK: - Tab Content
+
+    /// The scrollable content for a tab.
+    @ViewBuilder
+    func content(for tab: UserTab) -> some View {
+        switch tab {
+        case .posts: postsList
+        case .comments: commentsList
+        case .favorites: favoritesContent
+        case .liked: likedList
+        }
+    }
 
     var postsList: some View {
         LazyVStack(spacing: 0) {
@@ -278,6 +322,36 @@ struct UserView: View {
             .padding(.top, 40)
     }
 
+    /// The current user's liked (upvoted) stories. Mirrors `postsList`, sharing the
+    /// same retained `storyModels` so a story that also appears under Posts stays in
+    /// sync.
+    @ViewBuilder
+    var likedList: some View {
+        if likedStoryIds.isEmpty && !hasMoreLiked {
+            Text("You haven't liked any stories yet")
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 40)
+        } else {
+            LazyVStack(spacing: 0) {
+                ForEach(likedStoryIds, id: \.self) { storyId in
+                    StoryCellView(model: model(for: storyId), path: $path)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                    Divider()
+                }
+                if hasMoreLiked {
+                    ProgressView()
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .onAppear {
+                            Task { await loadMoreLiked() }
+                        }
+                }
+            }
+        }
+    }
+
     /// Creates a retained `StoryModel` for any id that doesn't have one yet.
     private func registerStoryModels(for ids: [Int]) {
         for id in ids where storyModels[id] == nil {
@@ -312,6 +386,18 @@ struct UserView: View {
         commentPage = nextPage
         hasMoreComments = result.hasMore
         isLoadingMoreComments = false
+    }
+
+    private func loadMoreLiked() async {
+        guard !isLoadingMoreLiked && hasMoreLiked else { return }
+        isLoadingMoreLiked = true
+        let nextPage = likedPage + 1
+        let result = await interactionStore.likedStories(page: nextPage)
+        registerStoryModels(for: result.ids)
+        likedStoryIds.append(contentsOf: result.ids)
+        likedPage = nextPage
+        hasMoreLiked = result.hasMore
+        isLoadingMoreLiked = false
     }
 }
 
@@ -355,4 +441,5 @@ struct UserCommentRow: View {
     NavigationStack {
         UserView(username: "zdw", path: .constant(NavigationPath()))
     }
+    .environment(InteractionStore())
 }

@@ -30,10 +30,10 @@ struct StoryOptionsMenu: View {
                         ?? URL(string: "https://news.ycombinator.com/item?id=\(story.id)")
                 }
             }
-            // Save and Add to Collection are grouped as one card.
+            // Favorite and Add to Collection are grouped as one card.
             group {
-                row("Save", systemImage: "bookmark") {
-                    // TODO: Save this story
+                row("Favorite", systemImage: "heart") {
+                    // TODO: Favorite this story
                 }
                 Divider()
                 row("Add to Collection...", systemImage: "plus.rectangle.on.rectangle") {

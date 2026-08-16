@@ -124,6 +124,16 @@ class HackerNewsAPI {
         await AlgoliaAPIService.getUserComments(username: username, page: page)
     }
 
+    /// The logged-in user's liked (upvoted) stories, most-recent first, for their
+    /// own profile's "Liked" tab. HN only exposes this list for the authenticated
+    /// user, so it always reads the current session's username and returns nothing
+    /// when logged out. `page` is 0-based to match the other user feeds.
+    static func getLikedStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+        guard let username = UserSession.shared?.username else { return ([], false) }
+        // NewsYCService pages the /upvoted list 1-based.
+        return await NewsYCService.upvotedStoryIds(username: username, page: page + 1)
+    }
+
     // MARK: - Voting
 
     /// Upvotes a story on behalf of the logged-in user.
