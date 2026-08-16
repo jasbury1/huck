@@ -79,6 +79,9 @@ struct StoryTextView: View {
     @State private var titleHeight: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
 
+    /// Non-nil while the shared "More" options popover is presented.
+    @State private var moreOptionsStory: StoryModel?
+
     /// 0 while the large title is fully visible, 1 once it has scrolled off.
     private var titleCollapseProgress: CGFloat {
         titleHeight > 0 ? min(max(scrollOffset / titleHeight, 0), 1) : 0
@@ -183,7 +186,18 @@ struct StoryTextView: View {
                     .lineLimit(1)
                     .opacity(titleCollapseProgress)
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                // Opens the same shared "More" options popover as the feed.
+                Button {
+                    moreOptionsStory = storyData
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.title2)
+                }
+            }
         }
+        // "More" options pop-up, shared with the story feed.
+        .storyOptionsPopover(for: $moreOptionsStory)
         .task {
             await storyData.fetchData()
             await commentFetcher.fetchComments()

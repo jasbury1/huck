@@ -8,7 +8,6 @@
 import SwiftUI
 import LinkPresentation
 import UniformTypeIdentifiers
-import UIKit
 
 struct StoryFeedView: View {
     @State var storyFilter: StoryFilter
@@ -74,19 +73,8 @@ struct StoryFeedView: View {
             }
         }
         .listStyle(.plain)
-        // "More" swipe action pop-up. Rendered as a floating popover on iPad
-        // and adapts to a sheet on iPhone. Presenting the tapped story lets
-        // each action operate on it directly.
-        .popover(
-            isPresented: Binding(
-                get: { moreOptionsStory != nil },
-                set: { if !$0 { moreOptionsStory = nil } }
-            )
-        ) {
-            if let story = moreOptionsStory {
-                moreOptionsMenu(for: story)
-            }
-        }
+        // "More" swipe action pop-up, shared with the story text view.
+        .storyOptionsPopover(for: $moreOptionsStory)
         // A small pull-down reveals the search field (it stays hidden while
         // scrolled, per the drawer's automatic display mode); pulling further
         // triggers the refresh below.
@@ -136,73 +124,6 @@ struct StoryFeedView: View {
         }
     }
 
-    /// The options shown by the "More" swipe action's popover. Options are laid
-    /// out as capsule rows — a leading label and a trailing SF Symbol — with
-    /// related actions grouped into a single rounded card divided by separators,
-    /// mirroring the action rows in Apple's Mail app, because I like the way that
-    /// looks.
-    private func moreOptionsMenu(for story: StoryModel) -> some View {
-        VStack(spacing: 12) {
-            // Copy Link stands on its own.
-            moreOptionGroup {
-                moreOptionRow("Copy Link", systemImage: "link") {
-                    // Link posts copy the article URL; text posts (no URL) fall
-                    // back to the story's Hacker News discussion page.
-                    UIPasteboard.general.url = story.url
-                        ?? URL(string: "https://news.ycombinator.com/item?id=\(story.id)")
-                }
-            }
-            // Save and Add to Collection are grouped as one card.
-            moreOptionGroup {
-                moreOptionRow("Save", systemImage: "bookmark") {
-                    // TODO: Save this story
-                }
-                Divider()
-                moreOptionRow("Add to Collection...", systemImage: "plus.rectangle.on.rectangle") {
-                    // TODO: Add this story to a collection
-                }
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .top)
-        .presentationDetents([.height(240)])
-    }
-
-    /// Wraps one or more option rows in a single rounded card, so grouped rows
-    /// share a background with dividers between them (like Mail's action group).
-    private func moreOptionGroup<Content: View>(
-        @ViewBuilder _ content: () -> Content
-    ) -> some View {
-        VStack(spacing: 0) {
-            content()
-        }
-        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-
-    /// A single option row: leading label, trailing icon. Running the action
-    /// also dismisses the popover. Meant to sit inside a `moreOptionGroup`.
-    private func moreOptionRow(
-        _ title: LocalizedStringKey,
-        systemImage: String,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button {
-            action()
-            moreOptionsStory = nil
-        } label: {
-            HStack {
-                Text(title)
-                Spacer()
-                Image(systemName: systemImage)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(.primary)
-    }
 }
 
 @Observable
