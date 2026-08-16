@@ -9,11 +9,17 @@ import Foundation
 
 public enum APIError: Error, LocalizedError {
     case loginFailed
+    case notLoggedIn
+    case missingAuthToken
+    case voteFailed
     case unknown
-    
+
     public var errorDescription: String? {
         switch self {
         case .loginFailed: return "Login Failed."
+        case .notLoggedIn: return "You must be logged in to do that."
+        case .missingAuthToken: return "Couldn't verify the action with Hacker News."
+        case .voteFailed: return "Vote Failed."
         case .unknown: return "Unknown Error."
         }
     }

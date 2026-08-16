@@ -124,6 +124,45 @@ class HackerNewsAPI {
         await AlgoliaAPIService.getUserComments(username: username, page: page)
     }
 
+    // MARK: - Voting
+
+    /// Upvotes a story on behalf of the logged-in user.
+    static func upvoteStory(id: Int) async throws {
+        try await vote(storyId: id, how: .up)
+    }
+
+    /// Removes the logged-in user's upvote from a story.
+    static func unvoteStory(id: Int) async throws {
+        try await vote(storyId: id, how: .unvote)
+    }
+
+    private static func vote(storyId: Int, how: NewsYCService.VoteAction) async throws {
+        guard UserSession.shared != nil else { throw APIError.notLoggedIn }
+        // The vote requires the item's per-user `auth` token, which only lives in
+        // the item page's HTML, so fetch it first, then cast the vote.
+        guard let voteAuth = await NewsYCService.voteAuth(forItem: storyId) else {
+            throw APIError.missingAuthToken
+        }
+        try await NewsYCService.castVote(id: storyId, how: how, auth: voteAuth.auth)
+    }
+
+    /// The set of story ids the logged-in user has upvoted, read from the first
+    /// `maxPages` of their `/upvoted` history. Bounded by design (see the upvoting
+    /// proposal): recent votes are covered here, and individual older stories are
+    /// corrected lazily when their vote `auth` token is fetched.
+    static func fetchUpvotedStoryIds(maxPages: Int = 2) async -> Set<Int> {
+        guard let username = UserSession.shared?.username else { return [] }
+        var ids = Set<Int>()
+        var page = 1
+        while page <= maxPages {
+            let result = await NewsYCService.upvotedStoryIds(username: username, page: page)
+            ids.formUnion(result.ids)
+            if !result.hasMore { break }
+            page += 1
+        }
+        return ids
+    }
+
     // MARK: - Authentication
 
     // TODO: Eventually these will be able to pull dummy data with a mock API handler.
