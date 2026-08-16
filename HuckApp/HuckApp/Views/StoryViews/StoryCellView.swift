@@ -18,7 +18,18 @@ struct StoryCellView: View {
     /// Opens link posts in the standardized in-app Safari browser.
     @Environment(\.openInAppBrowser) private var openInAppBrowser
 
+    /// Shared interaction state (drives the upvote arrow's color) and the upvote
+    /// action (handles the login gate and the vote toggle).
+    @Environment(InteractionStore.self) private var interactionStore
+    @Environment(\.upvote) private var upvote
+
     private var storyId: Int { storyData.id }
+
+    private var isUpvoted: Bool { interactionStore.interaction(for: storyId).isUpvoted }
+
+    /// The fetched score plus any optimistic vote adjustment from the shared store,
+    /// so this row stays in sync with the story's other views.
+    private var displayedScore: Int { storyData.score + interactionStore.scoreDelta(for: storyId) }
 
     init(model: StoryModel, path: Binding<NavigationPath>) {
         self.storyData = model
@@ -51,16 +62,17 @@ struct StoryCellView: View {
                     .buttonStyle(.plain)
                     
                     HStack {
-                        // Button to upvote the post
+                        // Button to upvote the post. The arrow turns orange once
+                        // upvoted; the action handles login and the toggle.
                         Button(action: {
-                            // TODO
+                            upvote(storyData)
                         }) {
                             HStack {
                                 Image(systemName: "arrow.up")
-                                    .foregroundColor(.gray)
-                                Text("\(storyData.score)")
+                                    .foregroundColor(isUpvoted ? .orange : .gray)
+                                Text("\(displayedScore)")
                                     .font(.footnote)
-                                    .foregroundStyle(.gray)
+                                    .foregroundStyle(isUpvoted ? .orange : .gray)
                             }
                         }
                         .buttonStyle(.plain)

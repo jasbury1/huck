@@ -64,18 +64,31 @@ enum ThumbnailType {
     case text
 }
 
+/// An immutable, write-once snapshot of a story's server-fetched content.
+///
+/// A `StoryModel` is populated exactly once by `fetchData()` and never mutated
+/// afterward, so the same story shown by multiple instances (feed row, comments
+/// view, profile) always reads identically. All *mutable*, user-derived state —
+/// upvotes and their optimistic effect on the score, saves, hides — lives in
+/// `InteractionStore`, keyed by story id, rather than on these per-view instances.
+///
+/// This is a deliberate design rule; see `docs/story-state-ownership.md`. The
+/// fetched properties are `private(set)` to enforce it: mutating one instance's
+/// content would silently desync the others (this is what caused the upvote score
+/// drift bug). If a field ever needs to change over time (e.g. a live-refreshing
+/// score), route it through an id-keyed store overlay — do not make it settable.
 @Observable
 class StoryModel : Equatable {
     let id: Int
-    var storyType: StoryType
-    var title: String
-    var by: String
-    var timestamp: Date
-    var score: Int
-    var url: URL?
-    var commentCount: Int
-    var thumbnailStatus: ThumbnailType
-    var text: String?
+    private(set) var storyType: StoryType
+    private(set) var title: String
+    private(set) var by: String
+    private(set) var timestamp: Date
+    private(set) var score: Int
+    private(set) var url: URL?
+    private(set) var commentCount: Int
+    private(set) var thumbnailStatus: ThumbnailType
+    private(set) var text: String?
 
     /// Whether `fetchData()` has fully populated this model (story + thumbnail).
     /// A `StoryModel` instance is retained by `StoriesFeedData` across cell

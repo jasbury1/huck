@@ -33,6 +33,7 @@ struct AccountView: View {
             }
         }
         .inAppBrowser()
+        .upvoteEnabled()
     }
 
     /// The signed-in user's name, derived from the stored auth cookie via

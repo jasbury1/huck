@@ -74,6 +74,17 @@ struct StoryTextView: View {
     /// Opens the linked page in the standardized in-app Safari browser.
     @Environment(\.openInAppBrowser) private var openInAppBrowser
 
+    /// Shared interaction state (drives the upvote arrow's color) and the upvote
+    /// action (handles the login gate and the vote toggle).
+    @Environment(InteractionStore.self) private var interactionStore
+    @Environment(\.upvote) private var upvote
+
+    private var isUpvoted: Bool { interactionStore.interaction(for: storyId).isUpvoted }
+
+    /// The fetched score plus any optimistic vote adjustment from the shared store,
+    /// so this view stays in sync with the story's feed row.
+    private var displayedScore: Int { storyData.score + interactionStore.scoreDelta(for: storyId) }
+
     /// Height of the large in-content title and how far the list has scrolled,
     /// used to fade the small nav-bar title in as the large one scrolls off.
     @State private var titleHeight: CGFloat = 0
@@ -107,11 +118,20 @@ struct StoryTextView: View {
                         .font(.callout)
                         .foregroundStyle(.gray)
                     HStack {
-                        Image(systemName: "arrow.up")
-                            .foregroundColor(.gray)
-                        Text("\(storyData.score)")
-                            .font(.footnote)
-                            .foregroundStyle(.gray)
+                        // Upvote button: arrow turns orange once upvoted; the
+                        // action handles login and the toggle.
+                        Button(action: {
+                            upvote(storyData)
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.up")
+                                    .foregroundColor(isUpvoted ? .orange : .gray)
+                                Text("\(displayedScore)")
+                                    .font(.footnote)
+                                    .foregroundStyle(isUpvoted ? .orange : .gray)
+                            }
+                        }
+                        .buttonStyle(.plain)
                         Image(systemName: "bubble")
                             .foregroundColor(.gray)
                         Text("\(storyData.commentCount)")
@@ -273,5 +293,6 @@ class CommentSectionData {
 
 #Preview {
     StoryTextView(storyId: 46391572, path: .constant(NavigationPath()))
+        .environment(InteractionStore())
 }
 

@@ -20,6 +20,9 @@ struct StoryFeedView: View {
     /// pop-up. Non-nil while the confirmation dialog is presented.
     @State private var moreOptionsStory: StoryModel?
 
+    /// Upvote action (handles the login gate and the vote toggle).
+    @Environment(\.upvote) private var upvote
+
     @Binding var path: NavigationPath
     
     var body: some View {
@@ -52,7 +55,7 @@ struct StoryFeedView: View {
                     // listed first so a full swipe triggers it. All stubbed.
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button {
-                            // TODO: Upvote this story
+                            upvote(observableStories.model(for: id))
                         } label: {
                             Label("Upvote", systemImage: "arrow.up")
                         }

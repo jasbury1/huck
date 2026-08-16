@@ -10,7 +10,11 @@ internal import Combine
 
 struct ContentView: View {
     @StateObject var appController: ApplicationController = ApplicationController()
-    
+
+    /// App-wide source of truth for per-story interaction state (upvotes, and
+    /// later saved/hidden), observed by story views via the environment.
+    @State private var interactionStore = InteractionStore()
+
     var body: some View {
         TabView {
             Tab("Feed", systemImage: "newspaper.fill") {
@@ -29,6 +33,7 @@ struct ContentView: View {
             }
         }
         .tint(.orange)
+        .environment(interactionStore)
         .onAppear(perform: startApp)
     }
     

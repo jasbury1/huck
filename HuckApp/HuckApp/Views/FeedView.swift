@@ -65,5 +65,6 @@ struct FeedView: View {
             }
         }
         .inAppBrowser()
+        .upvoteEnabled()
     }
 }
