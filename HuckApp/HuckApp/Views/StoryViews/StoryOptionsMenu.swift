@@ -19,6 +19,11 @@ struct StoryOptionsMenu: View {
     /// Dismisses the presenting popover once an option has run.
     let dismiss: () -> Void
 
+    @Environment(InteractionStore.self) private var interactionStore
+    @Environment(\.favorite) private var favorite
+
+    private var isFavorited: Bool { interactionStore.interaction(for: story.id).isFavorited }
+
     var body: some View {
         VStack(spacing: 12) {
             // Copy Link stands on its own.
@@ -32,8 +37,11 @@ struct StoryOptionsMenu: View {
             }
             // Favorite and Add to Collection are grouped as one card.
             group {
-                row("Favorite", systemImage: "heart") {
-                    // TODO: Favorite this story
+                row(
+                    isFavorited ? "Unfavorite" : "Favorite",
+                    systemImage: isFavorited ? "heart.slash" : "heart"
+                ) {
+                    favorite(story)
                 }
                 Divider()
                 row("Add to Collection...", systemImage: "plus.rectangle.on.rectangle") {

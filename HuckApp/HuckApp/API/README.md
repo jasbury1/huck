@@ -12,7 +12,7 @@ HackerNewsAPI  ← the facade: the ONLY type the rest of the app calls
    ├── Services/FirebaseAPIService   (realtime story lists and items)
    │         │
    │         └── WebService          (generic URL fetch + JSON decode)
-   └── Services/NewsYCService        (reverse-engineered HTML scraping: voting)
+   └── Services/NewsYCService        (reverse-engineered HTML scraping: voting, favorites)
 ```
 
 ### `HackerNewsAPI` — the facade
@@ -32,10 +32,12 @@ service — they are not returned above the facade.
 
 `NewsYCService` is the third category anticipated in `CLAUDE.md`: a
 reverse-engineered handler for `news.ycombinator.com` itself, for actions the JSON
-APIs don't offer (currently voting). It **scrapes HTML** rather than decoding JSON,
-because HN embeds the per-user, per-item `auth` token that voting requires inside its
-page markup. Requests are cookie-authenticated automatically via
-`HTTPCookieStorage.shared`. All HTML parsing is localized to this file so an upstream
+APIs don't offer (voting and favoriting, plus reading a user's `/upvoted` and
+`/favorites` lists). It **scrapes HTML** rather than decoding JSON, because HN embeds
+the per-user, per-item `auth` token that voting/favoriting requires inside its page
+markup. Requests are cookie-authenticated automatically via `HTTPCookieStorage.shared`
+(note a user's `/favorites` is public, so it works for any username; `/upvoted` is
+private to its owner). All HTML parsing is localized to this file so an upstream
 markup change is a one-file fix. Like the others, it stays below the facade.
 
 ### Domain types (`Models/`)

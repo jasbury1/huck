@@ -173,6 +173,36 @@ class HackerNewsAPI {
         return ids
     }
 
+    // MARK: - Favorites
+
+    /// Favorites a story on behalf of the logged-in user.
+    static func favoriteStory(id: Int) async throws {
+        try await fave(storyId: id, un: false)
+    }
+
+    /// Removes the logged-in user's favorite from a story.
+    static func unfavoriteStory(id: Int) async throws {
+        try await fave(storyId: id, un: true)
+    }
+
+    private static func fave(storyId: Int, un: Bool) async throws {
+        guard UserSession.shared != nil else { throw APIError.notLoggedIn }
+        // Like voting, favoriting needs the item's per-user `auth` token from its
+        // page HTML.
+        guard let faveAuth = await NewsYCService.faveAuth(forItem: storyId) else {
+            throw APIError.missingAuthToken
+        }
+        try await NewsYCService.castFave(id: storyId, un: un, auth: faveAuth.auth)
+    }
+
+    /// A user's favorited stories, most-recent first, paginated. Favorites are
+    /// public on Hacker News, so this works for any `username`. `page` is 0-based to
+    /// match the other user feeds.
+    static func getFavoriteStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+        // NewsYCService pages the /favorites list 1-based.
+        await NewsYCService.favoriteStoryIds(username: username, page: page + 1)
+    }
+
     // MARK: - Authentication
 
     // TODO: Eventually these will be able to pull dummy data with a mock API handler.

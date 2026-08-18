@@ -78,8 +78,10 @@ struct StoryTextView: View {
     /// action (handles the login gate and the vote toggle).
     @Environment(InteractionStore.self) private var interactionStore
     @Environment(\.upvote) private var upvote
+    @Environment(\.favorite) private var favorite
 
     private var isUpvoted: Bool { interactionStore.interaction(for: storyId).isUpvoted }
+    private var isFavorited: Bool { interactionStore.interaction(for: storyId).isFavorited }
 
     /// The fetched score plus any optimistic vote adjustment from the shared store,
     /// so this view stays in sync with the story's feed row.
@@ -144,8 +146,14 @@ struct StoryTextView: View {
                             .foregroundStyle(.gray)
                         Image(systemName: "paperplane")
                             .foregroundColor(.gray)
-                        Image(systemName: "heart")
-                            .foregroundColor(.gray)
+                        // Favorite the post. The heart fills red once favorited.
+                        Button(action: {
+                            favorite(storyData)
+                        }) {
+                            Image(systemName: isFavorited ? "heart.fill" : "heart")
+                                .foregroundColor(isFavorited ? .red : .gray)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }

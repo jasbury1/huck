@@ -120,6 +120,45 @@ class InteractionStore {
         return result
     }
 
+    /// Toggles the favorite on a story: flips local state optimistically, calls the
+    /// API, and rolls back if it fails. No-op when logged out (callers route to
+    /// login first). Unlike voting, favoriting doesn't affect the score.
+    func toggleFavorite(_ story: StoryModel) async {
+        guard UserSession.shared != nil else { return }
+
+        let id = story.id
+        let wasFavorited = interactions.favorited.contains(id)
+
+        setFavorited(!wasFavorited, for: id)
+
+        do {
+            if wasFavorited {
+                try await HackerNewsAPI.unfavoriteStory(id: id)
+            } else {
+                try await HackerNewsAPI.favoriteStory(id: id)
+            }
+            persist()
+        } catch {
+            setFavorited(wasFavorited, for: id)
+            print("Favorite failed for \(id): \(error)")
+        }
+    }
+
+    /// A page of the *current user's* favorited stories for display. Their own
+    /// `/favorites` list is authoritative for their favorite state, so this
+    /// reconciles the store (keeping hearts in sync) — mirroring `likedStories`.
+    /// Other users' favorites are fetched via `HackerNewsAPI.getFavoriteStories`
+    /// directly and are *not* reconciled here, since they aren't the current user's.
+    func favoriteStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+        guard let username = UserSession.shared?.username else { return ([], false) }
+        let result = await HackerNewsAPI.getFavoriteStories(username: username, page: page)
+        if !result.ids.isEmpty {
+            interactions.favorited.formUnion(result.ids)
+            persist()
+        }
+        return result
+    }
+
     // MARK: - Helpers
 
     private func setUpvoted(_ value: Bool, for id: Int) {
@@ -127,6 +166,14 @@ class InteractionStore {
             interactions.upvoted.insert(id)
         } else {
             interactions.upvoted.remove(id)
+        }
+    }
+
+    private func setFavorited(_ value: Bool, for id: Int) {
+        if value {
+            interactions.favorited.insert(id)
+        } else {
+            interactions.favorited.remove(id)
         }
     }
 

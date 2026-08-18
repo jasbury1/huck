@@ -76,13 +76,66 @@ struct NewsYCService {
         }
     }
 
-    // MARK: - Upvote history
+    // MARK: - Favoriting
 
-    /// Scrapes one page of the user's `/upvoted` history, returning the story ids
-    /// on that page and whether a further page exists.
+    /// Fetches an item's page and extracts the `auth` token needed to favorite it,
+    /// along with whether the current user has already favorited it. Returns `nil`
+    /// if the token can't be found (e.g. not logged in, or markup changed).
+    static func faveAuth(forItem id: Int) async -> (auth: String, alreadyFavorited: Bool)? {
+        guard let url = URL(string: "\(baseUri)/item?id=\(id)"),
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+        // The item's favorite link is `fave?id=<ID>&auth=<TOKEN>` (and gains `un=t`
+        // once favorited). Scope to this id so we don't pick up a comment's link.
+        guard let auth = firstMatch(
+            in: html,
+            pattern: "fave\\?id=\(id)[^'\"]*?auth=([0-9a-fA-F]+)"
+        ) else {
+            return nil
+        }
+        let alreadyFavorited = contains(in: html, pattern: "fave\\?id=\(id)[^'\"]*?un=t")
+        return (auth, alreadyFavorited)
+    }
+
+    /// Favorites (or un-favorites, when `un` is true) an item. Throws
+    /// `APIError.favoriteFailed` on a non-success response.
+    static func castFave(id: Int, un: Bool, auth: String) async throws {
+        var components = URLComponents(string: "\(baseUri)/fave")!
+        var items = [URLQueryItem(name: "id", value: String(id))]
+        if un { items.append(URLQueryItem(name: "un", value: "t")) }
+        items.append(URLQueryItem(name: "auth", value: auth))
+        components.queryItems = items
+        guard let url = components.url else { throw APIError.favoriteFailed }
+
+        var request = URLRequest(url: url)
+        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        let (_, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse,
+              (200..<300).contains(http.statusCode) else {
+            throw APIError.favoriteFailed
+        }
+    }
+
+    // MARK: - Story-list history
+
+    /// Scrapes one page of the user's `/upvoted` history (private to its owner),
+    /// returning the story ids on that page and whether a further page exists.
     static func upvotedStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool) {
+        await storyListPage(path: "upvoted", username: username, page: page)
+    }
+
+    /// Scrapes one page of the user's public `/favorites`, returning the story ids
+    /// on that page and whether a further page exists.
+    static func favoriteStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool) {
+        await storyListPage(path: "favorites", username: username, page: page)
+    }
+
+    /// Fetches and parses a standard HN story-list page (`/upvoted`, `/favorites`,
+    /// …), which all share the same row markup.
+    private static func storyListPage(path: String, username: String, page: Int) async -> (ids: [Int], hasMore: Bool) {
         let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? username
-        guard let url = URL(string: "\(baseUri)/upvoted?id=\(encoded)&p=\(page)"),
+        guard let url = URL(string: "\(baseUri)/\(path)?id=\(encoded)&p=\(page)"),
               let html = try? await fetchHTML(from: url) else {
             return ([], false)
         }

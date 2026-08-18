@@ -22,10 +22,12 @@ struct StoryCellView: View {
     /// action (handles the login gate and the vote toggle).
     @Environment(InteractionStore.self) private var interactionStore
     @Environment(\.upvote) private var upvote
+    @Environment(\.favorite) private var favorite
 
     private var storyId: Int { storyData.id }
 
     private var isUpvoted: Bool { interactionStore.interaction(for: storyId).isUpvoted }
+    private var isFavorited: Bool { interactionStore.interaction(for: storyId).isFavorited }
 
     /// The fetched score plus any optimistic vote adjustment from the shared store,
     /// so this row stays in sync with the story's other views.
@@ -102,9 +104,15 @@ struct StoryCellView: View {
                         Image(systemName: "paperplane")
                             .foregroundColor(.gray)
                         
-                        // Favorite the post
-                        Image(systemName: "heart")
-                            .foregroundColor(.gray)
+                        // Favorite the post. The heart fills red once favorited;
+                        // the action handles login and the toggle.
+                        Button(action: {
+                            favorite(storyData)
+                        }) {
+                            Image(systemName: isFavorited ? "heart.fill" : "heart")
+                                .foregroundColor(isFavorited ? .red : .gray)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }

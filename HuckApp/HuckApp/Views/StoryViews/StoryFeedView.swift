@@ -20,8 +20,9 @@ struct StoryFeedView: View {
     /// pop-up. Non-nil while the confirmation dialog is presented.
     @State private var moreOptionsStory: StoryModel?
 
-    /// Upvote action (handles the login gate and the vote toggle).
+    /// Upvote and favorite actions (each handles the login gate and the toggle).
     @Environment(\.upvote) private var upvote
+    @Environment(\.favorite) private var favorite
 
     @Binding var path: NavigationPath
     
@@ -61,7 +62,7 @@ struct StoryFeedView: View {
                         }
                         .tint(.orange)
                         Button {
-                            // TODO: Favorite this story
+                            favorite(observableStories.model(for: id))
                         } label: {
                             Label("Favorite", systemImage: "heart")
                         }

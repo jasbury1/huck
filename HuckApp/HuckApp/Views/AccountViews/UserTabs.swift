@@ -10,8 +10,6 @@ import SwiftUI
 enum UserTab: CaseIterable, Hashable, Equatable {
     case posts
     case comments
-    case favorites
-    case liked
 
     var title: LocalizedStringKey {
         return switch self {
@@ -19,10 +17,6 @@ enum UserTab: CaseIterable, Hashable, Equatable {
             "Posts"
         case .comments:
             "Comments"
-        case .favorites:
-            "Favorites"
-        case .liked:
-            "Liked"
         }
     }
 }

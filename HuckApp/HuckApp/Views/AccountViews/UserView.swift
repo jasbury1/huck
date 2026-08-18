@@ -12,10 +12,6 @@ struct UserView: View {
     @State var user: User?
     @Binding var path: NavigationPath
 
-    /// Owns upvote state and vends the current user's liked (upvoted) list — the
-    /// source for the Liked tab, which also keeps upvote arrows in sync.
-    @Environment(InteractionStore.self) private var interactionStore
-
     @State private var currentTab: UserTab = .posts
     @State private var userStoryIds: [Int] = []
     /// Retained story models keyed by id, so a post cell that scrolls back into
@@ -30,11 +26,6 @@ struct UserView: View {
     @State private var commentPage = 0
     @State private var hasMoreComments = false
     @State private var isLoadingMoreComments = false
-
-    @State private var likedStoryIds: [Int] = []
-    @State private var likedPage = 0
-    @State private var hasMoreLiked = false
-    @State private var isLoadingMoreLiked = false
 
     // Collapsing-header state. `collapse` is the single source of truth for how
     // far the header is translated up; only the visible tab drives it. Because it
@@ -51,21 +42,20 @@ struct UserView: View {
     @State private var isSyncing = false
 
     @Namespace private var namespace
-    private let systemBackgroundColor = Color(UIColor.systemBackground)
+    /// The view's background (white in light mode).
+    private let cardBackgroundColor = Color(UIColor.systemBackground)
 
     // MARK: - Tabs available
 
-    /// Whether this profile belongs to the logged-in user. The "Liked" list is
-    /// private to its owner, so its tab only appears here.
+    /// Whether this profile belongs to the logged-in user. Their likes are private,
+    /// so the Likes action only shows on their own profile.
     private var isCurrentUser: Bool {
         username == UserSession.shared?.username
     }
 
-    /// The tabs to show, in order. "Liked" is appended only for the current user.
+    /// The tabs to show, in order.
     private var availableTabs: [UserTab] {
-        var tabs: [UserTab] = [.posts, .comments, .favorites]
-        if isCurrentUser { tabs.append(.liked) }
-        return tabs
+        [.posts, .comments]
     }
 
     // MARK: - Collapse math
@@ -82,6 +72,7 @@ struct UserView: View {
             tabPager
             collapsingHeader
         }
+        .background(cardBackgroundColor)
         .navigationTitle(username)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -103,15 +94,6 @@ struct UserView: View {
             hasMorePages = storyResult.hasMore
             userComments = commentResult.comments
             hasMoreComments = commentResult.hasMore
-
-            // The Liked (upvoted) list is private to its owner, so only load it
-            // for the current user's own profile.
-            if isCurrentUser {
-                let likedResult = await interactionStore.likedStories(page: 0)
-                registerStoryModels(for: likedResult.ids)
-                likedStoryIds = likedResult.ids
-                hasMoreLiked = likedResult.hasMore
-            }
         }
     }
 
@@ -127,33 +109,124 @@ struct UserView: View {
                     .font(.largeTitle)
                     .bold()
                 userSummary
+                profileActionButtons
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .opacity(1 - collapseProgress)
+            .background(cardBackgroundColor)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { collapsibleHeight = $0 }
 
             VStack(spacing: 0) {
                 tabBarButtons
                 Divider()
             }
+            // White behind the tab bar, matching the content below it.
+            .background(cardBackgroundColor)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tabBarHeight = $0 }
         }
-        .background(systemBackgroundColor)
         .offset(y: -collapse)
     }
 
+    /// Maximum height of the bio before it clips. A future "Expand" control will
+    /// lift this cap.
+    private let bioMaxHeight: CGFloat = 120
+    /// The bio's full (unclipped) height, measured to decide whether to clip and
+    /// show "Expand".
+    @State private var bioFullHeight: CGFloat = 0
+
     var userSummary: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Karma: \(user?.karma ?? 0)")
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Karma: \(user?.karma ?? 0)")
+                    .foregroundStyle(.secondary)
+                Spacer()
+                // Shown only when the bio is clipped; expands it (no-op for now).
+                if bioFullHeight > bioMaxHeight {
+                    Button {
+                        // TODO: Expand the bio
+                    } label: {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .foregroundStyle(.orange)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
             if let about = user?.about, !about.isEmpty {
+                // Cap the height so a long bio can't push the tab bar off screen;
+                // overflow is hard-clipped.
                 Text(about)
-                    .padding(.top, 4)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    // A hidden copy at the same width reports the full height
+                    // (`fixedSize` keeps it from being clipped), so we can decide
+                    // whether to show "Expand".
+                    .background(alignment: .topLeading) {
+                        Text(about)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .topLeading)
+                            .hidden()
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                                bioFullHeight = $0
+                            }
+                    }
+                    // Cap the height and hard-clip BOTH the visible text and the
+                    // measurer's overflow, so nothing extends past this frame to
+                    // block scrolling/paging over the content below.
+                    .frame(maxHeight: bioMaxHeight, alignment: .top)
+                    .clipped()
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Prominent actions below the bio. The current user sees Likes + Favorites
+    /// side by side; other users see only Favorites (their likes are private),
+    /// spanning the full width. Non-functional for now.
+    var profileActionButtons: some View {
+        HStack(spacing: 12) {
+            if isCurrentUser {
+                profileActionButton("Likes", systemImage: "arrow.up", iconColor: .orange) {
+                    // TODO: Show this user's likes (upvoted posts and comments)
+                }
+            }
+            profileActionButton("Favorites", systemImage: "heart", iconColor: .red) {
+                // TODO: Show this user's favorites (posts and comments)
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    /// A neutral (system-background) card button: a colored leading icon, the
+    /// left-aligned title, and a trailing chevron.
+    private func profileActionButton(
+        _ title: LocalizedStringKey,
+        systemImage: String,
+        iconColor: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .foregroundStyle(iconColor)
+                Text(title)
+                    .foregroundStyle(.primary)
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color(.separator), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Tabs
@@ -261,7 +334,7 @@ struct UserView: View {
         }
         .padding(.horizontal)
         .padding(.top, 4)
-        .background(systemBackgroundColor)
+        .background(cardBackgroundColor)
         // Animate the underline for swipe-driven selection changes too.
         .animation(.easeInOut, value: currentTab)
     }
@@ -274,8 +347,6 @@ struct UserView: View {
         switch tab {
         case .posts: postsList
         case .comments: commentsList
-        case .favorites: favoritesContent
-        case .liked: likedList
         }
     }
 
@@ -315,43 +386,6 @@ struct UserView: View {
         }
     }
 
-    var favoritesContent: some View {
-        Text("Favorites are not publicly available")
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity)
-            .padding(.top, 40)
-    }
-
-    /// The current user's liked (upvoted) stories. Mirrors `postsList`, sharing the
-    /// same retained `storyModels` so a story that also appears under Posts stays in
-    /// sync.
-    @ViewBuilder
-    var likedList: some View {
-        if likedStoryIds.isEmpty && !hasMoreLiked {
-            Text("You haven't liked any stories yet")
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 40)
-        } else {
-            LazyVStack(spacing: 0) {
-                ForEach(likedStoryIds, id: \.self) { storyId in
-                    StoryCellView(model: model(for: storyId), path: $path)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                    Divider()
-                }
-                if hasMoreLiked {
-                    ProgressView()
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .onAppear {
-                            Task { await loadMoreLiked() }
-                        }
-                }
-            }
-        }
-    }
-
     /// Creates a retained `StoryModel` for any id that doesn't have one yet.
     private func registerStoryModels(for ids: [Int]) {
         for id in ids where storyModels[id] == nil {
@@ -386,18 +420,6 @@ struct UserView: View {
         commentPage = nextPage
         hasMoreComments = result.hasMore
         isLoadingMoreComments = false
-    }
-
-    private func loadMoreLiked() async {
-        guard !isLoadingMoreLiked && hasMoreLiked else { return }
-        isLoadingMoreLiked = true
-        let nextPage = likedPage + 1
-        let result = await interactionStore.likedStories(page: nextPage)
-        registerStoryModels(for: result.ids)
-        likedStoryIds.append(contentsOf: result.ids)
-        likedPage = nextPage
-        hasMoreLiked = result.hasMore
-        isLoadingMoreLiked = false
     }
 }
 
