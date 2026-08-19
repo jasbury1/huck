@@ -186,10 +186,13 @@ struct UserView: View {
                 // The "About" header and the bio grouped together in a card.
                 VStack(alignment: .leading, spacing: 8) {
                     //sectionHeader("About")
-                    // Cap the height so a long bio can't push the tab bar off screen;
-                    // overflow is hard-clipped.
+                    // Cap the height so a long bio can't push the tab bar off screen.
+                    // NOTE: no `.fixedSize` here — with it, the Text ignores the
+                    // height cap below and lays out at full height, overflowing the
+                    // frame. That overflow stays hit-testable (clip/mask only affect
+                    // rendering), so a long bio would overhang and steal the tab
+                    // list's scroll gestures. Without it, the Text respects the cap.
                     Text(about)
-                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                         // A hidden copy at the same width reports the full height
                         // (`fixedSize` keeps it from being clipped), so we can decide
@@ -213,9 +216,15 @@ struct UserView: View {
                             height: bioFullHeight > 0 ? min(bioFullHeight, bioMaxHeight) : nil,
                             alignment: .top
                         )
+                        // Hard-clip the overflow to the frame. `mask` only affects
+                        // alpha — without this, a long bio's invisible overflow still
+                        // extends past the frame and steals scroll gestures from the
+                        // tab section below. `clipped()` bounds both drawing AND hit
+                        // testing to the frame.
+                        .clipped()
                         // When the bio is clipped, fade the last stretch to hint at
                         // more content instead of a hard cut. Short bios that fit are
-                        // fully opaque. The mask also clips overflow to the frame.
+                        // fully opaque.
                         .mask(bioFadeMask)
                         // A "Read more" affordance sits over the fade, blending in
                         // from the trailing edge, and opens the full bio in a sheet.
@@ -246,7 +255,7 @@ struct UserView: View {
                 .background {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 2)
                 }
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -303,7 +312,7 @@ struct UserView: View {
             .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color(.separator), lineWidth: 1)
+                    .stroke(Color(.separator), lineWidth: 0)
             )
         }
         .buttonStyle(.plain)
