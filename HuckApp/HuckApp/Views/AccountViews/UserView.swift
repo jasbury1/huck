@@ -44,6 +44,14 @@ struct UserView: View {
     /// The view's background (white in light mode).
     private let cardBackgroundColor = Color(UIColor.systemBackground)
 
+    @Environment(\.colorScheme) private var colorScheme
+    /// Shadow color for the elevated cards. A dark drop shadow is invisible against
+    /// the near-black background in dark mode, so there we use a subtle light glow
+    /// to lift the card instead.
+    private var cardShadowColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.18)
+    }
+
     // MARK: - Tabs available
 
     /// Whether this profile belongs to the logged-in user. Their likes are private,
@@ -52,9 +60,14 @@ struct UserView: View {
         username == UserSession.shared?.username
     }
 
-    /// The tabs to show, in order.
+    /// The tabs to show, in order. "Recently viewed" is private to the logged-in
+    /// user, so it only appears on their own profile.
     private var availableTabs: [UserTab] {
-        [.posts, .comments]
+        var tabs: [UserTab] = [.posts, .comments]
+        if isCurrentUser {
+            tabs.append(.recentlyViewed)
+        }
+        return tabs
     }
 
     // MARK: - Collapse math
@@ -134,18 +147,24 @@ struct UserView: View {
         .offset(y: -collapse)
     }
 
-    /// Height of the soft fade at the bottom of a clipped bio.
+    /// Length of the fade ramp (opaque → clear) at the bottom of a clipped bio.
     private let bioFadeHeight: CGFloat = 32
+    /// How far above the bottom edge the fade reaches fully clear.
+    private let bioFadeEndInset: CGFloat = 24
 
-    /// Mask for the bio: opaque for a bio that fits, but fading to clear over the
-    /// last `bioFadeHeight` points when it's clipped, softening the cut-off.
+    /// Mask for the bio: opaque for a bio that fits, but ramping to clear near the
+    /// bottom when it's clipped, softening the cut-off. The clear point sits
+    /// `bioFadeEndInset` above the bottom so the text is gone slightly higher up.
     @ViewBuilder
     private var bioFadeMask: some View {
         if bioFullHeight > bioMaxHeight {
+            let clearLocation = max(0, (bioMaxHeight - bioFadeEndInset) / bioMaxHeight)
+            let blackLocation = max(0, (bioMaxHeight - bioFadeEndInset - bioFadeHeight) / bioMaxHeight)
             LinearGradient(
                 stops: [
                     .init(color: .black, location: 0),
-                    .init(color: .black, location: max(0, (bioMaxHeight - bioFadeHeight) / bioMaxHeight)),
+                    .init(color: .black, location: blackLocation),
+                    .init(color: .clear, location: clearLocation),
                     .init(color: .clear, location: 1)
                 ],
                 startPoint: .top,
@@ -255,11 +274,11 @@ struct UserView: View {
                 .background {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(Color(.systemBackground))
-                        .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 2)
+                        .shadow(color: cardShadowColor, radius: 6, x: 0, y: 2)
                 }
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color(.separator), lineWidth: 0)
+                        .stroke(Color(.separator), lineWidth: 1)
                 )
             }
         }
@@ -309,10 +328,10 @@ struct UserView: View {
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 2)
+            .shadow(color: cardShadowColor, radius: 6, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color(.separator), lineWidth: 0)
+                    .stroke(Color(.separator), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -454,7 +473,19 @@ struct UserView: View {
         switch tab {
         case .posts: postsList
         case .comments: commentsList
+        case .recentlyViewed: recentlyViewedList
         }
+    }
+
+    /// Placeholder for the recently-viewed stories. Tracking and content will be
+    /// wired up in a later change.
+    var recentlyViewedList: some View {
+        ContentUnavailableView(
+            "No Recently Viewed",
+            systemImage: "clock",
+            description: Text("Stories you open will show up here.")
+        )
+        .padding(.top, 40)
     }
 
     var postsList: some View {

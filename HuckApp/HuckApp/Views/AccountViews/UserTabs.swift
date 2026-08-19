@@ -10,6 +10,7 @@ import SwiftUI
 enum UserTab: CaseIterable, Hashable, Equatable {
     case posts
     case comments
+    case recentlyViewed
 
     var title: LocalizedStringKey {
         return switch self {
@@ -17,6 +18,8 @@ enum UserTab: CaseIterable, Hashable, Equatable {
             "Posts"
         case .comments:
             "Comments"
+        case .recentlyViewed:
+            "Recently viewed"
         }
     }
 
@@ -28,6 +31,8 @@ enum UserTab: CaseIterable, Hashable, Equatable {
             "newspaper.fill"
         case .comments:
             "bubble.left.and.bubble.right.fill"
+        case .recentlyViewed:
+            "clock.fill"
         }
     }
 
@@ -38,6 +43,8 @@ enum UserTab: CaseIterable, Hashable, Equatable {
             .orange
         case .comments:
             .blue
+        case .recentlyViewed:
+            .purple
         }
     }
 }
