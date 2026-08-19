@@ -167,26 +167,21 @@ struct UserView: View {
     /// lift this cap.
     private let bioMaxHeight: CGFloat = 140
     /// The bio's full (unclipped) height, measured to decide whether to clip and
-    /// show "Expand".
+    /// show "Read more".
     @State private var bioFullHeight: CGFloat = 0
+    /// Whether the full-bio sheet is presented.
+    @State private var showingFullBio = false
 
     var userSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Karma: \(user?.karma ?? 0)")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                // Shown only when the bio is clipped; expands it (no-op for now).
-                if bioFullHeight > bioMaxHeight {
-                    Button {
-                        // TODO: Expand the bio
-                    } label: {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .foregroundStyle(.orange)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+            Text("Karma: \(user?.karma ?? 0)")
+                .foregroundStyle(.secondary)
+                // Tuck the karma closer to the username above it.
+                .padding(.top, -6)
+            sectionHeader("About")
+                .padding(.horizontal, 0)
+                .padding(.top, 10)
+                .padding(.bottom, 4)
             if let about = user?.about, !about.isEmpty {
                 // The "About" header and the bio grouped together in a card.
                 VStack(alignment: .leading, spacing: 8) {
@@ -222,6 +217,28 @@ struct UserView: View {
                         // more content instead of a hard cut. Short bios that fit are
                         // fully opaque. The mask also clips overflow to the frame.
                         .mask(bioFadeMask)
+                        // A "Read more" affordance sits over the fade, blending in
+                        // from the trailing edge, and opens the full bio in a sheet.
+                        .overlay(alignment: .bottomTrailing) {
+                            if bioFullHeight > bioMaxHeight {
+                                Button {
+                                    showingFullBio = true
+                                } label: {
+                                    Text("Read more")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.orange)
+                                        .padding(.leading, 32)
+                                        .background(
+                                            LinearGradient(
+                                                colors: [.clear, cardBackgroundColor, cardBackgroundColor],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
@@ -238,6 +255,9 @@ struct UserView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(isPresented: $showingFullBio) {
+            BioSheet(username: username, about: user?.about ?? "")
+        }
     }
 
     /// Prominent actions below the bio. The current user sees Likes + Favorites
@@ -534,6 +554,33 @@ struct UserCommentRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+    }
+}
+
+/// A sheet that shows a user's full bio, scrollable, for bios too long to fit
+/// in the profile card.
+struct BioSheet: View {
+    let username: String
+    let about: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                Text(about)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            .navigationTitle(username)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }
 
