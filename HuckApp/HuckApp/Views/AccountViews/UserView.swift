@@ -41,7 +41,6 @@ struct UserView: View {
     /// interim offsets are ignored so they can't drag `collapse` back to the top.
     @State private var isSyncing = false
 
-    @Namespace private var namespace
     /// The view's background (white in light mode).
     private let cardBackgroundColor = Color(UIColor.systemBackground)
 
@@ -118,7 +117,13 @@ struct UserView: View {
             .background(cardBackgroundColor)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { collapsibleHeight = $0 }
 
-            VStack(spacing: 0) {
+            // Pinned region: the "Activity" title anchors to the top with the
+            // tab pills directly beneath it, both staying put as content scrolls.
+            VStack(alignment: .leading, spacing: 0) {
+                sectionHeader("Activity")
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
                 tabBarButtons
                 Divider()
             }
@@ -129,9 +134,38 @@ struct UserView: View {
         .offset(y: -collapse)
     }
 
+    /// Height of the soft fade at the bottom of a clipped bio.
+    private let bioFadeHeight: CGFloat = 32
+
+    /// Mask for the bio: opaque for a bio that fits, but fading to clear over the
+    /// last `bioFadeHeight` points when it's clipped, softening the cut-off.
+    @ViewBuilder
+    private var bioFadeMask: some View {
+        if bioFullHeight > bioMaxHeight {
+            LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0),
+                    .init(color: .black, location: max(0, (bioMaxHeight - bioFadeHeight) / bioMaxHeight)),
+                    .init(color: .clear, location: 1)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        } else {
+            Color.black
+        }
+    }
+
+    /// A lightweight section title used above the bio and the activity tabs.
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(.headline)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     /// Maximum height of the bio before it clips. A future "Expand" control will
     /// lift this cap.
-    private let bioMaxHeight: CGFloat = 120
+    private let bioMaxHeight: CGFloat = 140
     /// The bio's full (unclipped) height, measured to decide whether to clip and
     /// show "Expand".
     @State private var bioFullHeight: CGFloat = 0
@@ -154,28 +188,53 @@ struct UserView: View {
                 }
             }
             if let about = user?.about, !about.isEmpty {
-                // Cap the height so a long bio can't push the tab bar off screen;
-                // overflow is hard-clipped.
-                Text(about)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                    // A hidden copy at the same width reports the full height
-                    // (`fixedSize` keeps it from being clipped), so we can decide
-                    // whether to show "Expand".
-                    .background(alignment: .topLeading) {
-                        Text(about)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(maxWidth: .infinity, alignment: .topLeading)
-                            .hidden()
-                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
-                                bioFullHeight = $0
-                            }
-                    }
-                    // Cap the height and hard-clip BOTH the visible text and the
-                    // measurer's overflow, so nothing extends past this frame to
-                    // block scrolling/paging over the content below.
-                    .frame(maxHeight: bioMaxHeight, alignment: .top)
-                    .clipped()
+                // The "About" header and the bio grouped together in a card.
+                VStack(alignment: .leading, spacing: 8) {
+                    //sectionHeader("About")
+                    // Cap the height so a long bio can't push the tab bar off screen;
+                    // overflow is hard-clipped.
+                    Text(about)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        // A hidden copy at the same width reports the full height
+                        // (`fixedSize` keeps it from being clipped), so we can decide
+                        // whether to show "Expand".
+                        .background(alignment: .topLeading) {
+                            Text(about)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                                .hidden()
+                                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                                    bioFullHeight = $0
+                                }
+                        }
+                        // Clamp to the measured bio height (capped at `bioMaxHeight`)
+                        // and hard-clip the overflow. Using an exact height rather
+                        // than `maxHeight` keeps the frame from expanding to fill the
+                        // header's offered space, which left dead space for short bios.
+                        // Before measurement (`bioFullHeight == 0`) fall back to the
+                        // natural height.
+                        .frame(
+                            height: bioFullHeight > 0 ? min(bioFullHeight, bioMaxHeight) : nil,
+                            alignment: .top
+                        )
+                        // When the bio is clipped, fade the last stretch to hint at
+                        // more content instead of a hard cut. Short bios that fit are
+                        // fully opaque. The mask also clips overflow to the frame.
+                        .mask(bioFadeMask)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.systemBackground))
+                        .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 2)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color(.separator), lineWidth: 0)
+                )
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -221,6 +280,7 @@ struct UserView: View {
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(Color(.separator), lineWidth: 1)
@@ -310,33 +370,51 @@ struct UserView: View {
         )
     }
 
+    /// Mail-style category tabs: each tab is a symbol in a colored capsule that
+    /// expands to reveal its title when selected. Both tapping a pill and
+    /// swiping the pager below drive `currentTab`, and the shared animation
+    /// keeps the expand/collapse smooth either way.
     var tabBarButtons: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 10) {
             ForEach(availableTabs, id: \.self) { tab in
-                let selected = currentTab == tab
-                Text(tab.title)
-                    .font(.body)
-                    .foregroundStyle(selected ? Color.primary : Color.secondary)
-                    .padding(.vertical, 8)
-                    .onTapGesture {
-                        withAnimation(.easeInOut) { currentTab = tab }
-                    }
-                    .background {
-                        if selected {
-                            Color.orange
-                                .frame(height: 2)
-                                .frame(maxHeight: .infinity, alignment: .bottom)
-                                .matchedGeometryEffect(id: "indicator", in: namespace)
-                        }
-                    }
+                tabPill(for: tab)
             }
             Spacer()
         }
         .padding(.horizontal)
         .padding(.top, 4)
+        .padding(.bottom, 8)
         .background(cardBackgroundColor)
-        // Animate the underline for swipe-driven selection changes too.
-        .animation(.easeInOut, value: currentTab)
+        // Animate the pills for swipe-driven selection changes too.
+        .animation(.snappy(duration: 0.3), value: currentTab)
+    }
+
+    /// A single tab pill. Unselected it shows only its symbol on a neutral fill;
+    /// selected it fills with the tab's color and expands to include the title.
+    private func tabPill(for tab: UserTab) -> some View {
+        let selected = currentTab == tab
+        return Button {
+            withAnimation(.snappy(duration: 0.3)) { currentTab = tab }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: tab.systemImage)
+                if selected {
+                    Text(tab.title)
+                        .fontWeight(.semibold)
+                        .fixedSize()
+                }
+            }
+            .font(.subheadline)
+            .foregroundStyle(selected ? Color.white : Color.secondary)
+            .padding(.vertical, 8)
+            .padding(.horizontal, selected ? 14 : 11)
+            .background {
+                Capsule(style: .continuous)
+                    .fill(selected ? AnyShapeStyle(tab.color) : AnyShapeStyle(Color(.secondarySystemFill)))
+            }
+            .contentShape(Capsule(style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Tab Content

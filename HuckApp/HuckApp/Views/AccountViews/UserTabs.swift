@@ -19,4 +19,25 @@ enum UserTab: CaseIterable, Hashable, Equatable {
             "Comments"
         }
     }
+
+    /// The SF Symbol shown in the tab's pill. Always visible; the title only
+    /// appears when the pill is selected.
+    var systemImage: String {
+        return switch self {
+        case .posts:
+            "newspaper.fill"
+        case .comments:
+            "bubble.left.and.bubble.right.fill"
+        }
+    }
+
+    /// The pill's fill color when selected, à la the Mail app's category tabs.
+    var color: Color {
+        return switch self {
+        case .posts:
+            .orange
+        case .comments:
+            .blue
+        }
+    }
 }
