@@ -212,9 +212,20 @@ struct StoryTextView: View {
             if let text = storyData.text {
                 Text(try! AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
             }
-            Text("By \(storyData.by)")
-                .font(.callout)
-                .foregroundStyle(.gray)
+            // Only the username is tappable, navigating to the author's profile;
+            // a plain Button keeps the tap target limited to the name itself.
+            HStack(spacing: 4) {
+                Text("By")
+                    .foregroundStyle(.gray)
+                Button {
+                    path.append(ItemNavigation.userProfile(user: storyData.by))
+                } label: {
+                    Text(storyData.by)
+                        .foregroundStyle(.gray)
+                }
+                .buttonStyle(.plain)
+            }
+            .font(.callout)
             HStack {
                 // Upvote button: arrow turns orange once upvoted; the action
                 // handles login and the toggle.

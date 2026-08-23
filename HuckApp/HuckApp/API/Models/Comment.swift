@@ -27,4 +27,18 @@ class Comment {
         self.children = []
         self.timestamp = Date(timeIntervalSince1970: TimeInterval(item.createdAtI))
     }
+
+    /// Builds a comment from the realtime Firebase API, used as a fallback when a
+    /// story is too new to be indexed by Algolia. Firebase omits a comment's
+    /// score, so `points` defaults to 0.
+    init(firebase item: FirebaseCommentData, nestingLevel: Int) {
+        self.id = item.id
+        self.nestingLevel = nestingLevel
+        self.text = item.text?.normalizeHtmlText() ?? ""
+        self.points = 0
+        self.author = item.by ?? ""
+        self.parent = nil
+        self.children = []
+        self.timestamp = Date(timeIntervalSince1970: TimeInterval(item.time ?? 0))
+    }
 }

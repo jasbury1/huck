@@ -21,13 +21,19 @@ struct FirebaseStoryData: Codable {
 }
 
 /// A comment item as returned by the official Firebase HN `item` endpoint.
+///
+/// Most fields are optional because leaf comments omit `kids` and
+/// deleted/dead comments omit `by` and `text`; requiring them would fail the
+/// decode and drop the whole comment.
 struct FirebaseCommentData: Codable {
-    let by: String
     let id: Int
-    let kids: [Int]
-    let parent: Int
-    let text: String
-    let time: Int
+    let by: String?
+    let kids: [Int]?
+    let parent: Int?
+    let text: String?
+    let time: Int?
+    let deleted: Bool?
+    let dead: Bool?
 }
 
 // MARK: - Service
