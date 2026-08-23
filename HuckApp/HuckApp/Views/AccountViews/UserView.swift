@@ -189,10 +189,7 @@ struct UserView: View {
                 .foregroundStyle(.secondary)
                 // Tuck the karma closer to the username above it.
                 .padding(.top, -6)
-            sectionHeader("About")
-                .padding(.horizontal, 0)
-                .padding(.top, 10)
-                .padding(.bottom, 4)
+                .padding(.bottom, 10)
             if let about = user?.about, !about.isEmpty {
                 // The "About" header and the bio grouped together in a card.
                 VStack(alignment: .leading, spacing: 8) {
