@@ -9,16 +9,20 @@ import SwiftUI
 
 struct CommentCellView: View {
     @State private var commentData: Comment
+    /// When true, the row shrinks to just the username and a down chevron; the
+    /// timestamp, body, and this comment's replies are hidden.
+    let isCollapsed: Bool
     @Binding var path: NavigationPath
 
     private var indentationLevel = 0
 
-    init(commentData: Comment, path: Binding<NavigationPath>) {
+    init(commentData: Comment, isCollapsed: Bool, path: Binding<NavigationPath>) {
         self.commentData = commentData
+        self.isCollapsed = isCollapsed
         self._path = path
         indentationLevel = commentData.nestingLevel
     }
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Full-height indentation rails. Because the row has no vertical
@@ -45,13 +49,23 @@ struct CommentCellView: View {
                     }
                     .buttonStyle(.plain)
                     Spacer()
-                    Text(commentData.timestamp.ageString())
-                        .font(.footnote)
-                        .foregroundStyle(.gray)
+                    if isCollapsed {
+                        // A down chevron signals a collapsed thread that can be
+                        // expanded again.
+                        Image(systemName: "chevron.down")
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                    } else {
+                        Text(commentData.timestamp.ageString())
+                            .font(.footnote)
+                            .foregroundStyle(.gray)
+                    }
                 }
-                Text(try! AttributedString(markdown: commentData.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
-                    .font(.callout)
-                //Text(commentData.text)
+                if !isCollapsed {
+                    Text(try! AttributedString(markdown: commentData.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+                        .font(.callout)
+                    //Text(commentData.text)
+                }
                 Divider()
             }
             // Padding lives inside the text column so the rails stay full-height.
@@ -60,7 +74,6 @@ struct CommentCellView: View {
             // only sits between the rails and the text, not to the right of it.
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -108,97 +121,55 @@ struct StoryTextView: View {
     }
 
     var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 20) {
-                    storyHeader
-                    if storyData.text != nil {
-                        Text(try! AttributedString(markdown: storyData.text!, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
-                        //Text(storyData.text!)
-                    }
-                    Text("By \(storyData.by)")
-                        .font(.callout)
-                        .foregroundStyle(.gray)
-                    HStack {
-                        // Upvote button: arrow turns orange once upvoted; the
-                        // action handles login and the toggle.
-                        Button(action: {
-                            upvote(storyData)
-                        }) {
-                            HStack {
-                                Image(systemName: "arrow.up")
-                                    .foregroundColor(isUpvoted ? .orange : .gray)
-                                Text("\(displayedScore)")
-                                    .font(.footnote)
-                                    .foregroundStyle(isUpvoted ? .orange : .gray)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        Image(systemName: "bubble")
-                            .foregroundColor(.gray)
-                        Text("\(storyData.commentCount)")
-                            .font(.footnote)
-                            .foregroundStyle(.gray)
-                        Image(systemName: "clock")
-                            .foregroundColor(.gray)
-                        Text(storyData.timestamp.ageString())
-                            .font(.footnote)
-                            .foregroundStyle(.gray)
-                        Image(systemName: "paperplane")
-                            .foregroundColor(.gray)
-                        // Favorite the post. The heart fills red once favorited.
-                        Button(action: {
-                            favorite(storyData)
-                        }) {
-                            Image(systemName: isFavorited ? "heart.fill" : "heart")
-                                .foregroundColor(isFavorited ? .red : .gray)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
+        ScrollView {
+            // A plain LazyVStack (rather than a List) gives us direct control of
+            // the layout, so collapsing a comment folds smoothly: the collapsed
+            // row shrinks and its replies are removed while the username, sitting
+            // at the top of its cell, stays anchored in place.
+            LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                storyDetailSection
 
-            Section {
-                ForEach(commentFetcher.comments, id: \.id) { comment in
-                    CommentCellView(commentData: comment, path: $path)
-                        // The cell draws its own Divider; hide the List's
-                        // built-in row separator so lines don't double up.
-                        .listRowSeparator(.hidden)
-                        // No vertical inset, so rows meet edge-to-edge and the
-                        // indentation rails connect between comments.
-                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-                        // Leading swipe hides/collapses the comment; a full swipe
-                        // triggers it. Behavior is stubbed for now.
-                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                            Button {
-                                // TODO: Hide/collapse this comment thread
-                            } label: {
-                                Label("Hide", systemImage: "eye.slash")
+                Section {
+                    ForEach(commentFetcher.visibleComments, id: \.id) { comment in
+                        CommentCellView(commentData: comment, isCollapsed: commentFetcher.isCollapsed(comment), path: $path)
+                            .padding(.horizontal, 16)
+                            // Leading swipe (swipe right) exposes Upvote and Reply.
+                            // Upvote is listed first so a full swipe triggers it. Both stubbed.
+                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                Button {
+                                    // TODO: Upvote this comment
+                                } label: {
+                                    Label("Upvote", systemImage: "arrow.up")
+                                }
+                                .tint(.orange)
+                                Button {
+                                    // TODO: Reply to this comment
+                                } label: {
+                                    Label("Reply", systemImage: "arrowshape.turn.up.left")
+                                }
+                                .tint(.blue)
                             }
-                            .tint(.gray)
-                        }
-                        // Trailing swipe exposes Upvote and Reply. Upvote is
-                        // listed first so a full swipe triggers it. Both stubbed.
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button {
-                                // TODO: Upvote this comment
-                            } label: {
-                                Label("Upvote", systemImage: "arrow.up")
+                            // Trailing swipe (swipe left) folds the thread closed:
+                            // the replies are removed and the row shrinks to just
+                            // the username. A full swipe triggers it.
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button {
+                                    withAnimation(.easeInOut) {
+                                        commentFetcher.toggleCollapsed(comment)
+                                    }
+                                } label: {
+                                    Label("Collapse", systemImage: "chevron.up")
+                                }
+                                .tint(.gray)
                             }
-                            .tint(.green)
-                            Button {
-                                // TODO: Reply to this comment
-                            } label: {
-                                Label("Reply", systemImage: "arrowshape.turn.up.left")
-                            }
-                            .tint(.blue)
-                        }
+                    }
+                } header: {
+                    commentsHeader
                 }
-            } header: {
-                commentsHeader
             }
         }
-        .listStyle(.inset)
+        // Enables the row `swipeActions` above outside of a List (iOS 27+).
+        .swipeActionsContainer()
         .navigationBarTitleDisplayMode(.inline)
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
@@ -232,6 +203,59 @@ struct StoryTextView: View {
         }
     }
 
+    /// The post's details shown above the comments: headline, optional body,
+    /// author, and the score/comment/time row with the upvote and favorite
+    /// controls. Scrolls away above the pinned comments header.
+    private var storyDetailSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            storyHeader
+            if let text = storyData.text {
+                Text(try! AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+            }
+            Text("By \(storyData.by)")
+                .font(.callout)
+                .foregroundStyle(.gray)
+            HStack {
+                // Upvote button: arrow turns orange once upvoted; the action
+                // handles login and the toggle.
+                Button(action: {
+                    upvote(storyData)
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.up")
+                            .foregroundColor(isUpvoted ? .orange : .gray)
+                        Text("\(displayedScore)")
+                            .font(.footnote)
+                            .foregroundStyle(isUpvoted ? .orange : .gray)
+                    }
+                }
+                .buttonStyle(.plain)
+                Image(systemName: "bubble")
+                    .foregroundColor(.gray)
+                Text("\(storyData.commentCount)")
+                    .font(.footnote)
+                    .foregroundStyle(.gray)
+                Image(systemName: "clock")
+                    .foregroundColor(.gray)
+                Text(storyData.timestamp.ageString())
+                    .font(.footnote)
+                    .foregroundStyle(.gray)
+                Image(systemName: "paperplane")
+                    .foregroundColor(.gray)
+                // Favorite the post. The heart fills red once favorited.
+                Button(action: {
+                    favorite(storyData)
+                }) {
+                    Image(systemName: isFavorited ? "heart.fill" : "heart")
+                        .foregroundColor(isFavorited ? .red : .gray)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+    }
+
     /// The story's headline. For a link post reached via its comments, the
     /// thumbnail is shown to the left of the title and the whole header is
     /// tappable, navigating to the linked page — mirroring the story cell's
@@ -262,9 +286,10 @@ struct StoryTextView: View {
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { titleHeight = $0 }
     }
 
-    /// Section header shown between the post details and the comments. The inset
-    /// list style pins it to the top once scrolled past. Holds the sort and
-    /// more-options buttons inline with the title.
+    /// Section header shown between the post details and the comments. As a
+    /// pinned section header in the LazyVStack it sticks to the top once scrolled
+    /// past, so it carries an opaque background. Holds the sort and more-options
+    /// buttons inline with the title.
     private var commentsHeader: some View {
         HStack {
             Text("Comments")
@@ -284,8 +309,10 @@ struct StoryTextView: View {
             }
             .padding(.leading, 12)
         }
-        // Section headers are uppercased by default; keep the title as written.
-        .textCase(nil)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        // Opaque background so scrolled comments don't show through when pinned.
+        .background(Color(UIColor.systemBackground))
     }
 }
 

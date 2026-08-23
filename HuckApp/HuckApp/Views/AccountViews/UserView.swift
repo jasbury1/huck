@@ -44,14 +44,6 @@ struct UserView: View {
     /// The view's background (white in light mode).
     private let cardBackgroundColor = Color(UIColor.systemBackground)
 
-    @Environment(\.colorScheme) private var colorScheme
-    /// Shadow color for the elevated cards. A dark drop shadow is invisible against
-    /// the near-black background in dark mode, so there we use a subtle light glow
-    /// to lift the card instead.
-    private var cardShadowColor: Color {
-        colorScheme == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.18)
-    }
-
     // MARK: - Tabs available
 
     /// Whether this profile belongs to the logged-in user. Their likes are private,
@@ -127,7 +119,10 @@ struct UserView: View {
             .padding(.bottom, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .opacity(1 - collapseProgress)
-            .background(cardBackgroundColor)
+            // A subtle grey backdrop behind the profile info that sets the white
+            // bio/action cards apart — running to the top and stopping before the
+            // pinned Activity section below.
+            .background(Color(.secondarySystemBackground))
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { collapsibleHeight = $0 }
 
             // Pinned region: the "Activity" title anchors to the top with the
@@ -271,15 +266,7 @@ struct UserView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: cardShadowColor, radius: 6, x: 0, y: 2)
-                }
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color(.separator), lineWidth: 1)
-                )
+                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -328,11 +315,6 @@ struct UserView: View {
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .shadow(color: cardShadowColor, radius: 6, x: 0, y: 2)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color(.separator), lineWidth: 1)
-            )
         }
         .buttonStyle(.plain)
     }
