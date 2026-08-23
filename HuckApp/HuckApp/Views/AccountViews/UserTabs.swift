@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum UserTab: CaseIterable, Hashable, Equatable {
+enum ContentTab: CaseIterable, Hashable, Equatable {
     case posts
     case comments
     case recentlyViewed

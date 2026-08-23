@@ -12,7 +12,7 @@ struct UserView: View {
     @State var user: User?
     @Binding var path: NavigationPath
 
-    @State private var currentTab: UserTab = .posts
+    @State private var currentTab: ContentTab = .posts
     @State private var userStoryIds: [Int] = []
     /// Retained story models keyed by id, so a post cell that scrolls back into
     /// view renders from its already-populated instance instead of flashing the
@@ -33,8 +33,8 @@ struct UserView: View {
     // jumps — the incoming tab is instead scrolled to meet it. The measured
     // heights define how far the header travels and each scroll's top spacer.
     @State private var collapse: CGFloat = 0
-    @State private var scrollOffsets: [UserTab: CGFloat] = [:]
-    @State private var scrollPositions: [UserTab: ScrollPosition] = [:]
+    @State private var scrollOffsets: [ContentTab: CGFloat] = [:]
+    @State private var scrollPositions: [ContentTab: ScrollPosition] = [:]
     @State private var collapsibleHeight: CGFloat = 0
     @State private var tabBarHeight: CGFloat = 0
     /// True while an incoming tab is being scrolled to meet the header. Its
@@ -54,8 +54,8 @@ struct UserView: View {
 
     /// The tabs to show, in order. "Recently viewed" is private to the logged-in
     /// user, so it only appears on their own profile.
-    private var availableTabs: [UserTab] {
-        var tabs: [UserTab] = [.posts, .comments]
+    private var availableTabs: [ContentTab] {
+        var tabs: [ContentTab] = [.posts, .comments]
         if isCurrentUser {
             tabs.append(.recentlyViewed)
         }
@@ -280,7 +280,7 @@ struct UserView: View {
                 }
             }
             profileActionButton("Favorites", systemImage: "heart", iconColor: .red) {
-                // TODO: Show this user's favorites (posts and comments)
+                path.append(ItemNavigation.favorites(user: username))
             }
         }
         .padding(.top, 8)
@@ -338,7 +338,7 @@ struct UserView: View {
     /// tab is also scrolled past full collapse: the header looks identical either
     /// way, so we leave that tab's deeper scroll position untouched. Every tab's
     /// `headerHeight` top spacer guarantees the room needed to reach `collapse`.
-    private func syncCollapse(to newTab: UserTab) {
+    private func syncCollapse(to newTab: ContentTab) {
         let incoming = scrollOffsets[newTab] ?? 0
         if collapse >= collapsibleHeight && incoming >= collapsibleHeight {
             isSyncing = false
@@ -361,7 +361,7 @@ struct UserView: View {
     /// Wraps a tab's content in a scroll view that clears space for the header
     /// and, while it's the visible tab, drives the header's collapse.
     @ViewBuilder
-    func tabScroll<Content: View>(for tab: UserTab, @ViewBuilder content: () -> Content) -> some View {
+    func tabScroll<Content: View>(for tab: ContentTab, @ViewBuilder content: () -> Content) -> some View {
         ScrollView {
             VStack(spacing: 0) {
                 Color.clear.frame(height: headerHeight)
@@ -387,7 +387,7 @@ struct UserView: View {
 
     /// A binding into a tab's scroll position, used to drive it programmatically
     /// when bringing it to meet the header on a tab switch.
-    private func scrollPositionBinding(for tab: UserTab) -> Binding<ScrollPosition> {
+    private func scrollPositionBinding(for tab: ContentTab) -> Binding<ScrollPosition> {
         Binding(
             get: { scrollPositions[tab] ?? ScrollPosition() },
             set: { scrollPositions[tab] = $0 }
@@ -415,7 +415,7 @@ struct UserView: View {
 
     /// A single tab pill. Unselected it shows only its symbol on a neutral fill;
     /// selected it fills with the tab's color and expands to include the title.
-    private func tabPill(for tab: UserTab) -> some View {
+    private func tabPill(for tab: ContentTab) -> some View {
         let selected = currentTab == tab
         return Button {
             withAnimation(.snappy(duration: 0.3)) { currentTab = tab }
@@ -445,7 +445,7 @@ struct UserView: View {
 
     /// The scrollable content for a tab.
     @ViewBuilder
-    func content(for tab: UserTab) -> some View {
+    func content(for tab: ContentTab) -> some View {
         switch tab {
         case .posts: postsList
         case .comments: commentsList

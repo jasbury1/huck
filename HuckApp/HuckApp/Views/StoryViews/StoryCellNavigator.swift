@@ -10,6 +10,7 @@ import SwiftUI
 enum ItemNavigation: Hashable {
     case textStory(id: Int)
     case userProfile(user: String)
+    case favorites(user: String)
 }
 
 struct StoryDetailsView: View {
@@ -27,6 +28,8 @@ struct StoryDetailsView: View {
             StoryTextView(storyId: id, path: $path)
         case let .userProfile(user):
             UserView(username: user, path: $path)
+        case let .favorites(user):
+            FavoritesView(username: user)
         }
     }
 }
