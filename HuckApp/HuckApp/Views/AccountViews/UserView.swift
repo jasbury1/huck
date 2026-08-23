@@ -41,7 +41,6 @@ struct UserView: View {
     /// interim offsets are ignored so they can't drag `collapse` back to the top.
     @State private var isSyncing = false
 
-    @Namespace private var namespace
     /// The view's background (white in light mode).
     private let cardBackgroundColor = Color(UIColor.systemBackground)
 
@@ -53,9 +52,14 @@ struct UserView: View {
         username == UserSession.shared?.username
     }
 
-    /// The tabs to show, in order.
+    /// The tabs to show, in order. "Recently viewed" is private to the logged-in
+    /// user, so it only appears on their own profile.
     private var availableTabs: [UserTab] {
-        [.posts, .comments]
+        var tabs: [UserTab] = [.posts, .comments]
+        if isCurrentUser {
+            tabs.append(.recentlyViewed)
+        }
+        return tabs
     }
 
     // MARK: - Collapse math
@@ -115,10 +119,19 @@ struct UserView: View {
             .padding(.bottom, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .opacity(1 - collapseProgress)
-            .background(cardBackgroundColor)
+            // A subtle grey backdrop behind the profile info that sets the white
+            // bio/action cards apart — running to the top and stopping before the
+            // pinned Activity section below.
+            .background(Color(.secondarySystemBackground))
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { collapsibleHeight = $0 }
 
-            VStack(spacing: 0) {
+            // Pinned region: the "Activity" title anchors to the top with the
+            // tab pills directly beneath it, both staying put as content scrolls.
+            VStack(alignment: .leading, spacing: 0) {
+                sectionHeader("Activity")
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
                 tabBarButtons
                 Divider()
             }
@@ -129,56 +142,137 @@ struct UserView: View {
         .offset(y: -collapse)
     }
 
+    /// Length of the fade ramp (opaque → clear) at the bottom of a clipped bio.
+    private let bioFadeHeight: CGFloat = 32
+    /// How far above the bottom edge the fade reaches fully clear.
+    private let bioFadeEndInset: CGFloat = 24
+
+    /// Mask for the bio: opaque for a bio that fits, but ramping to clear near the
+    /// bottom when it's clipped, softening the cut-off. The clear point sits
+    /// `bioFadeEndInset` above the bottom so the text is gone slightly higher up.
+    @ViewBuilder
+    private var bioFadeMask: some View {
+        if bioFullHeight > bioMaxHeight {
+            let clearLocation = max(0, (bioMaxHeight - bioFadeEndInset) / bioMaxHeight)
+            let blackLocation = max(0, (bioMaxHeight - bioFadeEndInset - bioFadeHeight) / bioMaxHeight)
+            LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0),
+                    .init(color: .black, location: blackLocation),
+                    .init(color: .clear, location: clearLocation),
+                    .init(color: .clear, location: 1)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        } else {
+            Color.black
+        }
+    }
+
+    /// A lightweight section title used above the bio and the activity tabs.
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(.headline)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     /// Maximum height of the bio before it clips. A future "Expand" control will
     /// lift this cap.
-    private let bioMaxHeight: CGFloat = 120
+    private let bioMaxHeight: CGFloat = 140
     /// The bio's full (unclipped) height, measured to decide whether to clip and
-    /// show "Expand".
+    /// show "Read more".
     @State private var bioFullHeight: CGFloat = 0
+    /// Whether the full-bio sheet is presented.
+    @State private var showingFullBio = false
 
     var userSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Karma: \(user?.karma ?? 0)")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                // Shown only when the bio is clipped; expands it (no-op for now).
-                if bioFullHeight > bioMaxHeight {
-                    Button {
-                        // TODO: Expand the bio
-                    } label: {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .foregroundStyle(.orange)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+            Text("Karma: \(user?.karma ?? 0)")
+                .foregroundStyle(.secondary)
+                // Tuck the karma closer to the username above it.
+                .padding(.top, -6)
+            sectionHeader("About")
+                .padding(.horizontal, 0)
+                .padding(.top, 10)
+                .padding(.bottom, 4)
             if let about = user?.about, !about.isEmpty {
-                // Cap the height so a long bio can't push the tab bar off screen;
-                // overflow is hard-clipped.
-                Text(about)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                    // A hidden copy at the same width reports the full height
-                    // (`fixedSize` keeps it from being clipped), so we can decide
-                    // whether to show "Expand".
-                    .background(alignment: .topLeading) {
-                        Text(about)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(maxWidth: .infinity, alignment: .topLeading)
-                            .hidden()
-                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
-                                bioFullHeight = $0
+                // The "About" header and the bio grouped together in a card.
+                VStack(alignment: .leading, spacing: 8) {
+                    //sectionHeader("About")
+                    // Cap the height so a long bio can't push the tab bar off screen.
+                    // NOTE: no `.fixedSize` here — with it, the Text ignores the
+                    // height cap below and lays out at full height, overflowing the
+                    // frame. That overflow stays hit-testable (clip/mask only affect
+                    // rendering), so a long bio would overhang and steal the tab
+                    // list's scroll gestures. Without it, the Text respects the cap.
+                    Text(about)
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        // A hidden copy at the same width reports the full height
+                        // (`fixedSize` keeps it from being clipped), so we can decide
+                        // whether to show "Expand".
+                        .background(alignment: .topLeading) {
+                            Text(about)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                                .hidden()
+                                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                                    bioFullHeight = $0
+                                }
+                        }
+                        // Clamp to the measured bio height (capped at `bioMaxHeight`)
+                        // and hard-clip the overflow. Using an exact height rather
+                        // than `maxHeight` keeps the frame from expanding to fill the
+                        // header's offered space, which left dead space for short bios.
+                        // Before measurement (`bioFullHeight == 0`) fall back to the
+                        // natural height.
+                        .frame(
+                            height: bioFullHeight > 0 ? min(bioFullHeight, bioMaxHeight) : nil,
+                            alignment: .top
+                        )
+                        // Hard-clip the overflow to the frame. `mask` only affects
+                        // alpha — without this, a long bio's invisible overflow still
+                        // extends past the frame and steals scroll gestures from the
+                        // tab section below. `clipped()` bounds both drawing AND hit
+                        // testing to the frame.
+                        .clipped()
+                        // When the bio is clipped, fade the last stretch to hint at
+                        // more content instead of a hard cut. Short bios that fit are
+                        // fully opaque.
+                        .mask(bioFadeMask)
+                        // A "Read more" affordance sits over the fade, blending in
+                        // from the trailing edge, and opens the full bio in a sheet.
+                        .overlay(alignment: .bottomTrailing) {
+                            if bioFullHeight > bioMaxHeight {
+                                Button {
+                                    showingFullBio = true
+                                } label: {
+                                    Text("Read more")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.orange)
+                                        .padding(.leading, 32)
+                                        .background(
+                                            LinearGradient(
+                                                colors: [.clear, cardBackgroundColor, cardBackgroundColor],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                }
+                                .buttonStyle(.plain)
                             }
-                    }
-                    // Cap the height and hard-clip BOTH the visible text and the
-                    // measurer's overflow, so nothing extends past this frame to
-                    // block scrolling/paging over the content below.
-                    .frame(maxHeight: bioMaxHeight, alignment: .top)
-                    .clipped()
+                        }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(isPresented: $showingFullBio) {
+            BioSheet(username: username, about: user?.about ?? "")
+        }
     }
 
     /// Prominent actions below the bio. The current user sees Likes + Favorites
@@ -221,10 +315,6 @@ struct UserView: View {
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color(.separator), lineWidth: 1)
-            )
         }
         .buttonStyle(.plain)
     }
@@ -310,33 +400,51 @@ struct UserView: View {
         )
     }
 
+    /// Mail-style category tabs: each tab is a symbol in a colored capsule that
+    /// expands to reveal its title when selected. Both tapping a pill and
+    /// swiping the pager below drive `currentTab`, and the shared animation
+    /// keeps the expand/collapse smooth either way.
     var tabBarButtons: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 10) {
             ForEach(availableTabs, id: \.self) { tab in
-                let selected = currentTab == tab
-                Text(tab.title)
-                    .font(.body)
-                    .foregroundStyle(selected ? Color.primary : Color.secondary)
-                    .padding(.vertical, 8)
-                    .onTapGesture {
-                        withAnimation(.easeInOut) { currentTab = tab }
-                    }
-                    .background {
-                        if selected {
-                            Color.orange
-                                .frame(height: 2)
-                                .frame(maxHeight: .infinity, alignment: .bottom)
-                                .matchedGeometryEffect(id: "indicator", in: namespace)
-                        }
-                    }
+                tabPill(for: tab)
             }
             Spacer()
         }
         .padding(.horizontal)
         .padding(.top, 4)
+        .padding(.bottom, 8)
         .background(cardBackgroundColor)
-        // Animate the underline for swipe-driven selection changes too.
-        .animation(.easeInOut, value: currentTab)
+        // Animate the pills for swipe-driven selection changes too.
+        .animation(.snappy(duration: 0.3), value: currentTab)
+    }
+
+    /// A single tab pill. Unselected it shows only its symbol on a neutral fill;
+    /// selected it fills with the tab's color and expands to include the title.
+    private func tabPill(for tab: UserTab) -> some View {
+        let selected = currentTab == tab
+        return Button {
+            withAnimation(.snappy(duration: 0.3)) { currentTab = tab }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: tab.systemImage)
+                if selected {
+                    Text(tab.title)
+                        .fontWeight(.semibold)
+                        .fixedSize()
+                }
+            }
+            .font(.subheadline)
+            .foregroundStyle(selected ? Color.white : Color.secondary)
+            .padding(.vertical, 8)
+            .padding(.horizontal, selected ? 14 : 11)
+            .background {
+                Capsule(style: .continuous)
+                    .fill(selected ? AnyShapeStyle(tab.color) : AnyShapeStyle(Color(.secondarySystemFill)))
+            }
+            .contentShape(Capsule(style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Tab Content
@@ -347,7 +455,19 @@ struct UserView: View {
         switch tab {
         case .posts: postsList
         case .comments: commentsList
+        case .recentlyViewed: recentlyViewedList
         }
+    }
+
+    /// Placeholder for the recently-viewed stories. Tracking and content will be
+    /// wired up in a later change.
+    var recentlyViewedList: some View {
+        ContentUnavailableView(
+            "No Recently Viewed",
+            systemImage: "clock",
+            description: Text("Stories you open will show up here.")
+        )
+        .padding(.top, 40)
     }
 
     var postsList: some View {
@@ -456,6 +576,33 @@ struct UserCommentRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+    }
+}
+
+/// A sheet that shows a user's full bio, scrollable, for bios too long to fit
+/// in the profile card.
+struct BioSheet: View {
+    let username: String
+    let about: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                Text(about)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            .navigationTitle(username)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }
 
