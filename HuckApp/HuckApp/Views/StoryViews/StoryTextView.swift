@@ -164,7 +164,7 @@ struct StoryTextView: View {
                             }
                     }
                 } header: {
-                    commentsHeader
+                    SortableHeader(title: "Comments")
                 }
             }
         }
