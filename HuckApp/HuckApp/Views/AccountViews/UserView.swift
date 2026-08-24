@@ -8,24 +8,23 @@
 import SwiftUI
 
 struct UserView: View {
-    @State var username: String
-    @State var user: User?
+    let username: String
+    @State private var user: User?
     @Binding var path: NavigationPath
 
     @State private var currentTab: ContentTab = .posts
-    @State private var userStoryIds: [Int] = []
-    /// Retained story models keyed by id, so a post cell that scrolls back into
-    /// view renders from its already-populated instance instead of flashing the
-    /// placeholder. Mirrors `StoriesFeedData` in the main feed.
-    @State private var storyModels: [Int: StoryModel] = [:]
-    @State private var currentPage = 0
-    @State private var hasMorePages = false
-    @State private var isLoadingMore = false
 
-    @State private var userComments: [UserComment] = []
-    @State private var commentPage = 0
-    @State private var hasMoreComments = false
-    @State private var isLoadingMoreComments = false
+    /// This user's activity, one paginated feed per tab. Each grows as its list
+    /// is scrolled; see `PaginatedFeed`.
+    @State private var posts: PaginatedFeed<StoryModel>
+    @State private var comments: PaginatedFeed<UserComment>
+
+    init(username: String, path: Binding<NavigationPath>) {
+        self.username = username
+        self._path = path
+        self._posts = State(initialValue: .userStories(username: username))
+        self._comments = State(initialValue: .userComments(username: username))
+    }
 
     // Collapsing-header state. `collapse` is the single source of truth for how
     // far the header is translated up; only the visible tab drives it. Because it
@@ -88,16 +87,13 @@ struct UserView: View {
             }
         }
         .task {
+            // Eagerly warm the profile and both default tabs' first pages in
+            // parallel, so switching between Posts and Comments feels instant.
             async let fetchedUser = HackerNewsAPI.getUser(for: username)
-            async let firstPage = HackerNewsAPI.getUserStories(username: username, page: 0)
-            async let firstCommentPage = HackerNewsAPI.getUserComments(username: username, page: 0)
-            let (u, storyResult, commentResult) = await (fetchedUser, firstPage, firstCommentPage)
-            user = u
-            registerStoryModels(for: storyResult.ids)
-            userStoryIds = storyResult.ids
-            hasMorePages = storyResult.hasMore
-            userComments = commentResult.comments
-            hasMoreComments = commentResult.hasMore
+            async let loadedPosts: Void = posts.loadMore()
+            async let loadedComments: Void = comments.loadMore()
+            user = await fetchedUser
+            _ = await (loadedPosts, loadedComments)
         }
     }
 
@@ -465,75 +461,17 @@ struct UserView: View {
     }
 
     var postsList: some View {
-        LazyVStack(spacing: 0) {
-            ForEach(userStoryIds, id: \.self) { storyId in
-                StoryCellView(model: model(for: storyId), path: $path)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                Divider()
-            }
-            if hasMorePages {
-                ProgressView()
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .onAppear {
-                        Task { await loadMorePosts() }
-                    }
-            }
+        PaginatedList(feed: posts) { model in
+            StoryCellView(model: model, path: $path)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
         }
     }
 
     var commentsList: some View {
-        LazyVStack(spacing: 0) {
-            ForEach(userComments) { comment in
-                UserCommentRow(comment: comment, path: $path)
-                Divider()
-            }
-            if hasMoreComments {
-                ProgressView()
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .onAppear {
-                        Task { await loadMoreComments() }
-                    }
-            }
+        PaginatedList(feed: comments) { comment in
+            UserCommentRow(comment: comment, path: $path)
         }
-    }
-
-    /// Creates a retained `StoryModel` for any id that doesn't have one yet.
-    private func registerStoryModels(for ids: [Int]) {
-        for id in ids where storyModels[id] == nil {
-            storyModels[id] = StoryModel(id: id)
-        }
-    }
-
-    /// The retained model for a story id. Ids are registered as pages load, so
-    /// this is a pure synchronous read.
-    private func model(for id: Int) -> StoryModel {
-        storyModels[id] ?? StoryModel(id: id)
-    }
-
-    private func loadMorePosts() async {
-        guard !isLoadingMore && hasMorePages else { return }
-        isLoadingMore = true
-        let nextPage = currentPage + 1
-        let result = await HackerNewsAPI.getUserStories(username: username, page: nextPage)
-        registerStoryModels(for: result.ids)
-        userStoryIds.append(contentsOf: result.ids)
-        currentPage = nextPage
-        hasMorePages = result.hasMore
-        isLoadingMore = false
-    }
-
-    private func loadMoreComments() async {
-        guard !isLoadingMoreComments && hasMoreComments else { return }
-        isLoadingMoreComments = true
-        let nextPage = commentPage + 1
-        let result = await HackerNewsAPI.getUserComments(username: username, page: nextPage)
-        userComments.append(contentsOf: result.comments)
-        commentPage = nextPage
-        hasMoreComments = result.hasMore
-        isLoadingMoreComments = false
     }
 }
 

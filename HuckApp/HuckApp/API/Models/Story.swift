@@ -78,7 +78,7 @@ enum ThumbnailType {
 /// drift bug). If a field ever needs to change over time (e.g. a live-refreshing
 /// score), route it through an id-keyed store overlay — do not make it settable.
 @Observable
-class StoryModel : Equatable {
+class StoryModel : Equatable, Identifiable {
     let id: Int
     private(set) var storyType: StoryType
     private(set) var title: String
