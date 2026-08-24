@@ -9,11 +9,14 @@ import SwiftUI
 
 struct TabableContentView: View {
     @State private var currentTab: ContentTab = .posts
-    
-    private var title: String
-    
+
+    private let title: String
+    /// The story feed shown in the Posts tab (e.g. a user's favorited stories).
+    private let postsFeed: StoryFeed
+    @Binding private var path: NavigationPath
+
     private let cardBackgroundColor = Color(UIColor.systemBackground)
-    
+
     private var availableTabs: [ContentTab] {
         var tabs: [ContentTab] = [.posts, .comments]
         // TODO: This is so that this view can later be purposed for the logged in user's profile
@@ -22,16 +25,60 @@ struct TabableContentView: View {
         }
         return tabs
     }
-    
-    init(title: String) {
+
+    init(title: String, postsFeed: StoryFeed, path: Binding<NavigationPath>) {
         self.title = title
+        self.postsFeed = postsFeed
+        self._path = path
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SortableHeader(title: title)
             tabBarButtons
             Divider()
+            pages
+        }
+    }
+
+    /// Horizontally-paged tab content; both tapping a pill and swiping drive
+    /// `currentTab`.
+    private var pages: some View {
+        TabView(selection: $currentTab) {
+            ForEach(availableTabs, id: \.self) { tab in
+                content(for: tab)
+                    .tag(tab)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+    }
+
+    /// The scrollable content for a tab. Each tab lives in its own scroll view
+    /// so empty-state placeholders (posts vs comments) sit at the same height.
+    @ViewBuilder
+    private func content(for tab: ContentTab) -> some View {
+        ScrollView {
+            switch tab {
+            case .posts:
+                StoryList(
+                    feed: postsFeed,
+                    path: $path,
+                    emptyState: EmptyFeedView(
+                        title: "No Favorite Posts",
+                        systemImage: "heart",
+                        description: "Stories you favorite will show up here."
+                    )
+                )
+            case .comments:
+                // TODO: Show the user's favorited comments once that feed exists.
+                EmptyFeedView(
+                    title: "No Favorite Comments",
+                    systemImage: "bubble.left.and.bubble.right",
+                    description: "Comments you favorite will show up here."
+                )
+            case .recentlyViewed:
+                EmptyView()
+            }
         }
     }
     

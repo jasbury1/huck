@@ -9,6 +9,16 @@ import SwiftUI
 
 struct FavoritesView: View {
     let username: String
+    @Binding var path: NavigationPath
+
+    /// This user's favorited stories, paged in and prefetched by `StoryFeed`.
+    @State private var favorites: StoryFeed
+
+    init(username: String, path: Binding<NavigationPath>) {
+        self.username = username
+        self._path = path
+        self._favorites = State(initialValue: .favorites(username: username))
+    }
 
     /// Whether these favorites belong to the logged-in user, which changes the
     /// title from a possessive name to "Your favorites".
@@ -21,12 +31,12 @@ struct FavoritesView: View {
     }
 
     var body: some View {
-        TabableContentView(title: title)
+        TabableContentView(title: title, postsFeed: favorites, path: $path)
     }
 }
 
 #Preview {
     NavigationStack {
-        FavoritesView(username: "zdw")
+        FavoritesView(username: "zdw", path: .constant(NavigationPath()))
     }
 }

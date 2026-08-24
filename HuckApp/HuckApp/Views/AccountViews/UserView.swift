@@ -14,15 +14,15 @@ struct UserView: View {
 
     @State private var currentTab: ContentTab = .posts
 
-    /// This user's activity, one paginated feed per tab. Each grows as its list
-    /// is scrolled; see `PaginatedFeed`.
-    @State private var posts: PaginatedFeed<StoryModel>
+    /// This user's activity, one feed per tab. Each grows as its list is
+    /// scrolled; the posts feed also warms story details ahead of the scroll.
+    @State private var posts: StoryFeed
     @State private var comments: PaginatedFeed<UserComment>
 
     init(username: String, path: Binding<NavigationPath>) {
         self.username = username
         self._path = path
-        self._posts = State(initialValue: .userStories(username: username))
+        self._posts = State(initialValue: StoryFeed.userStories(username: username))
         self._comments = State(initialValue: .userComments(username: username))
     }
 
@@ -452,24 +452,34 @@ struct UserView: View {
     /// Placeholder for the recently-viewed stories. Tracking and content will be
     /// wired up in a later change.
     var recentlyViewedList: some View {
-        ContentUnavailableView(
-            "No Recently Viewed",
+        EmptyFeedView(
+            title: "No Recently Viewed",
             systemImage: "clock",
-            description: Text("Stories you open will show up here.")
+            description: "Stories you open will show up here."
         )
-        .padding(.top, 40)
     }
 
     var postsList: some View {
-        PaginatedList(feed: posts) { model in
-            StoryCellView(model: model, path: $path)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-        }
+        StoryList(
+            feed: posts,
+            path: $path,
+            emptyState: EmptyFeedView(
+                title: "No Posts",
+                systemImage: "newspaper",
+                description: "Stories \(username) submits will show up here."
+            )
+        )
     }
 
     var commentsList: some View {
-        PaginatedList(feed: comments) { comment in
+        PaginatedList(
+            feed: comments,
+            emptyState: EmptyFeedView(
+                title: "No Comments",
+                systemImage: "bubble.left.and.bubble.right",
+                description: "Comments \(username) posts will show up here."
+            )
+        ) { comment in
             UserCommentRow(comment: comment, path: $path)
         }
     }
