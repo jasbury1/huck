@@ -10,13 +10,13 @@ import SwiftUI
 /// A generic, append-only list that pages in more content until the source is
 /// exhausted. It owns the paging state — the accumulated `items`, whether more
 /// remain, and whether a fetch is in flight — and defers only the "fetch one
-/// page" step to an injected closure. That keeps every kind of user feed
-/// (posts, comments, favorites, …) on one implementation; each new feed is just
-/// a different `PageLoader`, added via the factory extensions below.
+/// page" step to an injected closure, so each new feed is just a different
+/// `PageLoader` added via a factory extension.
 ///
-/// Mirrors `StoriesFeedData`'s `@Observable` ownership pattern, but where that
-/// type *replaces* its feed on filter change (and so keeps an id-keyed reuse
-/// map), these feeds only ever grow — the `items` array itself is the retention.
+/// This is the engine for lists whose elements arrive fully-formed in the page
+/// (a user's comments). Story lists — where each id must be materialized into a
+/// retained `StoryModel` and its details warmed ahead of the scroll — use
+/// `StoryFeed` instead.
 @MainActor
 @Observable
 final class PaginatedFeed<Element> {
@@ -51,29 +51,6 @@ final class PaginatedFeed<Element> {
         items.append(contentsOf: result.elements)
         hasMore = result.hasMore
         nextPage += 1
-    }
-}
-
-// MARK: - Story feeds
-
-extension PaginatedFeed where Element == StoryModel {
-    /// Stories submitted by a user. Each page's ids become retained
-    /// `StoryModel`s; holding them in `items` is what lets a row that scrolls
-    /// back into view reuse its populated instance instead of flashing a
-    /// placeholder (each cell drives its own `fetchData()`).
-    static func userStories(username: String) -> PaginatedFeed {
-        PaginatedFeed { page in
-            let result = await HackerNewsAPI.getUserStories(username: username, page: page)
-            return (result.ids.map(StoryModel.init(id:)), result.hasMore)
-        }
-    }
-
-    /// A user's favorited stories.
-    static func favoriteStories(username: String) -> PaginatedFeed {
-        PaginatedFeed { page in
-            let result = await HackerNewsAPI.getFavoriteStories(username: username, page: page)
-            return (result.ids.map(StoryModel.init(id:)), result.hasMore)
-        }
     }
 }
 

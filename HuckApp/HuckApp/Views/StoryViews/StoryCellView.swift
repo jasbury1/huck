@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct StoryCellView: View {
-    /// The story's model, owned and retained by `StoriesFeedData`. Reading its
+    /// The story's model, owned and retained by its feed (`StoryFeed`). Reading its
     /// `@Observable` properties in the body keeps the row in sync, and because
     /// the same instance survives recycling the row never resets to a placeholder.
     let storyData: StoryModel

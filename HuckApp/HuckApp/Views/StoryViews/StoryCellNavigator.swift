@@ -29,7 +29,7 @@ struct StoryDetailsView: View {
         case let .userProfile(user):
             UserView(username: user, path: $path)
         case let .favorites(user):
-            FavoritesView(username: user)
+            FavoritesView(username: user, path: $path)
         }
     }
 }

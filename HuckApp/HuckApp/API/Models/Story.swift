@@ -91,7 +91,7 @@ class StoryModel : Equatable, Identifiable {
     private(set) var text: String?
 
     /// Whether `fetchData()` has fully populated this model (story + thumbnail).
-    /// A `StoryModel` instance is retained by `StoriesFeedData` across cell
+    /// A `StoryModel` instance is retained by its `StoryFeed` across cell
     /// recycling, so this guard keeps a row that scrolls back into view from
     /// re-fetching and, crucially, from briefly rendering as an empty placeholder.
     private var isLoaded = false
