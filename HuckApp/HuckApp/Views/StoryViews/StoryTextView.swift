@@ -131,7 +131,8 @@ struct StoryTextView: View {
 
                 Section {
                     ForEach(commentFetcher.visibleComments, id: \.id) { comment in
-                        CommentCellView(commentData: comment, isCollapsed: commentFetcher.isCollapsed(comment), path: $path)
+                        let collapsed = commentFetcher.isCollapsed(comment)
+                        CommentCellView(commentData: comment, isCollapsed: collapsed, path: $path)
                             .padding(.horizontal, 16)
                             // Leading swipe (swipe right) exposes Upvote and Reply.
                             // Upvote is listed first so a full swipe triggers it. Both stubbed.
@@ -161,6 +162,20 @@ struct StoryTextView: View {
                                     Label("Collapse", systemImage: "chevron.up")
                                 }
                                 .tint(.gray)
+                            }
+                            // A collapsed comment disables its swipe actions (the
+                            // swipeActions modifiers stay attached so the fold still
+                            // animates); tapping anywhere on it expands the thread
+                            // again. The tap gesture sits outside `disabled` so it
+                            // keeps working while the row's own controls are off.
+                            .disabled(collapsed)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                if collapsed {
+                                    withAnimation(.easeInOut) {
+                                        commentFetcher.toggleCollapsed(comment)
+                                    }
+                                }
                             }
                     }
                 } header: {
