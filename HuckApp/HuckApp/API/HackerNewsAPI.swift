@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 typealias CookieHandler = (Result<HTTPCookie, Error>) -> Void
 
@@ -83,22 +84,99 @@ class HackerNewsAPI {
 
     // MARK: - Comments
 
-    static func getComments(for id: Int) async -> [Comment] {
-        // Algolia returns the entire comment tree in a single request, but its
-        // index lags HN by minutes. For a recent story it may 404, or return a
-        // 200 with the story indexed but no comments yet (empty `children`).
-        // Either way there is nothing to show, so fall back to the realtime
-        // Firebase API — which also returns nothing if the story truly has no
-        // comments, so the fallback is safe in that case too.
-        if let rootItem = await AlgoliaAPIService.getItemById(id: id),
-           let children = rootItem.children, !children.isEmpty {
-            var commentThread = [Comment]()
-            for child in children {
-                getChildComments(nestLevel: 0, itemData: child, comments: &commentThread)
-            }
-            return commentThread
+    /// How many more comments Firebase must report than Algolia returned before we
+    /// treat Algolia's index as stale. A small tolerance absorbs the harmless skew
+    /// from deleted/dead comments, which the two sources count differently.
+    private static let commentStalenessTolerance = 2
+
+    /// Upper bound on concurrent Firebase `item` requests during a thread walk, so a
+    /// large thread never fans out into hundreds of simultaneous requests.
+    private static let maxConcurrentCommentFetches = 16
+
+    /// Structured logging for the comment-source decision. Filter Console/Xcode by
+    /// this category to see, per story, whether Algolia was served or a Firebase walk
+    /// was taken and why.
+    private static let commentLog = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "HuckApp",
+        category: "CommentFetch"
+    )
+
+    /// Which source to build a story's comment thread from, plus the counts behind the
+    /// choice. Kept as a pure decision, separate from the fetching it drives, so the
+    /// policy lives in one readable, testable place.
+    private enum CommentFetchPlan {
+        /// Algolia's indexed tree is complete enough to serve directly.
+        case algolia(count: Int, descendants: Int?)
+        /// Algolia has nothing for this story yet (unindexed, or indexed with no
+        /// comments).
+        case firebaseAlgoliaEmpty
+        /// Algolia is missing enough comments that we walk the realtime tree instead.
+        case firebaseStale(algoliaCount: Int, descendants: Int)
+    }
+
+    /// Decides how to source comments by comparing what Algolia returned against
+    /// Firebase's whole-thread `descendants` total. `descendants` counts every nesting
+    /// level, so it catches comments missing deep in the tree, not just new top-level
+    /// replies. With no Firebase count to compare against, we trust Algolia.
+    private static func planCommentFetch(algoliaCount: Int, descendants: Int?) -> CommentFetchPlan {
+        if algoliaCount == 0 {
+            return .firebaseAlgoliaEmpty
         }
-        return await getCommentsFromFirebase(for: id)
+        if let descendants, descendants - algoliaCount > commentStalenessTolerance {
+            return .firebaseStale(algoliaCount: algoliaCount, descendants: descendants)
+        }
+        return .algolia(count: algoliaCount, descendants: descendants)
+    }
+
+    /// Returns a story's flattened, depth-first comment thread.
+    ///
+    /// Algolia returns the whole tree in one request and is the fast path, but its
+    /// crawler lags HN by up to ~a minute, so a live story can come back missing its
+    /// newest comments. We fetch the Algolia tree and the realtime Firebase story
+    /// metadata together, then compare against the story's `descendants` (its
+    /// whole-thread comment total) to judge whether Algolia is complete. When it isn't
+    /// — or has nothing yet — we fall back to walking the realtime Firebase tree. That
+    /// staleness case almost always coincides with young, still-small threads, so the
+    /// walk is cheap in practice.
+    static func getComments(for id: Int) async -> [Comment] {
+        // The story is usually already warm in the cache from the feed, so reading it
+        // for its `descendants` count costs nothing; run it alongside the Algolia fetch.
+        async let storyRequest = StoryCache.shared.story(id: id)
+        async let algoliaRequest = AlgoliaAPIService.getItemById(id: id)
+        let story = await storyRequest
+        let algoliaItem = await algoliaRequest
+
+        var algoliaThread = [Comment]()
+        if let children = algoliaItem?.children {
+            for child in children {
+                getChildComments(nestLevel: 0, itemData: child, comments: &algoliaThread)
+            }
+        }
+
+        switch planCommentFetch(algoliaCount: algoliaThread.count, descendants: story?.descendants) {
+        case let .algolia(count, descendants):
+            let reported = descendants.map(String.init) ?? "unknown"
+            commentLog.info("Comments[\(id, privacy: .public)]: serving \(count, privacy: .public) comments from Algolia (Firebase descendants: \(reported, privacy: .public)); index fresh")
+            return algoliaThread
+        case .firebaseAlgoliaEmpty:
+            commentLog.info("Comments[\(id, privacy: .public)]: Algolia has no comments yet; walking realtime Firebase tree")
+        case let .firebaseStale(algoliaCount, descendants):
+            commentLog.info("Comments[\(id, privacy: .public)]: Algolia stale (\(algoliaCount, privacy: .public) of \(descendants, privacy: .public) comments); walking realtime Firebase tree")
+        }
+
+        // Both Firebase fallbacks need the story's top-level `kids` to seed the walk.
+        guard let story else {
+            commentLog.warning("Comments[\(id, privacy: .public)]: Firebase story unavailable; serving \(algoliaThread.count, privacy: .public) Algolia comments instead")
+            return algoliaThread
+        }
+        let firebaseThread = await getCommentsFromFirebase(for: id, story: story)
+        // Guard against a degenerate walk (e.g. kids that all fail to load) discarding
+        // an otherwise usable Algolia tree.
+        guard firebaseThread.count >= algoliaThread.count else {
+            commentLog.warning("Comments[\(id, privacy: .public)]: Firebase walk yielded \(firebaseThread.count, privacy: .public) < Algolia's \(algoliaThread.count, privacy: .public); serving Algolia instead")
+            return algoliaThread
+        }
+        return firebaseThread
     }
 
     private static func getChildComments(nestLevel: Int, itemData: AlgoliaItemData, comments: inout [Comment]) {
@@ -113,39 +191,72 @@ class HackerNewsAPI {
     }
 
     /// Builds the flat, depth-first comment list from the realtime Firebase API.
-    /// Unlike Algolia, Firebase returns one item per request, so each thread
-    /// level's siblings are fetched concurrently to keep latency down. Used only
-    /// when Algolia has not yet indexed a story.
-    private static func getCommentsFromFirebase(for id: Int) async -> [Comment] {
-        guard let story = await FirebaseAPIService.getStoryAsync(id: id),
-              let kids = story.kids else {
-            return []
+    ///
+    /// Firebase serves one item per request and only reveals a comment's children once
+    /// it has been fetched, so the thread is loaded breadth-first: each depth level is
+    /// fetched fully in parallel, and its children form the next level. This bounds the
+    /// sequential round trips to the tree's *depth* rather than its size. Once every
+    /// item is in hand, a single pre-order pass produces the depth-first list the UI
+    /// renders.
+    private static func getCommentsFromFirebase(for id: Int, story: FirebaseStoryData) async -> [Comment] {
+        guard let rootKids = story.kids, !rootKids.isEmpty else { return [] }
+
+        var items = [Int: FirebaseCommentData]()
+        var frontier = rootKids
+        var depth = 0
+        while !frontier.isEmpty {
+            let level = await fetchComments(ids: frontier)
+            items.merge(level) { _, new in new }
+            // The next level is every live comment's children, kept in reading order.
+            var next = [Int]()
+            for commentId in frontier {
+                guard let item = level[commentId],
+                      item.deleted != true, item.dead != true,
+                      let kids = item.kids else { continue }
+                next.append(contentsOf: kids)
+            }
+            frontier = next
+            depth += 1
         }
-        var commentThread = [Comment]()
-        await appendFirebaseComments(ids: kids, nestLevel: 0, into: &commentThread)
-        return commentThread
+
+        var thread = [Comment]()
+        flattenFirebaseComments(ids: rootKids, nestLevel: 0, items: items, into: &thread)
+        commentLog.info("Comments[\(id, privacy: .public)]: Firebase walk complete — \(thread.count, privacy: .public) comments across \(depth, privacy: .public) levels")
+        return thread
     }
 
-    private static func appendFirebaseComments(ids: [Int], nestLevel: Int, into comments: inout [Comment]) async {
-        // Fetch this level's siblings concurrently, then reassemble in their
-        // original order so the thread reads top to bottom.
-        let siblings: [FirebaseCommentData] = await withTaskGroup(of: (Int, FirebaseCommentData?).self) { group in
-            for (index, commentId) in ids.enumerated() {
-                group.addTask { (index, await FirebaseAPIService.getCommentAsync(id: commentId)) }
+    /// Fetches the given comment ids concurrently with a bounded degree of parallelism,
+    /// returning those that loaded keyed by id. Failed or missing ids are simply absent.
+    private static func fetchComments(ids: [Int]) async -> [Int: FirebaseCommentData] {
+        var results = [Int: FirebaseCommentData]()
+        var iterator = ids.makeIterator()
+        await withTaskGroup(of: FirebaseCommentData?.self) { group in
+            // Seed the group up to the concurrency limit.
+            var scheduled = 0
+            while scheduled < maxConcurrentCommentFetches, let commentId = iterator.next() {
+                group.addTask { await FirebaseAPIService.getCommentAsync(id: commentId) }
+                scheduled += 1
             }
-            var results = [(Int, FirebaseCommentData?)]()
-            for await result in group {
-                results.append(result)
+            // As each request finishes, backfill with the next pending id.
+            while let result = await group.next() {
+                if let result { results[result.id] = result }
+                if let commentId = iterator.next() {
+                    group.addTask { await FirebaseAPIService.getCommentAsync(id: commentId) }
+                }
             }
-            return results.sorted { $0.0 < $1.0 }.compactMap { $0.1 }
         }
+        return results
+    }
 
-        for sibling in siblings {
-            // Skip deleted/dead comments, which carry no author or body.
-            if sibling.deleted == true || sibling.dead == true { continue }
-            comments.append(Comment(firebase: sibling, nestingLevel: nestLevel))
-            if let kids = sibling.kids, !kids.isEmpty {
-                await appendFirebaseComments(ids: kids, nestLevel: nestLevel + 1, into: &comments)
+    /// Walks the fetched Firebase items in pre-order (depth-first), assigning each a
+    /// nesting level and dropping deleted/dead comments, to produce the flat shape the
+    /// comment list renders.
+    private static func flattenFirebaseComments(ids: [Int], nestLevel: Int, items: [Int: FirebaseCommentData], into comments: inout [Comment]) {
+        for id in ids {
+            guard let item = items[id], item.deleted != true, item.dead != true else { continue }
+            comments.append(Comment(firebase: item, nestingLevel: nestLevel))
+            if let kids = item.kids, !kids.isEmpty {
+                flattenFirebaseComments(ids: kids, nestLevel: nestLevel + 1, items: items, into: &comments)
             }
         }
     }

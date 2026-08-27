@@ -128,7 +128,9 @@ class StoryModel : Equatable, Identifiable {
         self.by = story.by
         self.timestamp = Date(timeIntervalSince1970: TimeInterval(story.time))
         self.score = story.score
-        self.commentCount = story.kids?.count ?? 0
+        // `descendants` is the whole-thread comment total; `kids` is only the
+        // top-level replies. Fall back to the top-level count if it's absent.
+        self.commentCount = story.descendants ?? story.kids?.count ?? 0
 
         await fetchThumbnail()
         isLoaded = true

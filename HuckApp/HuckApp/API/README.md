@@ -71,5 +71,13 @@ The types the app actually works with, decoupled from any single API:
   coalesces concurrent requests for the same id into one fetch, prefetches in
   parallel with bounded concurrency, and bounds its size with LRU eviction.
   Nothing outside the API layer touches `StoryCache` directly.
+- Comment sourcing is decided in `HackerNewsAPI.getComments(for:)`. It fetches
+  Algolia's whole-tree response and the realtime Firebase story together, then
+  `planCommentFetch` compares Algolia's node count against the story's Firebase
+  `descendants` (the whole-thread comment total). Algolia is served when it looks
+  complete; when it's empty or stale (missing more than a small tolerance), it
+  falls back to a breadth-first Firebase walk that fetches each depth level in
+  parallel (bounded concurrency) so round trips scale with tree depth, not size.
+  Which path is taken, and why, is logged under the `CommentFetch` category.
 - Session state (the logged-in user derived from cookies) lives in
   `UserSession`, outside this directory.

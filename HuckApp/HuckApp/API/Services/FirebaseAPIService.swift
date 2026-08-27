@@ -18,6 +18,11 @@ struct FirebaseStoryData: Codable {
     let kids: [Int]?
     let url: String?
     let text: String?
+    /// Total comment count for the whole thread, across every nesting level (not
+    /// just direct `kids`). Used as the realtime yardstick for whether Algolia's
+    /// indexed comment tree is still complete. Optional because non-story items
+    /// omit it.
+    let descendants: Int?
 }
 
 /// A comment item as returned by the official Firebase HN `item` endpoint.
