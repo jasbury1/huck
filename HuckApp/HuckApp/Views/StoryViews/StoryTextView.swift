@@ -194,10 +194,14 @@ struct StoryTextView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 // The small nav-bar title fades in as the large one scrolls off,
-                // matching the username on the user page.
+                // matching the username on the user page. Fill the available
+                // central width and truncate so a long title can't run under the
+                // trailing button.
                 Text(storyData.title)
                     .font(.headline)
                     .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity)
                     .opacity(titleCollapseProgress)
             }
             ToolbarItem(placement: .topBarTrailing) {
