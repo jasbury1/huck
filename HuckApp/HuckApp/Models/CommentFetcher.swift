@@ -13,6 +13,11 @@ class CommentFetcher {
     let id: Int
     var comments: [Comment] = []
 
+    /// True while the thread is still loading. Drives the loading indicator: a centred
+    /// spinner before any comments arrive, then a footer spinner while the rest of a
+    /// streamed Firebase thread fills in.
+    private(set) var isLoading = false
+
     /// Ids of comments whose reply subtrees are collapsed (hidden).
     var collapsedIds: Set<Int> = []
 
@@ -20,13 +25,18 @@ class CommentFetcher {
         self.id = id
     }
 
-    /// Loads the thread, updating `comments` as it arrives. Algolia threads land in
-    /// one snapshot; a Firebase-walked thread streams in progressively (top-level
-    /// comments first, deeper replies filling in), so the list renders as it loads.
+    /// Loads the thread, updating `comments` as it arrives. Algolia threads land in one
+    /// snapshot; a Firebase-walked thread streams in progressively. Each snapshot only
+    /// appends to the last, so the list grows downward without reflowing — the animated
+    /// assignment simply fades the new rows in.
     func fetchComments() async {
+        isLoading = true
         for await snapshot in HackerNewsAPI.streamComments(for: id) {
-            comments = snapshot
+            withAnimation(.easeIn(duration: 0.2)) {
+                comments = snapshot
+            }
         }
+        isLoading = false
     }
 
     /// The comments currently on screen: the flat, pre-order list with the reply

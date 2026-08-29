@@ -177,7 +177,11 @@ struct StoryTextView: View {
                                     }
                                 }
                             }
+                            // New rows fade in as the thread streams; combined with the
+                            // append-only snapshots this avoids any visible reflow.
+                            .transition(.opacity)
                     }
+                    commentsStatus
                 } header: {
                     SortableHeader(title: "Comments")
                 }
@@ -219,6 +223,25 @@ struct StoryTextView: View {
         .task {
             await storyData.fetchData()
             await commentFetcher.fetchComments()
+        }
+    }
+
+    /// The loading indicator that trails the comment list. While loading it's a
+    /// spinner — centred on its own before any comments arrive, then a footer as a
+    /// streamed Firebase thread fills in below. Once loading finishes with no comments,
+    /// it becomes a short empty-state note.
+    @ViewBuilder
+    private var commentsStatus: some View {
+        if commentFetcher.isLoading {
+            ProgressView()
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+        } else if commentFetcher.comments.isEmpty {
+            Text("No comments yet.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
         }
     }
 

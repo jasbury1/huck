@@ -11,7 +11,8 @@ HackerNewsAPI  ← the facade: the ONLY type the rest of the app calls
    ├── Services/AlgoliaAPIService    (historic data, whole comment threads, user search)
    ├── Services/FirebaseAPIService   (realtime story lists and items)
    │         │
-   │         └── WebService          (generic URL fetch + JSON decode)
+   │         ├── WebService          (generic URL fetch + JSON decode)
+   │         └── FirebaseThreadWalker(streams a comment thread in reading order)
    └── Services/NewsYCService        (reverse-engineered HTML scraping: voting, favorites)
 ```
 
@@ -71,17 +72,17 @@ The types the app actually works with, decoupled from any single API:
   coalesces concurrent requests for the same id into one fetch, prefetches in
   parallel with bounded concurrency, and bounds its size with LRU eviction.
   Nothing outside the API layer touches `StoryCache` directly.
-- Comment sourcing is decided in `HackerNewsAPI.streamComments(for:)`, which
-  yields progressively-growing snapshots of the thread (each meant to replace the
-  last). It fetches Algolia's whole-tree response and the realtime Firebase story
-  together, then `planCommentFetch` compares Algolia's node count against the
-  story's Firebase `descendants` (the whole-thread comment total). A complete
-  Algolia tree is emitted once; when it's empty or stale (missing more than a small
-  tolerance), it falls back to a breadth-first Firebase walk that fetches each depth
-  level in parallel (bounded concurrency) so round trips scale with tree depth, not
-  size, emitting a fuller snapshot after each level so the UI renders top-level
-  comments first and fills in replies as they arrive. A stale Algolia tree is
-  emitted immediately as instant content before the Firebase walk streams over it.
-  Which path is taken, and why, is logged under the `CommentFetch` category.
+- Comment sourcing is decided in `HackerNewsAPI.streamComments(for:)`, which yields
+  progressively-growing snapshots of the thread. It fetches Algolia's whole-tree
+  response and the realtime Firebase story together, then `planCommentFetch` compares
+  Algolia's node count against the story's Firebase `descendants` (the whole-thread
+  comment total). A complete Algolia tree is emitted once; when it's empty or stale
+  (missing more than a small tolerance), the facade hands the story's `kids` to
+  `FirebaseThreadWalker`. The walker streams the realtime tree with two separate
+  policies: it *fetches* in pre-order priority (top of the page first, bounded
+  concurrency) and it *reveals* only the contiguous fully-loaded prefix — so every
+  snapshot strictly appends to the last and the list never reflows. Successive
+  snapshots therefore only grow at the tail, which the view fades in. Which path is
+  taken, and why, is logged under the `CommentFetch` category.
 - Session state (the logged-in user derived from cookies) lives in
   `UserSession`, outside this directory.
