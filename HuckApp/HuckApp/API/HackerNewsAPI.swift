@@ -128,17 +128,33 @@ class HackerNewsAPI {
         return .algolia(count: algoliaCount, descendants: descendants)
     }
 
-    /// Returns a story's flattened, depth-first comment thread.
+    /// A stream of progressively-growing snapshots of a story's comment thread.
     ///
     /// Algolia returns the whole tree in one request and is the fast path, but its
     /// crawler lags HN by up to ~a minute, so a live story can come back missing its
     /// newest comments. We fetch the Algolia tree and the realtime Firebase story
-    /// metadata together, then compare against the story's `descendants` (its
-    /// whole-thread comment total) to judge whether Algolia is complete. When it isn't
-    /// — or has nothing yet — we fall back to walking the realtime Firebase tree. That
-    /// staleness case almost always coincides with young, still-small threads, so the
-    /// walk is cheap in practice.
-    static func getComments(for id: Int) async -> [Comment] {
+    /// metadata together and compare against the story's `descendants` (its
+    /// whole-thread comment total). When Algolia looks complete we emit it once and
+    /// finish. When it's empty or stale we walk the realtime Firebase tree, emitting a
+    /// fuller snapshot after each depth level so top-level comments appear within
+    /// roughly one round trip while deeper replies fill in beneath them.
+    ///
+    /// Each yielded value is a complete, correctly pre-ordered list meant to *replace*
+    /// the previous one; consumers just assign it.
+    static func streamComments(for id: Int) -> AsyncStream<[Comment]> {
+        AsyncStream { continuation in
+            let task = Task {
+                await produceComments(for: id) { snapshot in
+                    continuation.yield(snapshot)
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    /// Runs the source decision and drives the emissions behind `streamComments`.
+    private static func produceComments(for id: Int, emit: ([Comment]) -> Void) async {
         // The story is usually already warm in the cache from the feed, so reading it
         // for its `descendants` count costs nothing; run it alongside the Algolia fetch.
         async let storyRequest = StoryCache.shared.story(id: id)
@@ -157,26 +173,24 @@ class HackerNewsAPI {
         case let .algolia(count, descendants):
             let reported = descendants.map(String.init) ?? "unknown"
             commentLog.info("Comments[\(id, privacy: .public)]: serving \(count, privacy: .public) comments from Algolia (Firebase descendants: \(reported, privacy: .public)); index fresh")
-            return algoliaThread
+            emit(algoliaThread)
+            return
         case .firebaseAlgoliaEmpty:
-            commentLog.info("Comments[\(id, privacy: .public)]: Algolia has no comments yet; walking realtime Firebase tree")
+            commentLog.info("Comments[\(id, privacy: .public)]: Algolia has no comments yet; streaming realtime Firebase tree")
         case let .firebaseStale(algoliaCount, descendants):
-            commentLog.info("Comments[\(id, privacy: .public)]: Algolia stale (\(algoliaCount, privacy: .public) of \(descendants, privacy: .public) comments); walking realtime Firebase tree")
+            commentLog.info("Comments[\(id, privacy: .public)]: Algolia stale (\(algoliaCount, privacy: .public) of \(descendants, privacy: .public) comments); streaming realtime Firebase tree")
+            // Show Algolia's partial tree immediately for instant content; the Firebase
+            // walk streams a fuller thread over it, wave by wave.
+            emit(algoliaThread)
         }
 
         // Both Firebase fallbacks need the story's top-level `kids` to seed the walk.
         guard let story else {
             commentLog.warning("Comments[\(id, privacy: .public)]: Firebase story unavailable; serving \(algoliaThread.count, privacy: .public) Algolia comments instead")
-            return algoliaThread
+            emit(algoliaThread)
+            return
         }
-        let firebaseThread = await getCommentsFromFirebase(for: id, story: story)
-        // Guard against a degenerate walk (e.g. kids that all fail to load) discarding
-        // an otherwise usable Algolia tree.
-        guard firebaseThread.count >= algoliaThread.count else {
-            commentLog.warning("Comments[\(id, privacy: .public)]: Firebase walk yielded \(firebaseThread.count, privacy: .public) < Algolia's \(algoliaThread.count, privacy: .public); serving Algolia instead")
-            return algoliaThread
-        }
-        return firebaseThread
+        await streamFirebaseWalk(for: id, story: story, fallback: algoliaThread, emit: emit)
     }
 
     private static func getChildComments(nestLevel: Int, itemData: AlgoliaItemData, comments: inout [Comment]) {
@@ -190,23 +204,35 @@ class HackerNewsAPI {
         }
     }
 
-    /// Builds the flat, depth-first comment list from the realtime Firebase API.
+    /// Streams the comment thread from the realtime Firebase API.
     ///
     /// Firebase serves one item per request and only reveals a comment's children once
     /// it has been fetched, so the thread is loaded breadth-first: each depth level is
     /// fetched fully in parallel, and its children form the next level. This bounds the
-    /// sequential round trips to the tree's *depth* rather than its size. Once every
-    /// item is in hand, a single pre-order pass produces the depth-first list the UI
-    /// renders.
-    private static func getCommentsFromFirebase(for id: Int, story: FirebaseStoryData) async -> [Comment] {
-        guard let rootKids = story.kids, !rootKids.isEmpty else { return [] }
+    /// sequential round trips to the tree's *depth* rather than its size. After every
+    /// level we re-flatten everything fetched so far into a correct pre-order snapshot
+    /// and emit it, so comments appear progressively — top-level first, replies slotting
+    /// in beneath their parents as deeper levels arrive.
+    private static func streamFirebaseWalk(for id: Int, story: FirebaseStoryData, fallback: [Comment], emit: ([Comment]) -> Void) async {
+        guard let rootKids = story.kids, !rootKids.isEmpty else {
+            emit(fallback)
+            return
+        }
 
         var items = [Int: FirebaseCommentData]()
         var frontier = rootKids
         var depth = 0
+        var latestCount = 0
         while !frontier.isEmpty {
             let level = await fetchComments(ids: frontier)
             items.merge(level) { _, new in new }
+
+            // Emit a correctly pre-ordered snapshot of everything fetched so far.
+            var snapshot = [Comment]()
+            flattenFirebaseComments(ids: rootKids, nestLevel: 0, items: items, into: &snapshot)
+            latestCount = snapshot.count
+            emit(snapshot)
+
             // The next level is every live comment's children, kept in reading order.
             var next = [Int]()
             for commentId in frontier {
@@ -219,10 +245,14 @@ class HackerNewsAPI {
             depth += 1
         }
 
-        var thread = [Comment]()
-        flattenFirebaseComments(ids: rootKids, nestLevel: 0, items: items, into: &thread)
-        commentLog.info("Comments[\(id, privacy: .public)]: Firebase walk complete — \(thread.count, privacy: .public) comments across \(depth, privacy: .public) levels")
-        return thread
+        // Guard against a degenerate walk (e.g. kids that all fail to load) leaving the
+        // reader with less than the Algolia tree we already had.
+        if latestCount < fallback.count {
+            commentLog.warning("Comments[\(id, privacy: .public)]: Firebase walk yielded \(latestCount, privacy: .public) < Algolia's \(fallback.count, privacy: .public); serving Algolia instead")
+            emit(fallback)
+            return
+        }
+        commentLog.info("Comments[\(id, privacy: .public)]: Firebase walk complete — \(latestCount, privacy: .public) comments across \(depth, privacy: .public) levels")
     }
 
     /// Fetches the given comment ids concurrently with a bounded degree of parallelism,

@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@MainActor
 @Observable
 class CommentFetcher {
     let id: Int
@@ -19,9 +20,13 @@ class CommentFetcher {
         self.id = id
     }
 
+    /// Loads the thread, updating `comments` as it arrives. Algolia threads land in
+    /// one snapshot; a Firebase-walked thread streams in progressively (top-level
+    /// comments first, deeper replies filling in), so the list renders as it loads.
     func fetchComments() async {
-        print("Fetching Comments")
-        comments = await HackerNewsAPI.getComments(for: id)
+        for await snapshot in HackerNewsAPI.streamComments(for: id) {
+            comments = snapshot
+        }
     }
 
     /// The comments currently on screen: the flat, pre-order list with the reply
