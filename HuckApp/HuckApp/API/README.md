@@ -8,12 +8,16 @@ This directory contains everything Huck uses to talk to Hacker News.
 HackerNewsAPI  ← the facade: the ONLY type the rest of the app calls
    │
    ├── Cache/StoryCache              (actor; caches stories behind the facade)
+   ├── Cache/CommentCache            (actor; caches whole comment threads, short TTL)
    ├── Services/AlgoliaAPIService    (historic data, whole comment threads, user search)
    ├── Services/FirebaseAPIService   (realtime story lists and items)
    │         │
    │         ├── WebService          (generic URL fetch + JSON decode)
    │         └── FirebaseThreadWalker(streams a comment thread in reading order)
    └── Services/NewsYCService        (reverse-engineered HTML scraping: voting, favorites)
+
+`StoryCache` and `CommentCache` are both built on the generic `LRUCache` actor in
+`Common/` (alongside other reusable building blocks like `MinHeap`).
 ```
 
 ### `HackerNewsAPI` — the facade
@@ -84,5 +88,10 @@ The types the app actually works with, decoupled from any single API:
   snapshot strictly appends to the last and the list never reflows. Successive
   snapshots therefore only grow at the tail, which the view fades in. Which path is
   taken, and why, is logged under the `CommentFetch` category.
+- Completed comment threads are cached in `CommentCache` (keyed by story id), so
+  re-opening a post serves the thread in a single snapshot rather than re-hitting the
+  APIs. Entries carry a short time-to-live because threads gain replies over time;
+  once stale, the next open re-fetches. Only complete, non-empty threads are cached —
+  a cancelled walk or an empty/failed load is left out so it can be retried.
 - Session state (the logged-in user derived from cookies) lives in
   `UserSession`, outside this directory.

@@ -137,11 +137,23 @@ class HackerNewsAPI {
     ///
     /// Each yielded value is a complete, correctly pre-ordered list. Successive values
     /// only ever *append* to the previous one, so consumers can simply assign it.
+    ///
+    /// Completed threads are cached briefly (see `CommentCache`), so re-opening a post
+    /// serves the thread in one snapshot instead of hitting the APIs again.
     static func streamComments(for id: Int) -> AsyncStream<[Comment]> {
         AsyncStream { continuation in
             let task = Task {
-                await produceComments(for: id) { snapshot in
-                    continuation.yield(snapshot)
+                if let cached = await CommentCache.shared.thread(for: id) {
+                    commentLog.info("Comments[\(id, privacy: .public)]: served \(cached.count, privacy: .public) comments from cache")
+                    continuation.yield(cached)
+                } else {
+                    let thread = await produceComments(for: id) { continuation.yield($0) }
+                    // Cache only a real, complete result: skip empties (an empty thread
+                    // or a failed load, so it can be retried) and cancelled walks, whose
+                    // thread is only partial.
+                    if !thread.isEmpty, !Task.isCancelled {
+                        await CommentCache.shared.store(thread, for: id)
+                    }
                 }
                 continuation.finish()
             }
@@ -149,8 +161,9 @@ class HackerNewsAPI {
         }
     }
 
-    /// Runs the source decision and drives the emissions behind `streamComments`.
-    private static func produceComments(for id: Int, emit: ([Comment]) -> Void) async {
+    /// Runs the source decision and drives the emissions behind `streamComments`,
+    /// returning the final, complete thread.
+    private static func produceComments(for id: Int, emit: ([Comment]) -> Void) async -> [Comment] {
         // The story is usually already warm in the cache from the feed, so reading it
         // for its `descendants` count costs nothing; run it alongside the Algolia fetch.
         async let storyRequest = StoryCache.shared.story(id: id)
@@ -170,7 +183,7 @@ class HackerNewsAPI {
             let reported = descendants.map(String.init) ?? "unknown"
             commentLog.info("Comments[\(id, privacy: .public)]: serving \(count, privacy: .public) comments from Algolia (Firebase descendants: \(reported, privacy: .public)); index fresh")
             emit(algoliaThread)
-            return
+            return algoliaThread
         case .firebaseAlgoliaEmpty:
             commentLog.info("Comments[\(id, privacy: .public)]: Algolia has no comments yet; streaming realtime Firebase tree")
         case let .firebaseStale(algoliaCount, descendants):
@@ -181,7 +194,7 @@ class HackerNewsAPI {
         guard let story, let rootKids = story.kids, !rootKids.isEmpty else {
             commentLog.warning("Comments[\(id, privacy: .public)]: Firebase story unavailable; serving \(algoliaThread.count, privacy: .public) Algolia comments instead")
             emit(algoliaThread)
-            return
+            return algoliaThread
         }
 
         let finalThread = await FirebaseThreadWalker(rootKids: rootKids).walk(emit: emit)
@@ -192,9 +205,10 @@ class HackerNewsAPI {
         if finalThread.count < algoliaThread.count {
             commentLog.warning("Comments[\(id, privacy: .public)]: Firebase walk yielded \(finalThread.count, privacy: .public) < Algolia's \(algoliaThread.count, privacy: .public); serving Algolia instead")
             emit(algoliaThread)
-        } else {
-            commentLog.info("Comments[\(id, privacy: .public)]: Firebase walk complete — \(finalThread.count, privacy: .public) comments")
+            return algoliaThread
         }
+        commentLog.info("Comments[\(id, privacy: .public)]: Firebase walk complete — \(finalThread.count, privacy: .public) comments")
+        return finalThread
     }
 
     private static func getChildComments(nestLevel: Int, itemData: AlgoliaItemData, comments: inout [Comment]) {
