@@ -39,4 +39,6 @@ struct FavoritesView: View {
     NavigationStack {
         FavoritesView(username: "zdw", path: .constant(NavigationPath()))
     }
+    .environment(InteractionStore())
+    .environment(RecentlyViewedStore())
 }

@@ -19,6 +19,13 @@ struct UserView: View {
     @State private var posts: StoryFeed
     @State private var comments: PaginatedFeed<UserComment>
 
+    /// Per-user record of recently-viewed stories, shown in the (current-user-only)
+    /// "Recently viewed" tab.
+    @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+    /// A snapshot feed built from the store's current order (most-recent first).
+    /// Rebuilt whenever the tab is shown so newly-opened stories appear.
+    @State private var recentlyViewed: StoryFeed?
+
     init(username: String, path: Binding<NavigationPath>) {
         self.username = username
         self._path = path
@@ -94,7 +101,19 @@ struct UserView: View {
             async let loadedComments: Void = comments.loadMore()
             user = await fetchedUser
             _ = await (loadedPosts, loadedComments)
+            // Warm the recently-viewed snapshot too (current user only).
+            if isCurrentUser { await refreshRecentlyViewed() }
         }
+    }
+
+    /// Rebuilds the recently-viewed feed from the store's current order so it
+    /// reflects stories opened since the profile last appeared. Also folds in any
+    /// signed-out browsing, covering the case where login happened via this tab.
+    private func refreshRecentlyViewed() async {
+        recentlyViewedStore.adoptGuestHistory()
+        let feed = StoryFeed.fromIDs(recentlyViewedStore.viewedIDs)
+        await feed.loadMore()
+        recentlyViewed = feed
     }
 
     // MARK: - Header
@@ -324,6 +343,11 @@ struct UserView: View {
         .tabViewStyle(.page(indexDisplayMode: .never))
         .onChange(of: currentTab) { _, newTab in
             syncCollapse(to: newTab)
+            // Refresh the snapshot each time the tab is opened so it picks up any
+            // stories viewed since it was last shown.
+            if newTab == .recentlyViewed {
+                Task { await refreshRecentlyViewed() }
+            }
         }
     }
 
@@ -449,14 +473,20 @@ struct UserView: View {
         }
     }
 
-    /// Placeholder for the recently-viewed stories. Tracking and content will be
-    /// wired up in a later change.
+    /// The current user's recently-viewed stories, most-recently-viewed first,
+    /// rendered from the snapshot built by `refreshRecentlyViewed()`.
+    @ViewBuilder
     var recentlyViewedList: some View {
-        EmptyFeedView(
+        let empty = EmptyFeedView(
             title: "No Recently Viewed",
             systemImage: "clock",
             description: "Stories you open will show up here."
         )
+        if let recentlyViewed {
+            StoryList(feed: recentlyViewed, path: $path, emptyState: empty)
+        } else {
+            empty
+        }
     }
 
     var postsList: some View {
@@ -553,4 +583,5 @@ struct BioSheet: View {
         UserView(username: "zdw", path: .constant(NavigationPath()))
     }
     .environment(InteractionStore())
+    .environment(RecentlyViewedStore())
 }

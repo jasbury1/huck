@@ -123,4 +123,13 @@ extension StoryFeed {
             await HackerNewsAPI.getFavoriteStories(username: username, page: page)
         }
     }
+
+    /// A one-page feed over an explicit, already-ordered list of story ids. Used
+    /// by the recently-viewed list, whose order is decided locally (most-recent
+    /// first) rather than fetched from an API.
+    static func fromIDs(_ ids: [Int]) -> StoryFeed {
+        StoryFeed { page in
+            page == 0 ? (ids, false) : ([], false)
+        }
+    }
 }

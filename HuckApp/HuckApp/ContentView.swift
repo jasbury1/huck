@@ -15,6 +15,10 @@ struct ContentView: View {
     /// later saved/hidden), observed by story views via the environment.
     @State private var interactionStore = InteractionStore()
 
+    /// App-wide, per-user record of recently-viewed stories, observed by story
+    /// views to grey seen titles and to build the account's "Recently viewed" list.
+    @State private var recentlyViewedStore = RecentlyViewedStore()
+
     var body: some View {
         TabView {
             Tab("Feed", systemImage: "newspaper.fill") {
@@ -34,6 +38,7 @@ struct ContentView: View {
         }
         .tint(.orange)
         .environment(interactionStore)
+        .environment(recentlyViewedStore)
         .onAppear(perform: startApp)
     }
     

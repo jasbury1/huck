@@ -93,6 +93,10 @@ struct StoryTextView: View {
     @Environment(\.upvote) private var upvote
     @Environment(\.favorite) private var favorite
 
+    /// Records this story as recently viewed when its comments are opened — the
+    /// single choke point for every route into a story's comments/text.
+    @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+
     private var isUpvoted: Bool { interactionStore.interaction(for: storyId).isUpvoted }
     private var isFavorited: Bool { interactionStore.interaction(for: storyId).isFavorited }
 
@@ -221,6 +225,7 @@ struct StoryTextView: View {
         // "More" options pop-up, shared with the story feed.
         .storyOptionsPopover(for: $moreOptionsStory)
         .task {
+            recentlyViewedStore.recordView(storyId)
             await storyData.fetchData()
             await commentFetcher.fetchComments()
         }
@@ -382,5 +387,6 @@ class CommentSectionData {
 #Preview {
     StoryTextView(storyId: 46391572, path: .constant(NavigationPath()))
         .environment(InteractionStore())
+        .environment(RecentlyViewedStore())
 }
 

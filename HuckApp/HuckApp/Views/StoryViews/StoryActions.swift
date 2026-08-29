@@ -33,6 +33,7 @@ extension EnvironmentValues {
 /// user. One login gate is shared by both actions.
 private struct StoryActionsModifier: ViewModifier {
     @Environment(InteractionStore.self) private var store
+    @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
     @State private var loginTimestamp: Date?
     @State private var isPresentingLogin = false
 
@@ -49,8 +50,10 @@ private struct StoryActionsModifier: ViewModifier {
             }
             .onChange(of: loginTimestamp) {
                 // A successful login refreshes the cookie-derived session; reload
-                // the store for the current user and dismiss the login sheet.
+                // the store for the current user, carry any signed-out browsing
+                // into the account, and dismiss the login sheet.
                 store.loadForCurrentUser()
+                recentlyViewedStore.adoptGuestHistory()
                 isPresentingLogin = false
             }
     }

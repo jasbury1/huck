@@ -24,10 +24,17 @@ struct StoryCellView: View {
     @Environment(\.upvote) private var upvote
     @Environment(\.favorite) private var favorite
 
+    /// Per-user recently-viewed record: read to grey a seen title, written when
+    /// the story is opened.
+    @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+
     private var storyId: Int { storyData.id }
 
     private var isUpvoted: Bool { interactionStore.interaction(for: storyId).isUpvoted }
     private var isFavorited: Bool { interactionStore.interaction(for: storyId).isFavorited }
+
+    /// Whether the current user has already opened this story — its title is greyed.
+    private var isViewed: Bool { recentlyViewedStore.hasViewed(storyId) }
 
     /// The fetched score plus any optimistic vote adjustment from the shared store,
     /// so this row stays in sync with the story's other views.
@@ -44,9 +51,11 @@ struct StoryCellView: View {
                 switch storyData.storyType {
                 case .unknown:
                     Text(storyData.title)
+                        .foregroundStyle(isViewed ? .secondary : .primary)
                 case .link, .text:
                     Button(action: openStory) {
                         Text(storyData.title)
+                            .foregroundStyle(isViewed ? .secondary : .primary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -140,14 +149,17 @@ struct StoryCellView: View {
 
     /// Navigates to the story: the linked page opens in the in-app Safari
     /// browser, a text post pushes the comments view. Shared by the title and
-    /// the thumbnail.
+    /// the thumbnail. Either counts as viewing the story, so it's recorded here;
+    /// opening the comments separately is recorded by `StoryTextView`.
     private func openStory() {
         switch storyData.storyType {
         case .link:
             if let url = storyData.url {
+                recentlyViewedStore.recordView(storyId)
                 openInAppBrowser(url)
             }
         case .text:
+            recentlyViewedStore.recordView(storyId)
             path.append(ItemNavigation.textStory(id: storyId))
         case .unknown:
             break
