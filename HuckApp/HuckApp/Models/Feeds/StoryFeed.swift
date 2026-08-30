@@ -124,6 +124,16 @@ extension StoryFeed {
         }
     }
 
+    /// The current user's liked (upvoted) stories, paged via news.ycombinator.
+    /// HN exposes the `/upvoted` list only to its owner, so this is implicitly
+    /// the logged-in user and takes no username — `getLikedStories` reads the
+    /// active session and returns nothing when logged out.
+    static func liked() -> StoryFeed {
+        StoryFeed { page in
+            await HackerNewsAPI.getLikedStories(page: page)
+        }
+    }
+
     /// The current user's recently-viewed stories, most-recent first. A one-page
     /// feed whose id list is re-read from the store on each `reload()`, so this
     /// must stay a *single* instance that is reloaded — never rebuilt — to keep

@@ -296,7 +296,7 @@ struct UserView: View {
         HStack(spacing: 12) {
             if isCurrentUser {
                 profileActionButton("Likes", systemImage: "arrow.up", iconColor: .orange) {
-                    // TODO: Show this user's likes (upvoted posts and comments)
+                    path.append(ItemNavigation.liked)
                 }
             }
             profileActionButton("Favorites", systemImage: "heart", iconColor: .red) {

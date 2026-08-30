@@ -11,6 +11,7 @@ enum ItemNavigation: Hashable {
     case textStory(id: Int)
     case userProfile(user: String)
     case favorites(user: String)
+    case liked
     case collection(id: UUID)
     case huckCollection(id: String)
 }
@@ -32,6 +33,8 @@ struct StoryDetailsView: View {
             UserView(username: user, path: $path)
         case let .favorites(user):
             FavoritesView(username: user, path: $path)
+        case .liked:
+            LikedView(path: $path)
         case let .collection(id):
             CollectionView(collectionID: id, path: $path)
         case let .huckCollection(id):
