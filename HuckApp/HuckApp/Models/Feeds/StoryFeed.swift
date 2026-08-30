@@ -124,12 +124,15 @@ extension StoryFeed {
         }
     }
 
-    /// A one-page feed over an explicit, already-ordered list of story ids. Used
-    /// by the recently-viewed list, whose order is decided locally (most-recent
-    /// first) rather than fetched from an API.
-    static func fromIDs(_ ids: [Int]) -> StoryFeed {
+    /// The current user's recently-viewed stories, most-recent first. A one-page
+    /// feed whose id list is re-read from the store on each `reload()`, so this
+    /// must stay a *single* instance that is reloaded — never rebuilt — to keep
+    /// its `StoryModel` cache. Rebuilding would hand each row a fresh blank model
+    /// under the same id, and since the cell's fetch `.task` is keyed to that
+    /// (unchanged) identity it wouldn't re-run, leaving placeholder cards.
+    static func recentlyViewed(_ store: RecentlyViewedStore) -> StoryFeed {
         StoryFeed { page in
-            page == 0 ? (ids, false) : ([], false)
+            page == 0 ? (store.viewedIDs, false) : ([], false)
         }
     }
 }

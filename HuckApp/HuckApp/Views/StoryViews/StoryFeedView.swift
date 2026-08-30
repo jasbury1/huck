@@ -13,6 +13,12 @@ struct StoryFeedView: View {
     @State var storyFilter: StoryFilter
     @State private var feed: StoryFeed
 
+    /// Whether the first page has been loaded. Guards the load `.task`, which
+    /// SwiftUI also re-runs when the view reappears after navigating back — a
+    /// reappear must leave the feed (and its scroll position) untouched. Filter
+    /// changes are handled separately by `.onChange`, which doesn't fire on reappear.
+    @State private var hasLoaded = false
+
     /// Backing text for the search field revealed by pulling the feed down.
     @State private var searchText = ""
 
@@ -97,13 +103,19 @@ struct StoryFeedView: View {
         .refreshable {
             await feed.reload()
         }
-        .task(id: storyFilter) {
-            // Filter changes swap in a fresh feed (a different id source); the
-            // first load then pages it in. Pull-to-refresh reuses this feed via
-            // `reload()` so on-screen stories keep their populated models.
-            let newFeed = StoryFeed.topStories(filter: storyFilter)
-            feed = newFeed
-            await newFeed.loadMore()
+        .task {
+            // First-page load only. `.task` also re-runs when the view reappears
+            // after navigating back, so the guard keeps that from reloading — the
+            // feed and its scroll position survive the round trip.
+            guard !hasLoaded else { return }
+            hasLoaded = true
+            await feed.loadMore()
+        }
+        .onChange(of: storyFilter) {
+            // A real filter change swaps in a fresh feed (a different id source)
+            // and pages it in. Unlike `.task`, `.onChange` never fires on reappear.
+            feed = .topStories(filter: storyFilter)
+            Task { await feed.loadMore() }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

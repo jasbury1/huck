@@ -106,14 +106,19 @@ struct UserView: View {
         }
     }
 
-    /// Rebuilds the recently-viewed feed from the store's current order so it
-    /// reflects stories opened since the profile last appeared. Also folds in any
-    /// signed-out browsing, covering the case where login happened via this tab.
+    /// Refreshes the recently-viewed feed so it reflects stories opened since the
+    /// profile last appeared. Also folds in any signed-out browsing, covering the
+    /// case where login happened via this tab.
+    ///
+    /// The feed is created once and only ever `reload()`ed — reusing the instance
+    /// keeps its `StoryModel` cache, so already-loaded rows stay populated instead
+    /// of blanking to placeholders (a fresh feed would hand each id a new empty
+    /// model whose fetch `.task` won't re-run under the unchanged row identity).
     private func refreshRecentlyViewed() async {
         recentlyViewedStore.adoptGuestHistory()
-        let feed = StoryFeed.fromIDs(recentlyViewedStore.viewedIDs)
-        await feed.loadMore()
+        let feed = recentlyViewed ?? StoryFeed.recentlyViewed(recentlyViewedStore)
         recentlyViewed = feed
+        await feed.reload()
     }
 
     // MARK: - Header
