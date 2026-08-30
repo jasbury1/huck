@@ -135,4 +135,25 @@ extension StoryFeed {
             page == 0 ? (store.viewedIDs, false) : ([], false)
         }
     }
+
+    /// The stories in a user collection, in the order they were added. A one-page
+    /// feed whose id list is re-read from the store on each `reload()`, so adding
+    /// or removing a story is reflected on the next reload. Like `recentlyViewed`,
+    /// keep a single instance and reload it — never rebuild — to preserve its
+    /// `StoryModel` cache.
+    static func collection(_ collectionID: StoryCollection.ID, in store: CollectionsStore) -> StoryFeed {
+        StoryFeed { page in
+            guard page == 0 else { return ([], false) }
+            let ids = store.collections.first { $0.id == collectionID }?.storyIDs ?? []
+            return (ids, false)
+        }
+    }
+
+    /// A one-page feed over a fixed list of story ids — for curated, static
+    /// sources such as a Huck collection.
+    static func fixed(_ ids: [Int]) -> StoryFeed {
+        StoryFeed { page in
+            page == 0 ? (ids, false) : ([], false)
+        }
+    }
 }

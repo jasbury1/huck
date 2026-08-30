@@ -21,6 +21,11 @@ struct StoryOptionsMenu: View {
 
     @Environment(InteractionStore.self) private var interactionStore
     @Environment(\.favorite) private var favorite
+    @Environment(\.requireLogin) private var requireLogin
+
+    /// Presents the collection picker; gated behind login, since collections are
+    /// per-user.
+    @State private var isPresentingCollections = false
 
     private var isFavorited: Bool { interactionStore.interaction(for: story.id).isFavorited }
 
@@ -44,14 +49,23 @@ struct StoryOptionsMenu: View {
                     favorite(story)
                 }
                 Divider()
-                row("Add to Collection...", systemImage: "plus.rectangle.on.rectangle") {
-                    // TODO: Add this story to a collection
+                // Opens the collection picker rather than dismissing the menu, so
+                // the picker has a presenter to attach to.
+                row(
+                    "Add to Collection...",
+                    systemImage: "plus.rectangle.on.rectangle",
+                    dismissesMenu: false
+                ) {
+                    requireLogin { isPresentingCollections = true }
                 }
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .top)
         .presentationDetents([.height(240)])
+        .sheet(isPresented: $isPresentingCollections) {
+            AddToCollectionView(story: story)
+        }
     }
 
     /// Wraps one or more option rows in a single rounded card, so grouped rows
@@ -65,16 +79,19 @@ struct StoryOptionsMenu: View {
         .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
-    /// A single option row: leading label, trailing icon. Running the action
-    /// also dismisses the popover. Meant to sit inside a `group`.
+    /// A single option row: leading label, trailing icon. Running the action also
+    /// dismisses the popover, unless `dismissesMenu` is false — used by rows that
+    /// present their own sheet, which needs this menu to stay as its presenter.
+    /// Meant to sit inside a `group`.
     private func row(
         _ title: LocalizedStringKey,
         systemImage: String,
+        dismissesMenu: Bool = true,
         action: @escaping () -> Void
     ) -> some View {
         Button {
             action()
-            dismiss()
+            if dismissesMenu { dismiss() }
         } label: {
             HStack {
                 Text(title)

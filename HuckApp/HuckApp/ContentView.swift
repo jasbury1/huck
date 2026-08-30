@@ -19,6 +19,10 @@ struct ContentView: View {
     /// views to grey seen titles and to build the account's "Recently viewed" list.
     @State private var recentlyViewedStore = RecentlyViewedStore()
 
+    /// App-wide, per-user store of the "Your Collections" lists, observed by the
+    /// home feed's collections section and the story options menu's picker.
+    @State private var collectionsStore = CollectionsStore()
+
     var body: some View {
         TabView {
             Tab("Feed", systemImage: "newspaper.fill") {
@@ -39,6 +43,7 @@ struct ContentView: View {
         .tint(.orange)
         .environment(interactionStore)
         .environment(recentlyViewedStore)
+        .environment(collectionsStore)
         .onAppear(perform: startApp)
     }
     

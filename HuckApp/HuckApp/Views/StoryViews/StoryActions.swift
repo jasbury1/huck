@@ -22,9 +22,19 @@ struct FavoriteAction {
     func callAsFunction(_ story: StoryModel) { handler(story) }
 }
 
+/// Runs a closure only when signed in, otherwise presenting the login screen —
+/// the same gate as upvote/favorite, exposed for actions that aren't tied to a
+/// single story (e.g. creating a collection). The default runs the closure
+/// immediately, so it degrades gracefully outside a `storyActionsEnabled` subtree.
+struct RequireLoginAction {
+    let handler: (@escaping () -> Void) -> Void
+    func callAsFunction(_ action: @escaping () -> Void) { handler(action) }
+}
+
 extension EnvironmentValues {
     @Entry var upvote = UpvoteAction { _ in }
     @Entry var favorite = FavoriteAction { _ in }
+    @Entry var requireLogin = RequireLoginAction { $0() }
 }
 
 /// Wires the story action environment values for its subtree: logged-in taps toggle
@@ -34,6 +44,7 @@ extension EnvironmentValues {
 private struct StoryActionsModifier: ViewModifier {
     @Environment(InteractionStore.self) private var store
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+    @Environment(CollectionsStore.self) private var collectionsStore
     @State private var loginTimestamp: Date?
     @State private var isPresentingLogin = false
 
@@ -45,15 +56,23 @@ private struct StoryActionsModifier: ViewModifier {
             .environment(\.favorite, FavoriteAction { story in
                 perform { await store.toggleFavorite(story) }
             })
+            .environment(\.requireLogin, RequireLoginAction { action in
+                if UserSession.shared != nil {
+                    action()
+                } else {
+                    isPresentingLogin = true
+                }
+            })
             .sheet(isPresented: $isPresentingLogin) {
                 LoginView(authenticationTimestamp: $loginTimestamp)
             }
             .onChange(of: loginTimestamp) {
                 // A successful login refreshes the cookie-derived session; reload
-                // the store for the current user, carry any signed-out browsing
-                // into the account, and dismiss the login sheet.
+                // the per-user stores, carry any signed-out browsing into the
+                // account, and dismiss the login sheet.
                 store.loadForCurrentUser()
                 recentlyViewedStore.adoptGuestHistory()
+                collectionsStore.loadForCurrentUser()
                 isPresentingLogin = false
             }
     }
@@ -69,10 +88,10 @@ private struct StoryActionsModifier: ViewModifier {
 }
 
 extension View {
-    /// Enables `@Environment(\.upvote)` and `@Environment(\.favorite)` for this
-    /// view's subtree, routing taps through the interaction store and presenting
-    /// login when signed out. Apply it once per navigation stack, above the story
-    /// views that show these actions.
+    /// Enables `@Environment(\.upvote)`, `@Environment(\.favorite)`, and
+    /// `@Environment(\.requireLogin)` for this view's subtree, routing taps through
+    /// the interaction store and presenting login when signed out. Apply it once
+    /// per navigation stack, above the story views that show these actions.
     func storyActionsEnabled() -> some View {
         modifier(StoryActionsModifier())
     }
