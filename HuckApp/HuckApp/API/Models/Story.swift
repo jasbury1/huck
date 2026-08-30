@@ -162,6 +162,19 @@ class StoryModel : Equatable, Identifiable {
         return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
     }
 
+    /// The story's Hacker News discussion page — the canonical permalink to the
+    /// post itself, valid for every post type. Used as the Share target and the
+    /// "Copy Hacker News Link" action. The string is a fixed, always-valid URL.
+    var hackerNewsURL: URL {
+        URL(string: "https://news.ycombinator.com/item?id=\(id)")!
+    }
+
+    /// The linked article's URL for link posts; `nil` for text posts (Ask/Show
+    /// HN and self-posts), whose only link is the Hacker News page.
+    var contentURL: URL? {
+        url
+    }
+
     static func ==(lhs: StoryModel, rhs: StoryModel) -> Bool {
         return lhs.title == rhs.title && lhs.id == rhs.id
     }

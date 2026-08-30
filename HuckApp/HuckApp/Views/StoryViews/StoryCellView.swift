@@ -110,9 +110,12 @@ struct StoryCellView: View {
                             .font(.footnote)
                             .foregroundStyle(.gray)
                         
-                        // Share the post
-                        Image(systemName: "paperplane")
-                            .foregroundColor(.gray)
+                        // Share the post's Hacker News page via the share sheet.
+                        ShareLink(item: storyData.hackerNewsURL) {
+                            Image(systemName: "paperplane")
+                                .foregroundColor(.gray)
+                        }
+                        .buttonStyle(.plain)
                         
                         // Favorite the post. The heart fills red once favorited;
                         // the action handles login and the toggle.

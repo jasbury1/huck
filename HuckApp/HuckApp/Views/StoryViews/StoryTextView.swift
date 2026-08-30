@@ -298,8 +298,12 @@ struct StoryTextView: View {
                 Text(storyData.timestamp.ageString())
                     .font(.footnote)
                     .foregroundStyle(.gray)
-                Image(systemName: "paperplane")
-                    .foregroundColor(.gray)
+                // Share the post's Hacker News page via the share sheet.
+                ShareLink(item: storyData.hackerNewsURL) {
+                    Image(systemName: "paperplane")
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(.plain)
                 // Favorite the post. The heart fills red once favorited.
                 Button(action: {
                     favorite(storyData)

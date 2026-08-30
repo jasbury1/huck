@@ -31,13 +31,22 @@ struct StoryOptionsMenu: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            // Copy Link stands on its own.
+            // Copy actions. A link post has two distinct URLs — the article and
+            // the Hacker News discussion — so it offers both; a text post's only
+            // link is the Hacker News page, so it shows a single "Copy Link".
             group {
-                row("Copy Link", systemImage: "link") {
-                    // Link posts copy the article URL; text posts (no URL) fall
-                    // back to the story's Hacker News discussion page.
-                    UIPasteboard.general.url = story.url
-                        ?? URL(string: "https://news.ycombinator.com/item?id=\(story.id)")
+                if let contentURL = story.contentURL {
+                    row("Copy Content Link", systemImage: "link") {
+                        UIPasteboard.general.url = contentURL
+                    }
+                    Divider()
+                    row("Copy Hacker News Link", systemImage: "text.bubble") {
+                        UIPasteboard.general.url = story.hackerNewsURL
+                    }
+                } else {
+                    row("Copy Link", systemImage: "link") {
+                        UIPasteboard.general.url = story.hackerNewsURL
+                    }
                 }
             }
             // Favorite and Add to Collection are grouped as one card.
@@ -62,7 +71,8 @@ struct StoryOptionsMenu: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .top)
-        .presentationDetents([.height(240)])
+        // Link posts add a second Copy row, so they need a little more height.
+        .presentationDetents([.height(story.contentURL != nil ? 300 : 240)])
         .sheet(isPresented: $isPresentingCollections) {
             AddToCollectionView(story: story)
         }
