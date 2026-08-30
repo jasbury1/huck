@@ -154,6 +154,14 @@ class StoryModel : Equatable, Identifiable {
         }
     }
 
+    /// The link's host with a leading "www." stripped, e.g. "github.com". Nil for
+    /// text posts or links without a host. Shown after the title in the feed when
+    /// the "Display story domain" setting is on.
+    var displayDomain: String? {
+        guard let host = url?.host() else { return nil }
+        return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+    }
+
     static func ==(lhs: StoryModel, rhs: StoryModel) -> Bool {
         return lhs.title == rhs.title && lhs.id == rhs.id
     }

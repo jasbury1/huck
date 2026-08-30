@@ -7,8 +7,17 @@
 
 import SwiftUI
 
+/// Shared `@AppStorage` keys for feed-appearance preferences, so the Settings
+/// toggle and the views that read a preference stay in sync on one identifier.
+enum FeedSettings {
+    static let displayStoryDomainKey = "feed.displayStoryDomain"
+}
+
 struct SettingsView: View {
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+
+    /// Whether story cells show the link's domain after the title. Defaults on.
+    @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
 
     @State private var isConfirmingClearHistory = false
 
@@ -22,6 +31,16 @@ struct SettingsView: View {
                         iconColor: .orange
                     ) {
                         isConfirmingClearHistory = true
+                    }
+                }
+
+                Section("Feed Appearance") {
+                    Toggle(isOn: $displayStoryDomain) {
+                        Label {
+                            Text("Display Story Domain")
+                        } icon: {
+                            SettingsIcon(systemImage: "globe", color: .blue)
+                        }
                     }
                 }
             }
@@ -52,14 +71,25 @@ private struct SettingsRow: View {
                 Text(title)
                     .foregroundStyle(.primary)
             } icon: {
-                Image(systemName: systemImage)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 28, height: 28)
-                    .background(iconColor, in: RoundedRectangle(cornerRadius: 6))
+                SettingsIcon(systemImage: systemImage, color: iconColor)
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// The iOS Settings-style icon badge: a colored SF Symbol in a small
+/// rounded-rectangle. Shared by tappable rows and toggle rows.
+private struct SettingsIcon: View {
+    let systemImage: String
+    let color: Color
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 28, height: 28)
+            .background(color, in: RoundedRectangle(cornerRadius: 6))
     }
 }
 

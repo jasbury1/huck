@@ -28,6 +28,9 @@ struct StoryCellView: View {
     /// the story is opened.
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
 
+    /// Whether to show the link's domain after the title; set in Settings.
+    @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
+
     private var storyId: Int { storyData.id }
 
     private var isUpvoted: Bool { interactionStore.interaction(for: storyId).isUpvoted }
@@ -50,12 +53,10 @@ struct StoryCellView: View {
             VStack(alignment: .leading) {
                 switch storyData.storyType {
                 case .unknown:
-                    Text(storyData.title)
-                        .foregroundStyle(isViewed ? .secondary : .primary)
+                    titleText
                 case .link, .text:
                     Button(action: openStory) {
-                        Text(storyData.title)
-                            .foregroundStyle(isViewed ? .secondary : .primary)
+                        titleText
                     }
                     .buttonStyle(.plain)
                 }
@@ -140,6 +141,23 @@ struct StoryCellView: View {
         .task {
             await storyData.fetchData()
         }
+    }
+
+    /// The title with the link's domain appended in smaller, secondary text when
+    /// the setting is on. Built as a single `Text` so the domain flows right after
+    /// the title and wraps onto the next line when it doesn't fit.
+    private var titleText: Text {
+        let title = Text(storyData.title)
+            .foregroundStyle(isViewed ? Color.secondary : Color.primary)
+
+        guard displayStoryDomain, let domain = storyData.displayDomain else {
+            return title
+        }
+
+        let domainText = Text("(\(domain))")
+            .font(.footnote)
+            .foregroundStyle(Color.secondary)
+        return Text("\(title)  \(domainText)")
     }
 
     /// The image thumbnail (or its placeholder while loading / for text posts).
