@@ -93,6 +93,13 @@ final class RecentlyViewedStore {
         RecentlyViewedPersistence.save(storage)
     }
 
+    /// Clears the current session's recently-viewed history, then persists.
+    /// Signed out, this empties the guest bucket.
+    func clearHistory() {
+        storage.byUser[currentKey] = nil
+        RecentlyViewedPersistence.save(storage)
+    }
+
     // MARK: - Helpers
 
     /// `ids` with `id` moved to (or inserted at) the front, capped to `maxStories`.
