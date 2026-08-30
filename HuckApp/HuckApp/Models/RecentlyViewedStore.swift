@@ -93,6 +93,17 @@ final class RecentlyViewedStore {
         RecentlyViewedPersistence.save(storage)
     }
 
+    /// Removes a story from the current session's history — marking it unread, so
+    /// its feed title is no longer greyed — then persists. No-op if it wasn't
+    /// viewed. Signed out, this edits the guest bucket.
+    func removeView(_ id: Int) {
+        let key = currentKey
+        guard var ids = storage.byUser[key], ids.contains(id) else { return }
+        ids.removeAll { $0 == id }
+        storage.byUser[key] = ids.isEmpty ? nil : ids
+        RecentlyViewedPersistence.save(storage)
+    }
+
     /// Clears the current session's recently-viewed history, then persists.
     /// Signed out, this empties the guest bucket.
     func clearHistory() {

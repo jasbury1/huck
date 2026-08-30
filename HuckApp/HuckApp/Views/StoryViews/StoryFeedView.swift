@@ -30,6 +30,10 @@ struct StoryFeedView: View {
     @Environment(\.upvote) private var upvote
     @Environment(\.favorite) private var favorite
 
+    /// Per-user recently-viewed record. "Mark Read" records a story here so its
+    /// title greys in the feed, the same treatment an opened story gets.
+    @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+
     @Binding var path: NavigationPath
 
     init(storyFilter: StoryFilter, path: Binding<NavigationPath>) {
@@ -58,9 +62,19 @@ struct StoryFeedView: View {
                         }
                         .tint(.gray)
                         Button {
-                            // TODO: Mark this story read
+                            // Toggle read state: recording greys the title (as an
+                            // opened story does); removing it marks the story unread.
+                            if recentlyViewedStore.hasViewed(story.id) {
+                                recentlyViewedStore.removeView(story.id)
+                            } else {
+                                recentlyViewedStore.recordView(story.id)
+                            }
                         } label: {
-                            Label("Mark Read", systemImage: "checkmark.circle")
+                            let isRead = recentlyViewedStore.hasViewed(story.id)
+                            Label(
+                                isRead ? "Mark Unread" : "Mark Read",
+                                systemImage: isRead ? "circle" : "checkmark.circle"
+                            )
                         }
                         .tint(.indigo)
                     }
