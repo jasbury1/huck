@@ -22,7 +22,21 @@ struct LikedView: View {
     }
 
     var body: some View {
-        TabableContentView(title: "Your likes", postsFeed: liked, path: $path)
+        TabableContentView(
+            title: "Your likes",
+            postsFeed: liked,
+            postsEmptyState: EmptyFeedView(
+                title: "No Liked Posts",
+                systemImage: "arrow.up",
+                description: "Stories you like will show up here."
+            ),
+            commentsEmptyState: EmptyFeedView(
+                title: "No Liked Comments",
+                systemImage: "bubble.left.and.bubble.right",
+                description: "Comments you like will show up here."
+            ),
+            path: $path
+        )
     }
 }
 

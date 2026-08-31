@@ -31,7 +31,21 @@ struct FavoritesView: View {
     }
 
     var body: some View {
-        TabableContentView(title: title, postsFeed: favorites, path: $path)
+        TabableContentView(
+            title: title,
+            postsFeed: favorites,
+            postsEmptyState: EmptyFeedView(
+                title: "No Favorite Posts",
+                systemImage: "heart",
+                description: "Stories you favorite will show up here."
+            ),
+            commentsEmptyState: EmptyFeedView(
+                title: "No Favorite Comments",
+                systemImage: "bubble.left.and.bubble.right",
+                description: "Comments you favorite will show up here."
+            ),
+            path: $path
+        )
     }
 }
 

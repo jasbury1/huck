@@ -13,6 +13,11 @@ struct TabableContentView: View {
     private let title: String
     /// The story feed shown in the Posts tab (e.g. a user's favorited stories).
     private let postsFeed: StoryFeed
+    /// Placeholder shown when the Posts tab has no stories. Caller-supplied so
+    /// the wording matches the context (favorites vs. likes).
+    private let postsEmptyState: EmptyFeedView
+    /// Placeholder shown when the Comments tab has no comments.
+    private let commentsEmptyState: EmptyFeedView
     @Binding private var path: NavigationPath
 
     private let cardBackgroundColor = Color(UIColor.systemBackground)
@@ -26,9 +31,17 @@ struct TabableContentView: View {
         return tabs
     }
 
-    init(title: String, postsFeed: StoryFeed, path: Binding<NavigationPath>) {
+    init(
+        title: String,
+        postsFeed: StoryFeed,
+        postsEmptyState: EmptyFeedView,
+        commentsEmptyState: EmptyFeedView,
+        path: Binding<NavigationPath>
+    ) {
         self.title = title
         self.postsFeed = postsFeed
+        self.postsEmptyState = postsEmptyState
+        self.commentsEmptyState = commentsEmptyState
         self._path = path
     }
 
@@ -63,19 +76,11 @@ struct TabableContentView: View {
                 StoryList(
                     feed: postsFeed,
                     path: $path,
-                    emptyState: EmptyFeedView(
-                        title: "No Favorite Posts",
-                        systemImage: "heart",
-                        description: "Stories you favorite will show up here."
-                    )
+                    emptyState: postsEmptyState
                 )
             case .comments:
-                // TODO: Show the user's favorited comments once that feed exists.
-                EmptyFeedView(
-                    title: "No Favorite Comments",
-                    systemImage: "bubble.left.and.bubble.right",
-                    description: "Comments you favorite will show up here."
-                )
+                // TODO: Show the user's favorited/liked comments once that feed exists.
+                commentsEmptyState
             case .recentlyViewed:
                 EmptyView()
             }
