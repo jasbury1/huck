@@ -112,6 +112,16 @@ struct StoryTextView: View {
     /// Non-nil while the shared "More" options popover is presented.
     @State private var moreOptionsStory: StoryModel?
 
+    /// Drives the compose control. While false it's a compact Liquid Glass
+    /// button; while true the glass shape has morphed into the comment text box.
+    @State private var isComposing = false
+    /// The in-progress comment text.
+    @State private var draftComment = ""
+    /// Focuses the composer's text field while writing.
+    @FocusState private var isComposerFocused: Bool
+    /// Shared namespace so the button and the text box morph into one another.
+    @Namespace private var composerNamespace
+
     /// 0 while the large title is fully visible, 1 once it has scrolled off.
     private var titleCollapseProgress: CGFloat {
         titleHeight > 0 ? min(max(scrollOffset / titleHeight, 0), 1) : 0
@@ -202,14 +212,13 @@ struct StoryTextView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 // The small nav-bar title fades in as the large one scrolls off,
-                // matching the username on the user page. Fill the available
-                // central width and truncate so a long title can't run under the
-                // trailing button.
+                // matching the username on the user page. Sizing to the nav bar's
+                // central region (rather than forcing full width) lets a long
+                // title tail-truncate before it reaches the trailing buttons.
                 Text(storyData.title)
                     .font(.headline)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .frame(maxWidth: .infinity)
                     .opacity(titleCollapseProgress)
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -224,6 +233,10 @@ struct StoryTextView: View {
         }
         // "More" options pop-up, shared with the story feed.
         .storyOptionsPopover(for: $moreOptionsStory)
+        // Floating Liquid Glass compose control in the bottom-trailing corner.
+        .overlay(alignment: .bottomTrailing) {
+            commentComposer
+        }
         .task {
             recentlyViewedStore.recordView(storyId)
             await storyData.fetchData()
@@ -247,6 +260,87 @@ struct StoryTextView: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
+        }
+    }
+
+    /// A Liquid Glass compose control anchored to the bottom-trailing corner. At
+    /// rest it's a compact circular button carrying the compose glyph; tapping it
+    /// morphs the same glass shape into a full-width text box for writing a
+    /// comment. The shared `glassEffectID` inside the `GlassEffectContainer` is
+    /// what lets the two states fluidly morph into one another.
+    private var commentComposer: some View {
+        GlassEffectContainer(spacing: 20) {
+            if isComposing {
+                HStack(spacing: 12) {
+                    HStack(alignment: .bottom, spacing: 8) {
+                        TextField("Add a comment…", text: $draftComment, axis: .vertical)
+                            .focused($isComposerFocused)
+                            .lineLimit(1...5)
+                        // Send is stubbed for now — posting comments needs the custom
+                        // news.ycombinator.com write API, which comes later.
+                        Button {
+                            // TODO: submit the comment
+                        } label: {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title2)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(draftComment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
+                    .glassEffectID("composer", in: composerNamespace)
+
+                    // Separate glass circle that dismisses the box, mirroring the
+                    // App Store search field's trailing "X".
+                    Button {
+                        dismissComposer()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.title2)
+                            .frame(width: 56, height: 56)
+                    }
+                    .buttonStyle(.plain)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .glassEffectID("dismiss", in: composerNamespace)
+                }
+            } else {
+                Button {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        isComposing = true
+                    }
+                } label: {
+                    Image(systemName: "bubble.and.pencil")
+                        .font(.title2)
+                        .frame(width: 56, height: 56)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(.regular.interactive(), in: .circle)
+                .glassEffectID("composer", in: composerNamespace)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+        // Raise the keyboard as soon as the box appears. The brief delay lets the
+        // text field mount first so focusing reliably opens the keyboard.
+        .onChange(of: isComposing) { _, composing in
+            guard composing else { return }
+            Task {
+                try? await Task.sleep(for: .milliseconds(50))
+                isComposerFocused = true
+            }
+        }
+    }
+
+    /// Collapses the composer back into the compose button, dismissing the
+    /// keyboard and clearing any in-progress text.
+    private func dismissComposer() {
+        isComposerFocused = false
+        draftComment = ""
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            isComposing = false
         }
     }
 
