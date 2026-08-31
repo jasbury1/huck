@@ -43,6 +43,9 @@ struct UserView: View {
     @State private var scrollPositions: [ContentTab: ScrollPosition] = [:]
     @State private var collapsibleHeight: CGFloat = 0
     @State private var tabBarHeight: CGFloat = 0
+    /// Height of a tab's scroll viewport, used to give short/empty tabs enough
+    /// scroll range to still drive the header's full collapse.
+    @State private var viewportHeight: CGFloat = 0
     /// True while an incoming tab is being scrolled to meet the header. Its
     /// interim offsets are ignored so they can't drag `collapse` back to the top.
     @State private var isSyncing = false
@@ -390,9 +393,16 @@ struct UserView: View {
         ScrollView {
             VStack(spacing: 0) {
                 Color.clear.frame(height: headerHeight)
+                // Fill at least the space below the pinned tab bar so even an
+                // empty tab has enough scroll range to drive the header's full
+                // collapse — otherwise a short tab can't be scrolled back up to
+                // re-expand a collapsed header, stranding the header's controls.
                 content()
+                    .frame(minHeight: max(0, viewportHeight - tabBarHeight), alignment: .top)
             }
         }
+        // Measures the scroll viewport (the ScrollView's own frame).
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
         .scrollPosition(scrollPositionBinding(for: tab))
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
