@@ -43,9 +43,7 @@ extension EnvironmentValues {
 /// user. One login gate is shared by both actions.
 private struct StoryActionsModifier: ViewModifier {
     @Environment(InteractionStore.self) private var store
-    @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
-    @Environment(CollectionsStore.self) private var collectionsStore
-    @State private var loginTimestamp: Date?
+    @Environment(UserSession.self) private var session
     @State private var isPresentingLogin = false
 
     func body(content: Content) -> some View {
@@ -57,29 +55,26 @@ private struct StoryActionsModifier: ViewModifier {
                 perform { await store.toggleFavorite(story) }
             })
             .environment(\.requireLogin, RequireLoginAction { action in
-                if UserSession.shared != nil {
+                if session.isSignedIn {
                     action()
                 } else {
                     isPresentingLogin = true
                 }
             })
             .sheet(isPresented: $isPresentingLogin) {
-                LoginView(authenticationTimestamp: $loginTimestamp)
+                LoginView()
             }
-            .onChange(of: loginTimestamp) {
-                // A successful login refreshes the cookie-derived session; reload
-                // the per-user stores, carry any signed-out browsing into the
-                // account, and dismiss the login sheet.
-                store.loadForCurrentUser()
-                recentlyViewedStore.adoptGuestHistory()
-                collectionsStore.loadForCurrentUser()
-                isPresentingLogin = false
+            // Signing in is what the sheet was for, so dismiss it once it has.
+            // The per-user reload is not this modifier's job — it happens once,
+            // at the root, for every way the account can change.
+            .onChange(of: session.account) {
+                if session.isSignedIn { isPresentingLogin = false }
             }
     }
 
     /// Runs a store action when signed in, or routes to login when signed out.
     private func perform(_ action: @escaping () async -> Void) {
-        if UserSession.shared != nil {
+        if session.isSignedIn {
             Task { await action() }
         } else {
             isPresentingLogin = true

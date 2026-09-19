@@ -34,11 +34,17 @@ final class RecentlyViewedStore {
     /// sentinel because a real HN username is never empty.
     private static let guestKey = ""
 
+    /// Who is signed in. Read live on each access, which is what lets a login
+    /// switch buckets with no explicit reload; because `UserSession` is
+    /// observable, views reading through this store also refresh on that switch.
+    private let session: UserSession
+
     /// The bucket the current session reads and writes: the signed-in user, or
     /// the guest bucket when signed out.
-    private var currentKey: String { UserSession.shared?.username ?? Self.guestKey }
+    private var currentKey: String { session.username ?? Self.guestKey }
 
-    init() {
+    init(session: UserSession) {
+        self.session = session
         storage = RecentlyViewedPersistence.load()
     }
 
@@ -64,7 +70,7 @@ final class RecentlyViewedStore {
 
         // The two-user retention cap only applies to real accounts; the guest
         // bucket is transient and merged away on login, so it doesn't take a slot.
-        if let username = UserSession.shared?.username {
+        if let username = session.username {
             touch(username)
         }
 
@@ -76,7 +82,7 @@ final class RecentlyViewedStore {
     /// browsing done while signed out carries into the account. No-op when signed
     /// out or when there's nothing to merge.
     func adoptGuestHistory() {
-        guard let username = UserSession.shared?.username else { return }
+        guard let username = session.username else { return }
         let guestIDs = storage.byUser[Self.guestKey] ?? []
         guard !guestIDs.isEmpty else { return }
 

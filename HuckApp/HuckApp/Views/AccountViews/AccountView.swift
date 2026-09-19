@@ -9,39 +9,53 @@ import SwiftUI
 import Foundation
 
 struct AccountView: View {
-    //@State var session = UserSession.shared
-    // TODO: Eventually some more advanced observable user state needs to be shared for the app
-    @State var authenticationTimestamp: Date? = nil
+    @Environment(UserSession.self) private var session
     @State private var path = NavigationPath()
 
     var body: some View {
-        // Derive the signed-in user from the stored auth cookie. We pass
-        // `authenticationTimestamp` (which login/logout updates) so that reading
-        // it here creates a body dependency — otherwise SwiftUI never re-runs
-        // this branch when the auth state changes and the login screen sticks.
-        let currentUsername = sessionUsername(after: authenticationTimestamp)
+        // Reading `session.account` here is what ties this branch to the auth
+        // state: it's observable, so signing in or out re-evaluates the view.
         NavigationStack(path: $path) {
             Group {
-                if !currentUsername.isEmpty {
-                    UserView(username: currentUsername, path: $path)
+                if let account = session.account {
+                    UserView(username: account.username, path: $path)
                 } else {
-                    LoginView(authenticationTimestamp: $authenticationTimestamp)
+                    LoginView()
                 }
             }
             .navigationDestination(for: ItemNavigation.self) { navigation in
                 StoryDetailsView(from: navigation, path: $path)
+            }
+            .toolbar {
+                // Only meaningful once there's an account to act on; signed out,
+                // the tab is just the login form.
+                if session.isSignedIn {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        accountMenu
+                    }
+                }
             }
         }
         .inAppBrowser()
         .storyActionsEnabled()
     }
 
-    /// The signed-in user's name, derived from the stored auth cookie via
-    /// `UserSession`. The `timestamp` parameter isn't used for the lookup — it
-    /// exists so `body` reads `authenticationTimestamp` and re-evaluates when
-    /// login/logout changes it.
-    private func sessionUsername(after timestamp: Date?) -> String {
-        UserSession.shared?.username ?? ""
+    /// The account tab's overflow menu. Signing out is its only entry today, but
+    /// it's a menu rather than a bare button so further account-level actions
+    /// have somewhere to go.
+    private var accountMenu: some View {
+        Menu {
+            Button(role: .destructive) {
+                // Clearing the session cascades: `ContentView` observes the
+                // account and re-points every per-user store, and this view
+                // falls back to the login form.
+                session.signOut()
+            } label: {
+                Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+            }
+        } label: {
+            Label("Account Options", systemImage: "ellipsis")
+        }
     }
 }
 

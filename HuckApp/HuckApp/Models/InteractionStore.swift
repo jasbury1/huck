@@ -31,7 +31,13 @@ class InteractionStore {
     /// view body track it, and any mutation invalidates those views.
     private(set) var interactions = PersistedInteractions()
 
-    /// The user the loaded state belongs to; `nil` when logged out.
+    /// Who is signed in. Held rather than read globally so the store has one
+    /// declared dependency instead of an ambient one.
+    private let session: UserSession
+
+    /// The user the *loaded* state belongs to; `nil` when logged out. Distinct
+    /// from `session.username`: the in-memory sets belong to whoever they were
+    /// loaded for, and persisting against anyone else would corrupt their file.
     private var username: String?
 
     /// Optimistic, per-story adjustment to the displayed score (e.g. +1 while an
@@ -46,14 +52,15 @@ class InteractionStore {
     private var favoritesWalk = ListWalk()
     private var upvotedWalk = ListWalk()
 
-    init() {
+    init(session: UserSession) {
+        self.session = session
         loadForCurrentUser()
     }
 
     /// (Re)loads persisted state for whoever is currently logged in. Call after a
     /// login/logout so the store reflects the active account.
     func loadForCurrentUser() {
-        username = UserSession.shared?.username
+        username = session.username
         interactions = username.map(InteractionPersistence.load) ?? PersistedInteractions()
     }
 
@@ -80,7 +87,7 @@ class InteractionStore {
     /// the same story is represented by multiple `StoryModel` instances, mutating a
     /// single instance's score would desync the others (see the score-drift bug).
     func toggleUpvote(_ story: StoryModel) async {
-        guard UserSession.shared != nil else { return }
+        guard session.isSignedIn else { return }
 
         let id = story.id
         let wasUpvoted = interactions.upvoted.contains(id)
@@ -111,14 +118,20 @@ class InteractionStore {
         persist()
     }
 
-    /// A page of the current user's liked (upvoted) stories for display (most-recent
-    /// first). The `/upvoted` list is authoritative for their upvote state, so each
-    /// page is folded into the store by `reconcile` — keeping that invariant here,
-    /// in the owner of upvote state, rather than at each call site. No score delta
-    /// is applied: the fetched score already reflects these votes.
-    func likedStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
-        guard let result = await HackerNewsAPI.getLikedStories(page: page) else { return ([], false) }
-        reconcile(&upvotedWalk, page: page, result: result, into: \.upvoted)
+    /// A page of a user's liked (upvoted) stories for display (most-recent first).
+    /// When the list belongs to the user whose state is loaded, `/upvoted` is
+    /// authoritative for it, so each page is folded in by `reconcile` — keeping
+    /// that invariant here, in the owner of upvote state, rather than at each call
+    /// site. No score delta is applied: the fetched score already reflects these
+    /// votes. In practice `username` is always the signed-in user, since Hacker
+    /// News shows `/upvoted` to no one else.
+    func likedStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+        guard let result = await HackerNewsAPI.getLikedStories(username: username, page: page) else {
+            return ([], false)
+        }
+        if username == self.username {
+            reconcile(&upvotedWalk, page: page, result: result, into: \.upvoted)
+        }
         return result
     }
 
@@ -126,7 +139,7 @@ class InteractionStore {
     /// API, and rolls back if it fails. No-op when logged out (callers route to
     /// login first). Unlike voting, favoriting doesn't affect the score.
     func toggleFavorite(_ story: StoryModel) async {
-        guard UserSession.shared != nil else { return }
+        guard session.isSignedIn else { return }
 
         let id = story.id
         let wasFavorited = interactions.favorited.contains(id)

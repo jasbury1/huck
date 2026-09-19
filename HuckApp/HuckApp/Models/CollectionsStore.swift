@@ -18,17 +18,21 @@ final class CollectionsStore {
     /// observed property, so reads in a view body refresh when it mutates.
     private(set) var collections: [StoryCollection] = []
 
+    /// Who is signed in, as a declared dependency rather than an ambient global.
+    private let session: UserSession
+
     /// The user the loaded collections belong to; `nil` when logged out.
     private var username: String?
 
-    init() {
+    init(session: UserSession) {
+        self.session = session
         loadForCurrentUser()
     }
 
     /// (Re)loads collections for whoever is logged in. Call after a login/logout
     /// so the store reflects the active account.
     func loadForCurrentUser() {
-        username = UserSession.shared?.username
+        username = session.username
         collections = username.map { CollectionsPersistence.load(username: $0).collections } ?? []
     }
 

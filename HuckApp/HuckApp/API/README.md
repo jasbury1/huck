@@ -93,5 +93,8 @@ The types the app actually works with, decoupled from any single API:
   APIs. Entries carry a short time-to-live because threads gain replies over time;
   once stale, the next open re-fetches. Only complete, non-empty threads are cached —
   a cancelled walk or an empty/failed load is left out so it can be retried.
-- Session state (the logged-in user derived from cookies) lives in
-  `UserSession`, outside this directory.
+- Session state (the logged-in user derived from cookies) lives in `UserSession`,
+  outside this directory, and this layer does not read it. *Whether* a credential
+  exists is answered from the cookie jar directly (`hasAuthCookie`), so the API
+  stays callable from any isolation context; *who* is signed in arrives as a
+  `username` parameter from the caller.

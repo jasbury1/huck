@@ -21,8 +21,10 @@ struct LoginView: View {
     @State private var passwordFailed: Bool = false
     
     @FocusState private var focus: LoginFocus?
-    
-    @Binding var authenticationTimestamp: Date?
+
+    /// Signing in updates the shared session, which is observable — so every view
+    /// that reads it re-evaluates on its own. There is no completion to report.
+    @Environment(UserSession.self) private var session
     
     var signinButtonDisabled: Bool {
         [name, password].contains(where: \.isEmpty)
@@ -95,12 +97,9 @@ struct LoginView: View {
                 Button {
                     Task {
                         do {
-                            try await HackerNewsAPI.login(username: name, password: password)
-                            authenticationTimestamp = Date.now
-                            print("everything worked")
+                            try await session.signIn(username: name, password: password)
                         }
                         catch {
-                            print("Catch block")
                             password = ""
                             passwordFailed = true
                         }

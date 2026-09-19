@@ -27,6 +27,7 @@ final class InteractionSync {
     private(set) var isSyncing = false
 
     private let store: InteractionStore
+    private let session: UserSession
 
     /// How much of each list to walk. Two pages is the 60 most recent entries —
     /// where drift realistically is — and bounds a pass at four requests. Anything
@@ -37,38 +38,52 @@ final class InteractionSync {
     /// this keeps a flurry of them from becoming a flurry of scrapes.
     private let minimumInterval: Duration = .seconds(60)
 
-    /// When the last pass finished, for `minimumInterval`. A continuous clock so
-    /// time spent backgrounded counts toward the interval.
-    private var lastSync: ContinuousClock.Instant?
+    /// When the last pass finished and for whom. A continuous clock, so time spent
+    /// backgrounded counts toward the interval.
+    private var lastSync: (username: String, instant: ContinuousClock.Instant)?
 
-    /// The pass in flight, so concurrent callers share it rather than stacking up.
-    private var pass: Task<Void, Never>?
+    /// The pass in flight and the account it is reconciling, so concurrent callers
+    /// share it rather than stacking up.
+    private var inFlight: (username: String, task: Task<Void, Never>)?
 
-    init(store: InteractionStore) {
+    init(store: InteractionStore, session: UserSession) {
         self.store = store
+        self.session = session
     }
 
-    /// Reconciles upvotes and favorites — unless a pass is already running, in
-    /// which case this awaits that one, or one finished within `minimumInterval`,
-    /// in which case it does nothing. Cheap to call from any refresh point.
+    /// Reconciles upvotes and favorites — unless a pass is already running for
+    /// this account, in which case this awaits that one, or one finished within
+    /// `minimumInterval`, in which case it does nothing. Cheap to call from any
+    /// refresh point. No-op when signed out: these lists are per-user, and
+    /// `/upvoted` is visible only to its owner.
     func refresh() async {
-        if let pass {
-            await pass.value
+        guard let username = session.username else { return }
+
+        // A pass already running for this account is the one we would start, so
+        // share it. One running for a *different* account — the user signed in
+        // while it was in flight — is not, so let it finish and then run ours.
+        if let inFlight {
+            await inFlight.task.value
+            if inFlight.username == username { return }
+        }
+
+        // The interval guards against re-scraping the same account. A change of
+        // account says nothing has been verified for *this* user no matter how
+        // recent the last pass was, so it doesn't apply.
+        if let lastSync, lastSync.username == username,
+           lastSync.instant.duration(to: .now) < minimumInterval {
             return
         }
-        if let lastSync, lastSync.duration(to: .now) < minimumInterval { return }
 
-        let pass = Task { await sync() }
-        self.pass = pass
-        await pass.value
-        self.pass = nil
-        lastSync = .now
+        let task = Task { await sync(username: username) }
+        inFlight = (username, task)
+        await task.value
+        inFlight = nil
+        lastSync = (username, .now)
     }
 
-    /// One reconciliation pass over both lists. No-op when logged out: these lists
-    /// are per-user, and `/upvoted` is only visible to its owner.
-    private func sync() async {
-        guard let username = UserSession.shared?.username else { return }
+    /// One reconciliation pass over both of the account's lists.
+    private func sync(username: String) async {
         isSyncing = true
         defer { isSyncing = false }
 
@@ -76,7 +91,7 @@ final class InteractionSync {
         // each page lands in the same reconciliation the Likes and Favorites
         // screens use — including its guards against removing anything on a
         // partial or failed walk.
-        await walk { await self.store.likedStories(page: $0) }
+        await walk { await self.store.likedStories(username: username, page: $0) }
         await walk { await self.store.favoriteStories(username: username, page: $0) }
     }
 

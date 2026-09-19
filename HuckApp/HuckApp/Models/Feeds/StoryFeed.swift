@@ -128,15 +128,13 @@ extension StoryFeed {
         }
     }
 
-    /// The current user's liked (upvoted) stories, paged via news.ycombinator.
-    /// HN exposes the `/upvoted` list only to its owner, so this is implicitly
-    /// the logged-in user and takes no username — `getLikedStories` reads the
-    /// active session and returns nothing when logged out. Routed through
-    /// `InteractionStore` so each page reconciles upvote state, as `favorites`
-    /// does for hearts.
-    static func liked(in store: InteractionStore) -> StoryFeed {
+    /// A user's liked (upvoted) stories, paged via news.ycombinator. Hacker News
+    /// exposes `/upvoted` only to its owner, so in practice `username` is always
+    /// the signed-in user. Routed through `InteractionStore` so each page
+    /// reconciles upvote state, as `favorites` does for hearts.
+    static func liked(username: String, in store: InteractionStore) -> StoryFeed {
         StoryFeed { page in
-            await store.likedStories(page: page)
+            await store.likedStories(username: username, page: page)
         }
     }
 

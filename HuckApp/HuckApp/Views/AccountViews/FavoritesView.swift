@@ -12,6 +12,7 @@ struct FavoritesView: View {
     @Binding var path: NavigationPath
 
     @Environment(InteractionStore.self) private var interactionStore
+    @Environment(UserSession.self) private var session
 
     /// This user's favorited stories, paged in and prefetched by `StoryFeed`.
     /// Built on appear rather than in `init` because the feed reconciles through
@@ -22,7 +23,7 @@ struct FavoritesView: View {
     /// Whether these favorites belong to the logged-in user, which changes the
     /// title from a possessive name to "Your favorites".
     private var isCurrentUser: Bool {
-        username == UserSession.shared?.username
+        username == session.username
     }
 
     private var title: String {
@@ -59,9 +60,11 @@ struct FavoritesView: View {
 }
 
 #Preview {
+    let session = UserSession()
     NavigationStack {
         FavoritesView(username: "zdw", path: .constant(NavigationPath()))
     }
-    .environment(InteractionStore())
-    .environment(RecentlyViewedStore())
+    .environment(session)
+    .environment(InteractionStore(session: session))
+    .environment(RecentlyViewedStore(session: session))
 }

@@ -239,15 +239,14 @@ class HackerNewsAPI {
         await AlgoliaAPIService.getUserComments(username: username, page: page)
     }
 
-    /// The logged-in user's liked (upvoted) stories, most-recent first, for their
-    /// own profile's "Liked" tab. HN only exposes this list for the authenticated
-    /// user, so it always reads the current session's username and returns nothing
-    /// when logged out. `page` is 0-based to match the other user feeds. `nil`
-    /// means the page couldn't be fetched, as distinct from an empty page.
-    static func getLikedStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool)? {
-        guard let username = UserSession.shared?.username else { return ([], false) }
+    /// A user's liked (upvoted) stories, most-recent first, for their own
+    /// profile's "Liked" tab. Hacker News exposes `/upvoted` only to its owner, so
+    /// `username` must be the signed-in user for this to return anything. `page`
+    /// is 0-based to match the other user feeds. `nil` means the page couldn't be
+    /// fetched, as distinct from an empty page.
+    static func getLikedStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool)? {
         // NewsYCService pages the /upvoted list 1-based.
-        return await NewsYCService.upvotedStoryIds(username: username, page: page + 1)
+        await NewsYCService.upvotedStoryIds(username: username, page: page + 1)
     }
 
     // MARK: - Voting
@@ -263,30 +262,13 @@ class HackerNewsAPI {
     }
 
     private static func vote(storyId: Int, how: NewsYCService.VoteAction) async throws {
-        guard UserSession.shared != nil else { throw APIError.notLoggedIn }
+        guard hasAuthCookie else { throw APIError.notLoggedIn }
         // The vote requires the item's per-user `auth` token, which only lives in
         // the item page's HTML, so fetch it first, then cast the vote.
         guard let voteAuth = await NewsYCService.voteAuth(forItem: storyId) else {
             throw APIError.missingAuthToken
         }
         try await NewsYCService.castVote(id: storyId, how: how, auth: voteAuth.auth)
-    }
-
-    /// The set of story ids the logged-in user has upvoted, read from the first
-    /// `maxPages` of their `/upvoted` history. Bounded by design (see the upvoting
-    /// proposal): recent votes are covered here, and individual older stories are
-    /// corrected lazily when their vote `auth` token is fetched.
-    static func fetchUpvotedStoryIds(maxPages: Int = 2) async -> Set<Int> {
-        guard let username = UserSession.shared?.username else { return [] }
-        var ids = Set<Int>()
-        var page = 1
-        while page <= maxPages {
-            guard let result = await NewsYCService.upvotedStoryIds(username: username, page: page) else { break }
-            ids.formUnion(result.ids)
-            if !result.hasMore { break }
-            page += 1
-        }
-        return ids
     }
 
     // MARK: - Favorites
@@ -302,7 +284,7 @@ class HackerNewsAPI {
     }
 
     private static func fave(storyId: Int, un: Bool) async throws {
-        guard UserSession.shared != nil else { throw APIError.notLoggedIn }
+        guard hasAuthCookie else { throw APIError.notLoggedIn }
         // Like voting, favoriting needs the item's per-user `auth` token from its
         // page HTML.
         guard let faveAuth = await NewsYCService.faveAuth(forItem: storyId) else {
@@ -340,6 +322,15 @@ class HackerNewsAPI {
         if let loginError {
             throw loginError
         }
+    }
+
+    /// Whether a credential exists to send at all. This layer asks the cookie jar
+    /// directly rather than `UserSession`: the cookie *is* the credential, and
+    /// keeping the check here means the API stays usable from any isolation
+    /// context. Who is signed in — as opposed to whether anyone is — is the
+    /// session's business, and reaches this layer as a `username` parameter.
+    private static var hasAuthCookie: Bool {
+        readCookie(forURL: baseUri).contains { $0.name == "user" }
     }
 
     static func logout(username: String) {

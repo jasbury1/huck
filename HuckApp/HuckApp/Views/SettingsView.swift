@@ -95,5 +95,5 @@ private struct SettingsIcon: View {
 
 #Preview {
     SettingsView()
-        .environment(RecentlyViewedStore())
+        .environment(RecentlyViewedStore(session: UserSession()))
 }

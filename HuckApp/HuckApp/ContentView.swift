@@ -11,31 +11,39 @@ internal import Combine
 struct ContentView: View {
     @StateObject var appController: ApplicationController = ApplicationController()
 
+    /// Who is signed in — the root of the per-user object graph, since the three
+    /// stores below all key their state off it.
+    @State private var session: UserSession
+
     /// App-wide source of truth for per-story interaction state (upvotes, and
     /// later saved/hidden), observed by story views via the environment.
     @State private var interactionStore: InteractionStore
 
     /// Reconciles that state against the server — at launch, on returning to the
-    /// foreground, and on pull-to-refresh. Throttled and coalesced internally, so
-    /// call sites can ask freely.
+    /// foreground, on sign-in, and on pull-to-refresh. Throttled and coalesced
+    /// internally, so call sites can ask freely.
     @State private var interactionSync: InteractionSync
-
-    @Environment(\.scenePhase) private var scenePhase
 
     /// App-wide, per-user record of recently-viewed stories, observed by story
     /// views to grey seen titles and to build the account's "Recently viewed" list.
-    @State private var recentlyViewedStore = RecentlyViewedStore()
+    @State private var recentlyViewedStore: RecentlyViewedStore
 
     /// App-wide, per-user store of the "Your Collections" lists, observed by the
     /// home feed's collections section and the story options menu's picker.
-    @State private var collectionsStore = CollectionsStore()
+    @State private var collectionsStore: CollectionsStore
+
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        // The sync reconciles into the store, so the two are built together here
-        // rather than each defaulting independently.
-        let interactionStore = InteractionStore()
+        // Built here as one graph rather than defaulting independently: each of
+        // these depends on the session, and the sync also writes into the store.
+        let session = UserSession()
+        let interactionStore = InteractionStore(session: session)
+        _session = State(initialValue: session)
         _interactionStore = State(initialValue: interactionStore)
-        _interactionSync = State(initialValue: InteractionSync(store: interactionStore))
+        _interactionSync = State(initialValue: InteractionSync(store: interactionStore, session: session))
+        _recentlyViewedStore = State(initialValue: RecentlyViewedStore(session: session))
+        _collectionsStore = State(initialValue: CollectionsStore(session: session))
     }
 
     var body: some View {
@@ -56,6 +64,7 @@ struct ContentView: View {
             }
         }
         .tint(.orange)
+        .environment(session)
         .environment(interactionStore)
         .environment(interactionSync)
         .environment(recentlyViewedStore)
@@ -66,10 +75,25 @@ struct ContentView: View {
             await interactionSync.refresh()
         }
         // Returning to the foreground, where the drift most likely happened —
-        // the user may have been on the HN site in between. `onChange` doesn't
-        // fire for the initial phase, so this doesn't double up with `.task`.
+        // the user may have been on the HN site in between. Re-derive the session
+        // first, since the auth cookie may have expired or changed while away.
+        // `onChange` doesn't fire for the initial phase, so this doesn't double
+        // up with `.task`.
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
+            session.refresh()
+            Task { await interactionSync.refresh() }
+        }
+        // The single reaction to the account changing, however it changed — the
+        // gate's login sheet, the Account tab, an expiry noticed on foreground.
+        // Every per-user store is re-pointed here, so no login path can leave one
+        // behind. Order matters: the stores key their persistence off the session,
+        // so reconciling before they reload would write the new account's state
+        // into the old account's file.
+        .onChange(of: session.account) {
+            interactionStore.loadForCurrentUser()
+            recentlyViewedStore.adoptGuestHistory()
+            collectionsStore.loadForCurrentUser()
             Task { await interactionSync.refresh() }
         }
     }

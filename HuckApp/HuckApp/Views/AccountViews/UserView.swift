@@ -22,6 +22,7 @@ struct UserView: View {
     /// Per-user record of recently-viewed stories, shown in the (current-user-only)
     /// "Recently viewed" tab.
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+    @Environment(UserSession.self) private var session
     /// A snapshot feed built from the store's current order (most-recent first).
     /// Rebuilt whenever the tab is shown so newly-opened stories appear.
     @State private var recentlyViewed: StoryFeed?
@@ -58,7 +59,7 @@ struct UserView: View {
     /// Whether this profile belongs to the logged-in user. Their likes are private,
     /// so the Likes action only shows on their own profile.
     private var isCurrentUser: Bool {
-        username == UserSession.shared?.username
+        username == session.username
     }
 
     /// The tabs to show, in order. "Recently viewed" is private to the logged-in
@@ -594,9 +595,11 @@ struct BioSheet: View {
 }
 
 #Preview {
+    let session = UserSession()
     NavigationStack {
         UserView(username: "zdw", path: .constant(NavigationPath()))
     }
-    .environment(InteractionStore())
-    .environment(RecentlyViewedStore())
+    .environment(session)
+    .environment(InteractionStore(session: session))
+    .environment(RecentlyViewedStore(session: session))
 }

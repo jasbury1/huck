@@ -395,8 +395,10 @@ class CommentSectionData {
 }
 
 #Preview {
+    let session = UserSession()
     StoryTextView(storyId: 46391572, path: .constant(NavigationPath()))
-        .environment(InteractionStore())
-        .environment(RecentlyViewedStore())
+        .environment(session)
+        .environment(InteractionStore(session: session))
+        .environment(RecentlyViewedStore(session: session))
 }
 

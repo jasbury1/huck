@@ -14,6 +14,7 @@ struct LikedView: View {
     @Binding var path: NavigationPath
 
     @Environment(InteractionStore.self) private var interactionStore
+    @Environment(UserSession.self) private var session
 
     /// The current user's liked stories, paged in and prefetched by `StoryFeed`.
     /// Built on appear rather than in `init` because the feed reconciles through
@@ -45,15 +46,21 @@ struct LikedView: View {
             }
         }
         .task {
-            liked = liked ?? .liked(in: interactionStore)
+            // Signed out there is no `/upvoted` list to show, so the feed stays
+            // unbuilt and the spinner holds — this screen is only reachable from
+            // the signed-in profile.
+            guard let username = session.username else { return }
+            liked = liked ?? .liked(username: username, in: interactionStore)
         }
     }
 }
 
 #Preview {
+    let session = UserSession()
     NavigationStack {
         LikedView(path: .constant(NavigationPath()))
     }
-    .environment(InteractionStore())
-    .environment(RecentlyViewedStore())
+    .environment(session)
+    .environment(InteractionStore(session: session))
+    .environment(RecentlyViewedStore(session: session))
 }
