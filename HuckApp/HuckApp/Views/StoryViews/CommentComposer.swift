@@ -58,6 +58,8 @@ struct CommentComposer: View {
     /// before the gesture commits to a state change.
     @State private var dragOffset: CGFloat = 0
     @FocusState private var isFocused: Bool
+    /// Presents the "discard this comment?" confirmation.
+    @State private var isConfirmingDiscard = false
     /// Lets the button and the text box morph into one another.
     @Namespace private var namespace
 
@@ -95,6 +97,21 @@ struct CommentComposer: View {
                 move(to: .collapsed)
             }
         }
+        // Alerts are presented by UIKit, which ignores tints set on individual
+        // buttons and colors them with the app's accent instead. Presenting from
+        // a clear background view lets the alert inherit a neutral tint — so
+        // Cancel reads as plain text — without recoloring the composer itself.
+        // (Discard stays red: destructive buttons ignore the tint.)
+        .background {
+            Color.clear
+                .tint(.primary)
+                .alert("Discard this comment?", isPresented: $isConfirmingDiscard) {
+                    Button("Discard", role: .destructive) { discard() }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Your comment will be lost.")
+                }
+        }
     }
 
     // MARK: - Transitions
@@ -105,6 +122,13 @@ struct CommentComposer: View {
     /// destination state rather than the one being left behind.
     private func move(to newState: CommentComposerState) {
         guard newState != state else { return }
+        // Cancelling throws the draft away, so confirm first when there's
+        // something to lose. Both routes to `.cancelled` — the cancel button and
+        // a swipe down from `.collapsed` — pass through here.
+        if newState == .cancelled, !trimmedDraft.isEmpty {
+            isConfirmingDiscard = true
+            return
+        }
         if newState == .cancelled { draft = "" }
         withAnimation(transition) { state = newState }
 
@@ -118,6 +142,13 @@ struct CommentComposer: View {
                 isFocused = true
             }
         }
+    }
+
+    /// Throws the draft away and returns to the compose button. Clearing the
+    /// text first lets the transition past `move(to:)`'s confirmation guard.
+    private func discard() {
+        draft = ""
+        move(to: .cancelled)
     }
 
     // MARK: - Pieces
@@ -171,8 +202,10 @@ struct CommentComposer: View {
             move(to: .cancelled)
         } label: {
             Image(systemName: "xmark")
-                .font(.title2)
-                .frame(width: 56, height: 56)
+                .font(.subheadline.weight(.semibold))
+                // Smaller than the compose button so it reads as secondary to
+                // the text box, but still the 44pt minimum tap target.
+                .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
         .glassEffect(.regular.interactive(), in: .circle)
