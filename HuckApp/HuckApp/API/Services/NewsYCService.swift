@@ -120,24 +120,29 @@ struct NewsYCService {
     // MARK: - Story-list history
 
     /// Scrapes one page of the user's `/upvoted` history (private to its owner),
-    /// returning the story ids on that page and whether a further page exists.
-    static func upvotedStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool) {
+    /// returning the story ids on that page and whether a further page exists,
+    /// or `nil` if the page couldn't be fetched.
+    static func upvotedStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool)? {
         await storyListPage(path: "upvoted", username: username, page: page)
     }
 
     /// Scrapes one page of the user's public `/favorites`, returning the story ids
-    /// on that page and whether a further page exists.
-    static func favoriteStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool) {
+    /// on that page and whether a further page exists, or `nil` if the page
+    /// couldn't be fetched.
+    static func favoriteStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool)? {
         await storyListPage(path: "favorites", username: username, page: page)
     }
 
     /// Fetches and parses a standard HN story-list page (`/upvoted`, `/favorites`,
-    /// …), which all share the same row markup.
-    private static func storyListPage(path: String, username: String, page: Int) async -> (ids: [Int], hasMore: Bool) {
+    /// …), which all share the same row markup. Returns `nil` when the fetch
+    /// fails, which callers must distinguish from an empty final page: a caller
+    /// that treats a failure as "the list ends here" would conclude the user has
+    /// no further favorites and wrongly discard them.
+    private static func storyListPage(path: String, username: String, page: Int) async -> (ids: [Int], hasMore: Bool)? {
         let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? username
         guard let url = URL(string: "\(baseUri)/\(path)?id=\(encoded)&p=\(page)"),
               let html = try? await fetchHTML(from: url) else {
-            return ([], false)
+            return nil
         }
         // Each story row is `<tr class='athing' id='<ID>'>`.
         let ids = allMatches(in: html, pattern: "class=['\"]athing[^>]*?id=['\"](\\d+)['\"]")

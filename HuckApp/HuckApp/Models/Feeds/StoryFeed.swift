@@ -117,20 +117,26 @@ extension StoryFeed {
         }
     }
 
-    /// A user's favorited stories, paged via news.ycombinator.
-    static func favorites(username: String) -> StoryFeed {
+    /// A user's favorited stories, paged via news.ycombinator. Routed through
+    /// `InteractionStore` rather than the API directly so that, when the list is
+    /// the current user's own, each page also reconciles their favorite state —
+    /// otherwise rows would show an empty heart for anything favorited outside
+    /// this install.
+    static func favorites(username: String, in store: InteractionStore) -> StoryFeed {
         StoryFeed { page in
-            await HackerNewsAPI.getFavoriteStories(username: username, page: page)
+            await store.favoriteStories(username: username, page: page)
         }
     }
 
     /// The current user's liked (upvoted) stories, paged via news.ycombinator.
     /// HN exposes the `/upvoted` list only to its owner, so this is implicitly
     /// the logged-in user and takes no username — `getLikedStories` reads the
-    /// active session and returns nothing when logged out.
-    static func liked() -> StoryFeed {
+    /// active session and returns nothing when logged out. Routed through
+    /// `InteractionStore` so each page reconciles upvote state, as `favorites`
+    /// does for hearts.
+    static func liked(in store: InteractionStore) -> StoryFeed {
         StoryFeed { page in
-            await HackerNewsAPI.getLikedStories(page: page)
+            await store.likedStories(page: page)
         }
     }
 

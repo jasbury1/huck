@@ -11,14 +11,13 @@ struct FavoritesView: View {
     let username: String
     @Binding var path: NavigationPath
 
-    /// This user's favorited stories, paged in and prefetched by `StoryFeed`.
-    @State private var favorites: StoryFeed
+    @Environment(InteractionStore.self) private var interactionStore
 
-    init(username: String, path: Binding<NavigationPath>) {
-        self.username = username
-        self._path = path
-        self._favorites = State(initialValue: .favorites(username: username))
-    }
+    /// This user's favorited stories, paged in and prefetched by `StoryFeed`.
+    /// Built on appear rather than in `init` because the feed reconciles through
+    /// `InteractionStore`, which is only reachable from the environment once the
+    /// view is on screen. Kept as a single instance thereafter.
+    @State private var favorites: StoryFeed?
 
     /// Whether these favorites belong to the logged-in user, which changes the
     /// title from a possessive name to "Your favorites".
@@ -31,21 +30,31 @@ struct FavoritesView: View {
     }
 
     var body: some View {
-        TabableContentView(
-            title: title,
-            postsFeed: favorites,
-            postsEmptyState: EmptyFeedView(
-                title: "No Favorite Posts",
-                systemImage: "heart",
-                description: "Stories you favorite will show up here."
-            ),
-            commentsEmptyState: EmptyFeedView(
-                title: "No Favorite Comments",
-                systemImage: "bubble.left.and.bubble.right",
-                description: "Comments you favorite will show up here."
-            ),
-            path: $path
-        )
+        Group {
+            if let favorites {
+                TabableContentView(
+                    title: title,
+                    postsFeed: favorites,
+                    postsEmptyState: EmptyFeedView(
+                        title: "No Favorite Posts",
+                        systemImage: "heart",
+                        description: "Stories you favorite will show up here."
+                    ),
+                    commentsEmptyState: EmptyFeedView(
+                        title: "No Favorite Comments",
+                        systemImage: "bubble.left.and.bubble.right",
+                        description: "Comments you favorite will show up here."
+                    ),
+                    path: $path
+                )
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .task {
+            favorites = favorites ?? .favorites(username: username, in: interactionStore)
+        }
     }
 }
 

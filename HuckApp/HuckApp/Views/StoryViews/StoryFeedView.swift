@@ -34,6 +34,9 @@ struct StoryFeedView: View {
     /// title greys in the feed, the same treatment an opened story gets.
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
 
+    /// Reconciles upvote/favorite state on pull-to-refresh.
+    @Environment(InteractionSync.self) private var interactionSync
+
     @Binding var path: NavigationPath
 
     init(storyFilter: StoryFilter, path: Binding<NavigationPath>) {
@@ -113,9 +116,13 @@ struct StoryFeedView: View {
             placement: .navigationBarDrawer(displayMode: .automatic),
             prompt: "Search \(storyFilter.searchName)"
         )
-        // Pull-to-refresh re-fetches the current filter's story ids.
+        // Pull-to-refresh re-fetches the current filter's story ids, and takes the
+        // opportunity to reconcile upvote/favorite state so the arrows and hearts
+        // on the refreshed rows reflect anything done outside the app.
         .refreshable {
-            await feed.reload()
+            async let reload: Void = feed.reload()
+            async let interactions: Void = interactionSync.refresh()
+            _ = await (reload, interactions)
         }
         .task {
             // First-page load only. `.task` also re-runs when the view reappears

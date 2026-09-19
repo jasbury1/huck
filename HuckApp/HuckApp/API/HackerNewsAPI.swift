@@ -242,8 +242,9 @@ class HackerNewsAPI {
     /// The logged-in user's liked (upvoted) stories, most-recent first, for their
     /// own profile's "Liked" tab. HN only exposes this list for the authenticated
     /// user, so it always reads the current session's username and returns nothing
-    /// when logged out. `page` is 0-based to match the other user feeds.
-    static func getLikedStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+    /// when logged out. `page` is 0-based to match the other user feeds. `nil`
+    /// means the page couldn't be fetched, as distinct from an empty page.
+    static func getLikedStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool)? {
         guard let username = UserSession.shared?.username else { return ([], false) }
         // NewsYCService pages the /upvoted list 1-based.
         return await NewsYCService.upvotedStoryIds(username: username, page: page + 1)
@@ -280,7 +281,7 @@ class HackerNewsAPI {
         var ids = Set<Int>()
         var page = 1
         while page <= maxPages {
-            let result = await NewsYCService.upvotedStoryIds(username: username, page: page)
+            guard let result = await NewsYCService.upvotedStoryIds(username: username, page: page) else { break }
             ids.formUnion(result.ids)
             if !result.hasMore { break }
             page += 1
@@ -312,8 +313,9 @@ class HackerNewsAPI {
 
     /// A user's favorited stories, most-recent first, paginated. Favorites are
     /// public on Hacker News, so this works for any `username`. `page` is 0-based to
-    /// match the other user feeds.
-    static func getFavoriteStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+    /// match the other user feeds. `nil` means the page couldn't be fetched, as
+    /// distinct from an empty page.
+    static func getFavoriteStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool)? {
         // NewsYCService pages the /favorites list 1-based.
         await NewsYCService.favoriteStoryIds(username: username, page: page + 1)
     }

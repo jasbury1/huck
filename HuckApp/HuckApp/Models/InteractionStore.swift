@@ -41,6 +41,11 @@ class InteractionStore {
     /// scores in sync. Not persisted: on relaunch the refetched score is truth.
     private var scoreDeltas: [Int: Int] = [:]
 
+    /// Progress through the current walk of the user's own `/favorites` and
+    /// `/upvoted` lists — see `ListWalk` and `reconcile`.
+    private var favoritesWalk = ListWalk()
+    private var upvotedWalk = ListWalk()
+
     init() {
         loadForCurrentUser()
     }
@@ -107,16 +112,13 @@ class InteractionStore {
     }
 
     /// A page of the current user's liked (upvoted) stories for display (most-recent
-    /// first). The `/upvoted` list is authoritative proof these are upvoted, so this
-    /// also reconciles the store — keeping that invariant here, in the owner of
-    /// upvote state, rather than at each call site. No score delta is applied: the
-    /// fetched score already reflects these votes.
+    /// first). The `/upvoted` list is authoritative for their upvote state, so each
+    /// page is folded into the store by `reconcile` — keeping that invariant here,
+    /// in the owner of upvote state, rather than at each call site. No score delta
+    /// is applied: the fetched score already reflects these votes.
     func likedStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
-        let result = await HackerNewsAPI.getLikedStories(page: page)
-        if !result.ids.isEmpty {
-            interactions.upvoted.formUnion(result.ids)
-            persist()
-        }
+        guard let result = await HackerNewsAPI.getLikedStories(page: page) else { return ([], false) }
+        reconcile(&upvotedWalk, page: page, result: result, into: \.upvoted)
         return result
     }
 
@@ -144,19 +146,64 @@ class InteractionStore {
         }
     }
 
-    /// A page of the *current user's* favorited stories for display. Their own
-    /// `/favorites` list is authoritative for their favorite state, so this
-    /// reconciles the store (keeping hearts in sync) — mirroring `likedStories`.
-    /// Other users' favorites are fetched via `HackerNewsAPI.getFavoriteStories`
-    /// directly and are *not* reconciled here, since they aren't the current user's.
-    func favoriteStories(page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
-        guard let username = UserSession.shared?.username else { return ([], false) }
-        let result = await HackerNewsAPI.getFavoriteStories(username: username, page: page)
-        if !result.ids.isEmpty {
-            interactions.favorited.formUnion(result.ids)
-            persist()
+    /// A page of a user's favorited stories for display. When the list belongs to
+    /// the *current* user it is authoritative for their favorite state, so each
+    /// page is folded into the store by `reconcile` — filling in hearts for
+    /// stories favorited on the web or before this install, and, once a walk
+    /// reaches the end of the list, clearing ones unfavorited elsewhere. Another
+    /// user's favorites are returned untouched: they say nothing about what *we*
+    /// have favorited.
+    func favoriteStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+        guard let result = await HackerNewsAPI.getFavoriteStories(username: username, page: page) else {
+            return ([], false)
+        }
+        if username == self.username {
+            reconcile(&favoritesWalk, page: page, result: result, into: \.favorited)
         }
         return result
+    }
+
+    // MARK: - Reconciliation
+
+    /// Progress through one walk of a server-side list (`/favorites`, `/upvoted`)
+    /// as its pages are read in order. Traversal-scoped and never persisted.
+    private struct ListWalk {
+        /// Every id seen so far in this walk.
+        var seen: Set<Int> = []
+        /// The page number that must come next for `seen` to stay meaningful.
+        var expectedPage = 0
+    }
+
+    /// Folds one page of a server list into the matching local set.
+    ///
+    /// Each page proves the ids on it *are* in the list, so they're always added.
+    /// Removal needs more: only once a walk has read the list from page 0 through
+    /// to its end (`hasMore == false`) is `seen` the complete server-side truth,
+    /// and only then can ids missing from it be dropped — which is what clears a
+    /// story unfavorited on the web but still showing a filled heart here.
+    ///
+    /// Two guards keep that from ever removing wrongly. Pages must arrive in
+    /// sequence, so a gap (two feeds paging the same list concurrently) demotes
+    /// the walk to add-only. And a failed fetch reaches us as `nil` upstream
+    /// rather than an empty final page, so a network blip mid-walk can't be
+    /// mistaken for the end of the list.
+    private func reconcile(
+        _ walk: inout ListWalk,
+        page: Int,
+        result: (ids: [Int], hasMore: Bool),
+        into keyPath: WritableKeyPath<PersistedInteractions, Set<Int>>
+    ) {
+        if page == 0 { walk = ListWalk() }
+        let inSequence = page == walk.expectedPage
+        walk.seen.formUnion(result.ids)
+        walk.expectedPage = page + 1
+
+        if inSequence, !result.hasMore {
+            interactions[keyPath: keyPath] = walk.seen
+        } else {
+            interactions[keyPath: keyPath].formUnion(result.ids)
+        }
+        persist()
     }
 
     // MARK: - Helpers
