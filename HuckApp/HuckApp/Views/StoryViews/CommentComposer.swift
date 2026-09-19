@@ -1,0 +1,219 @@
+//
+//  CommentComposer.swift
+//  HuckApp
+//
+//  Created by James Asbury on 9/19/26.
+//
+
+import SwiftUI
+
+/// The size of the comment composer, ordered smallest to largest. Swiping the
+/// composer's grabber moves exactly one step along this ladder, so the raw
+/// values are meaningful: neighbouring cases are neighbouring sizes.
+enum CommentComposerState: Int, CaseIterable, Comparable {
+    /// No draft. Only the compose button is shown.
+    case cancelled
+    /// A single line of the draft, with the keyboard down.
+    case collapsed
+    /// The everyday writing size: grows with the content up to a cap.
+    case normal
+    /// A larger editing surface, the future home of richer input options.
+    case expanded
+
+    static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
+
+    /// The next state up, or this one if already the largest.
+    var raised: Self { Self(rawValue: rawValue + 1) ?? self }
+
+    /// The next state down, or this one if already the smallest.
+    var lowered: Self { Self(rawValue: rawValue - 1) ?? self }
+
+    /// Whether the keyboard belongs on screen in this state.
+    var wantsKeyboard: Bool { self >= .normal }
+
+    /// How far the text box may grow before it starts scrolling internally.
+    var lineLimit: ClosedRange<Int> {
+        switch self {
+        case .cancelled, .collapsed: 1...1
+        case .normal: 1...5
+        case .expanded: 6...14
+        }
+    }
+}
+
+/// A Liquid Glass comment composer that lives in the bottom-trailing corner of
+/// a story. It travels through `CommentComposerState`: at rest it's a compact
+/// compose button, and it grows into a text box that can be collapsed to a
+/// single line or expanded into a larger editor.
+///
+/// Dragging the grabber moves one state per swipe; the text box's glass shape
+/// morphs between sizes because every state shares one `glassEffectID`.
+struct CommentComposer: View {
+    /// Called with the trimmed comment when the user taps send.
+    let onSubmit: (String) -> Void
+
+    @State private var state: CommentComposerState = .cancelled
+    @State private var draft = ""
+    /// Live vertical drag on the grabber, so the composer follows the finger
+    /// before the gesture commits to a state change.
+    @State private var dragOffset: CGFloat = 0
+    @FocusState private var isFocused: Bool
+    /// Lets the button and the text box morph into one another.
+    @Namespace private var namespace
+
+    /// One shared animation so every size change feels like the same control.
+    private let transition = Animation.spring(response: 0.4, dampingFraction: 0.8)
+    /// How far the grabber must travel (including fling) to change state.
+    private let dragThreshold: CGFloat = 40
+
+    /// The draft with surrounding whitespace removed — what actually gets sent.
+    private var trimmedDraft: String {
+        draft.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var body: some View {
+        GlassEffectContainer(spacing: 20) {
+            if state == .cancelled {
+                composeButton
+            } else {
+                HStack(spacing: 12) {
+                    editor
+                    cancelButton
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+        .offset(y: dragOffset)
+        // Keeps the state in step with focus changes the composer didn't drive:
+        // tapping the field while collapsed starts writing, and dismissing the
+        // keyboard (Return, or the keyboard's own gesture) collapses the box.
+        .onChange(of: isFocused) { _, focused in
+            if focused, state == .collapsed {
+                move(to: .normal)
+            } else if !focused, state.wantsKeyboard {
+                move(to: .collapsed)
+            }
+        }
+    }
+
+    // MARK: - Transitions
+
+    /// Moves to `newState`, bringing the keyboard and the draft along with it.
+    ///
+    /// The state is set before focus so the `isFocused` observer above sees the
+    /// destination state rather than the one being left behind.
+    private func move(to newState: CommentComposerState) {
+        guard newState != state else { return }
+        if newState == .cancelled { draft = "" }
+        withAnimation(transition) { state = newState }
+
+        if !newState.wantsKeyboard {
+            isFocused = false
+        } else if !isFocused {
+            // Let the field mount before focusing, so opening the composer
+            // straight from the button reliably raises the keyboard.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(50))
+                isFocused = true
+            }
+        }
+    }
+
+    // MARK: - Pieces
+
+    /// The compact button shown while cancelled; tapping it starts a comment.
+    private var composeButton: some View {
+        Button {
+            move(to: .normal)
+        } label: {
+            Image(systemName: "bubble.and.pencil")
+                .font(.title2)
+                .frame(width: 56, height: 56)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .circle)
+        .glassEffectID("composer", in: namespace)
+        .accessibilityLabel("Add a comment")
+    }
+
+    /// The text box: a grabber for resizing, the field itself, and send.
+    private var editor: some View {
+        VStack(spacing: 8) {
+            grabber
+            HStack(alignment: .bottom, spacing: 8) {
+                TextField("Add a comment…", text: $draft, axis: .vertical)
+                    .focused($isFocused)
+                    .lineLimit(state.lineLimit)
+                Button {
+                    onSubmit(trimmedDraft)
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title2)
+                }
+                .buttonStyle(.plain)
+                .disabled(trimmedDraft.isEmpty)
+                .accessibilityLabel("Post comment")
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity)
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
+        .glassEffectID("composer", in: namespace)
+    }
+
+    /// A separate glass circle that abandons the draft outright, mirroring the
+    /// App Store search field's trailing "X".
+    private var cancelButton: some View {
+        Button {
+            move(to: .cancelled)
+        } label: {
+            Image(systemName: "xmark")
+                .font(.title2)
+                .frame(width: 56, height: 56)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .circle)
+        .glassEffectID("cancel", in: namespace)
+        .accessibilityLabel("Discard comment")
+    }
+
+    /// The grab handle above the text box. Each swipe steps one state: up
+    /// towards `expanded`, down towards `cancelled`.
+    private var grabber: some View {
+        Capsule()
+            .fill(.secondary)
+            .frame(width: 36, height: 5)
+            // A tall, full-width hit area so the thin pill is easy to grab.
+            .frame(maxWidth: .infinity, minHeight: 20)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 5)
+                    .onChanged { value in
+                        dragOffset = value.translation.height
+                    }
+                    .onEnded { value in
+                        // Fold in the fling so a quick flick commits too.
+                        let travel = value.translation.height
+                            + value.predictedEndTranslation.height / 4
+                        withAnimation(transition) { dragOffset = 0 }
+                        if travel < -dragThreshold {
+                            move(to: state.raised)
+                        } else if travel > dragThreshold {
+                            move(to: state.lowered)
+                        }
+                    }
+            )
+            .accessibilityLabel("Composer size")
+            .accessibilityHint("Swipe up to expand, swipe down to collapse")
+    }
+}
+
+#Preview {
+    ZStack(alignment: .bottomTrailing) {
+        Color(.systemBackground)
+        CommentComposer { _ in }
+    }
+}
