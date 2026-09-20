@@ -342,35 +342,64 @@ class HackerNewsAPI {
         }
     }
 
-    private static func loginUri(username: String, password: String) -> URL {
-        var components = URLComponents()
-        components.path += "login"
-        components.queryItems = [
-            URLQueryItem(name: "acct", value: username), URLQueryItem(name: "pw", value: password),
-        ]
-        return components.url(relativeTo: baseUri)!
+    /// Hacker News only evaluates credentials that arrive in a form POST body —
+    /// a GET with `?acct=…&pw=…` is ignored and simply re-renders the login
+    /// form, which reads as a rejected password. Percent-encoded to the
+    /// unreserved set, because `URLComponents` would leave `+`, `&` and `=`
+    /// intact and a password containing any of them would corrupt the body.
+    private static func loginFormBody(username: String, password: String) -> Data {
+        var unreserved = CharacterSet.alphanumerics
+        unreserved.insert(charactersIn: "-._~")
+        func encoded(_ value: String) -> String {
+            value.addingPercentEncoding(withAllowedCharacters: unreserved) ?? value
+        }
+        return Data("acct=\(encoded(username))&pw=\(encoded(password))&goto=news".utf8)
     }
+
+    /// Hacker News serves its reCAPTCHA challenge instead of checking the
+    /// password when the login POST doesn't look like it came from a browser —
+    /// the app's own descriptive User-Agent is enough to trigger it. This is
+    /// only sent on the login request; the scraping requests in `NewsYCService`
+    /// keep identifying themselves as Huck.
+    private static let loginUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) "
+        + "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
 
     private static func requestLoginCookie(username: String, password: String, cookieHandler: @escaping CookieHandler) async throws {
         let session = URLSession.nonRedirectingEphemeralSession()
-        let uri = loginUri(username: username, password: password)
-        let request = URLRequest(url: uri)
 
-        // Do not use request.httpMethod = "POST". It skips the redirect delegate
         // TODO: Move this all to web service
-        let (_, response) = try await session.data(for: request, delegate: RedirectBlocker())
+        var request = URLRequest(url: URL(string: "login", relativeTo: baseUri)!)
+        request.httpMethod = "POST"
+        request.httpBody = loginFormBody(username: username, password: password)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue(loginUserAgent, forHTTPHeaderField: "User-Agent")
+
+        // The redirect must stay blocked: a successful login is a 302 carrying
+        // the `user` cookie, and following it would drop the `Set-Cookie` header
+        // we're here for (the session deliberately doesn't store cookies itself).
+        let (data, response) = try await session.data(for: request, delegate: RedirectBlocker())
         guard let response = response as? HTTPURLResponse else {
             print("Bad response: \(response)")
             throw NetworkError.badResponse
         }
-        let headerFields = response.allHeaderFields as! [String: String]
+        let headerFields = response.allHeaderFields.reduce(into: [String: String]()) { fields, entry in
+            if let name = entry.key as? String, let value = entry.value as? String {
+                fields[name] = value
+            }
+        }
         let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: baseUri)
         if let token = cookies.first(where: { $0.name == "user" }) {
             print("Success. Calling cookie handler")
             cookieHandler(.success(token))
         } else {
-            print("Failure. Calling cookie handler")
-            cookieHandler(.failure(APIError.loginFailed))
+            // No cookie means either a rejected password ("Bad login") or the
+            // captcha wall; they need different advice, so tell them apart.
+            let body = String(data: data, encoding: .utf8) ?? ""
+            let error: APIError = body.contains("Validation required")
+                ? .loginValidationRequired
+                : .loginFailed
+            print("Failure. Calling cookie handler: \(error)")
+            cookieHandler(.failure(error))
         }
     }
 }

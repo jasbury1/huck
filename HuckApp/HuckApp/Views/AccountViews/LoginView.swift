@@ -18,7 +18,10 @@ struct LoginView: View {
     @State private var name: String = ""
     @State private var password: String = ""
     @State private var hidePassword: Bool = true
-    @State private var passwordFailed: Bool = false
+    /// Why the last attempt failed, or `nil` if there hasn't been one. Taken
+    /// from the error rather than assumed, since a rejected password and Hacker
+    /// News' captcha wall call for different advice.
+    @State private var failureMessage: String?
     
     @FocusState private var focus: LoginFocus?
 
@@ -91,17 +94,22 @@ struct LoginView: View {
             .padding(.horizontal)
             .focused($focus, equals: .password)
             VStack {
-                if (passwordFailed) {
-                    Text("Incorrect username and/or password")
+                if let failureMessage {
+                    Text(failureMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
                 Button {
                     Task {
                         do {
+                            failureMessage = nil
                             try await session.signIn(username: name, password: password)
                         }
                         catch {
                             password = ""
-                            passwordFailed = true
+                            failureMessage = error.localizedDescription
                         }
                     }
                     
