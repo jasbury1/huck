@@ -8,16 +8,32 @@
 import SwiftUI
 
 struct UserView: View {
-    let username: String
+    /// The profile being shown, or `nil` for the signed-out account tab. There's
+    /// no Hacker News user to fetch in that case, so the page keeps its chrome
+    /// but drops to what works without an account: the locally-recorded reading
+    /// history, and a way to sign in.
+    let username: String?
     @State private var user: User?
     @Binding var path: NavigationPath
 
-    @State private var currentTab: ContentTab = .posts
+    @State private var currentTab: ContentTab
 
     /// This user's activity, one feed per tab. Each grows as its list is
     /// scrolled; the posts feed also warms story details ahead of the scroll.
-    @State private var posts: StoryFeed
-    @State private var comments: PaginatedFeed<UserComment>
+    /// Both are `nil` while signed out, where neither tab is offered.
+    @State private var posts: StoryFeed?
+    @State private var comments: PaginatedFeed<UserComment>?
+
+    /// Whose activity `posts` and `comments` page. Compared against `username`
+    /// so that signing in or out rebuilds them rather than leaving the previous
+    /// account's pages on screen.
+    @State private var feedsUsername: String?
+
+    /// What the signed-out "Sign In" card does. The account tab owns the login
+    /// sheet — it offers the same action from its toolbar menu — so this view
+    /// only reports the tap. Profiles reached from a story always have a
+    /// username and never show the card, so they can leave it unset.
+    let onSignIn: (() -> Void)?
 
     /// Per-user record of recently-viewed stories, shown in the (current-user-only)
     /// "Recently viewed" tab.
@@ -27,11 +43,20 @@ struct UserView: View {
     /// Rebuilt whenever the tab is shown so newly-opened stories appear.
     @State private var recentlyViewed: StoryFeed?
 
-    init(username: String, path: Binding<NavigationPath>) {
+    init(username: String?, path: Binding<NavigationPath>, onSignIn: (() -> Void)? = nil) {
         self.username = username
         self._path = path
-        self._posts = State(initialValue: StoryFeed.userStories(username: username))
-        self._comments = State(initialValue: .userComments(username: username))
+        self.onSignIn = onSignIn
+        // The feeds are (re)built by `loadProfile()`, which also runs on any
+        // later change of `username` — signing in or out, without this view
+        // losing its identity. Seeding them here keeps a real profile's first
+        // frame from flashing an empty list before that task runs.
+        self._posts = State(initialValue: username.map { StoryFeed.userStories(username: $0) })
+        self._comments = State(initialValue: username.map { PaginatedFeed<UserComment>.userComments(username: $0) })
+        self._feedsUsername = State(initialValue: username)
+        // Signed out, Posts isn't among the available tabs, so the pager would
+        // otherwise open with nothing selected.
+        self._currentTab = State(initialValue: username == nil ? .recentlyViewed : .posts)
     }
 
     // Collapsing-header state. `collapse` is the single source of truth for how
@@ -59,12 +84,23 @@ struct UserView: View {
     /// Whether this profile belongs to the logged-in user. Their likes are private,
     /// so the Likes action only shows on their own profile.
     private var isCurrentUser: Bool {
-        username == session.username
+        username != nil && username == session.username
     }
 
-    /// The tabs to show, in order. "Recently viewed" is private to the logged-in
-    /// user, so it only appears on their own profile.
+    /// What the header and nav bar title call this page. Signed out there's no
+    /// username to show, so the tab names itself. A `String` rather than a
+    /// `LocalizedStringKey` so a real username is rendered verbatim instead of
+    /// being looked up as a translation key.
+    private var displayName: String {
+        username ?? String(localized: "Account")
+    }
+
+    /// The tabs to show, in order. Posts and Comments need a Hacker News account
+    /// to read from, so signed out only the locally-recorded history remains.
+    /// "Recently viewed" is private, so on a real profile it's the logged-in
+    /// user's own only.
     private var availableTabs: [ContentTab] {
+        guard username != nil else { return [.recentlyViewed] }
         var tabs: [ContentTab] = [.posts, .comments]
         if isCurrentUser {
             tabs.append(.recentlyViewed)
@@ -87,27 +123,57 @@ struct UserView: View {
             collapsingHeader
         }
         .background(cardBackgroundColor)
-        .navigationTitle(username)
+        .navigationTitle(displayName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 // The small nav-bar username fades in as the large one collapses.
-                Text(username)
+                Text(displayName)
                     .font(.headline)
                     .opacity(collapseProgress)
             }
         }
-        .task {
-            // Eagerly warm the profile and both default tabs' first pages in
-            // parallel, so switching between Posts and Comments feels instant.
-            async let fetchedUser = HackerNewsAPI.getUser(for: username)
-            async let loadedPosts: Void = posts.loadMore()
-            async let loadedComments: Void = comments.loadMore()
-            user = await fetchedUser
-            _ = await (loadedPosts, loadedComments)
-            // Warm the recently-viewed snapshot too (current user only).
-            if isCurrentUser { await refreshRecentlyViewed() }
+        // Keyed on `username` so signing in or out reloads in place rather than
+        // through a fresh view — which would tear down the login sheet mid-flight.
+        .task(id: username) { await loadProfile() }
+    }
+
+    /// Loads everything this page shows for the current `username`, and rebuilds
+    /// the per-user feeds when it changes. Signed out there's no profile to
+    /// fetch and no activity to page, so only the local history is refreshed.
+    private func loadProfile() async {
+        // A tab from the previous account may no longer be offered.
+        if !availableTabs.contains(currentTab), let first = availableTabs.first {
+            currentTab = first
         }
+
+        guard let username else {
+            user = nil
+            posts = nil
+            comments = nil
+            feedsUsername = nil
+            await refreshRecentlyViewed()
+            return
+        }
+
+        // Already built for this user by `init` (or a previous run); only a
+        // change of account warrants discarding the pages fetched so far.
+        if feedsUsername != username {
+            posts = StoryFeed.userStories(username: username)
+            comments = PaginatedFeed<UserComment>.userComments(username: username)
+            feedsUsername = username
+        }
+        guard let posts, let comments else { return }
+
+        // Eagerly warm the profile and both default tabs' first pages in
+        // parallel, so switching between Posts and Comments feels instant.
+        async let fetchedUser = HackerNewsAPI.getUser(for: username)
+        async let loadedPosts: Void = posts.loadMore()
+        async let loadedComments: Void = comments.loadMore()
+        user = await fetchedUser
+        _ = await (loadedPosts, loadedComments)
+        // Warm the recently-viewed snapshot too (current user only).
+        if isCurrentUser { await refreshRecentlyViewed() }
     }
 
     /// Refreshes the recently-viewed feed so it reflects stories opened since the
@@ -133,7 +199,7 @@ struct UserView: View {
     var collapsingHeader: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(username)
+                Text(displayName)
                     .font(.largeTitle)
                     .bold()
                 userSummary
@@ -209,11 +275,20 @@ struct UserView: View {
 
     var userSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Karma: \(user?.karma ?? 0)")
-                .foregroundStyle(.secondary)
-                // Tuck the karma closer to the username above it.
-                .padding(.top, -6)
-                .padding(.bottom, 10)
+            // Signed out there's no karma to report, so the subtitle explains
+            // what signing in adds instead. Written as a branch rather than a
+            // ternary inside `Text` so both stay `LocalizedStringKey`s.
+            Group {
+                if username == nil {
+                    Text("Sign in to see your posts, comments, and favorites.")
+                } else {
+                    Text("Karma: \(user?.karma ?? 0)")
+                }
+            }
+            .foregroundStyle(.secondary)
+            // Tuck the karma closer to the username above it.
+            .padding(.top, -6)
+            .padding(.bottom, 10)
             if let about = user?.about, !about.isEmpty {
                 // The "About" header and the bio grouped together in a card.
                 VStack(alignment: .leading, spacing: 8) {
@@ -289,22 +364,27 @@ struct UserView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .sheet(isPresented: $showingFullBio) {
-            BioSheet(username: username, about: user?.about ?? "")
+            BioSheet(username: username ?? "", about: user?.about ?? "")
         }
     }
 
     /// Prominent actions below the bio. The current user sees Likes + Favorites
     /// side by side; other users see only Favorites (their likes are private),
-    /// spanning the full width. Non-functional for now.
+    /// spanning the full width. Both need an account to resolve against, so
+    /// signed out they give way to the action that gets you one.
     var profileActionButtons: some View {
         HStack(spacing: 12) {
-            if isCurrentUser {
-                profileActionButton("Likes", systemImage: "arrow.up", iconColor: .orange) {
-                    path.append(ItemNavigation.liked)
+            if let username {
+                if isCurrentUser {
+                    profileActionButton("Likes", systemImage: "arrow.up", iconColor: .orange) {
+                        path.append(ItemNavigation.liked)
+                    }
                 }
-            }
-            profileActionButton("Favorites", systemImage: "heart", iconColor: .red) {
-                path.append(ItemNavigation.favorites(user: username))
+                profileActionButton("Favorites", systemImage: "heart", iconColor: .red) {
+                    path.append(ItemNavigation.favorites(user: username))
+                }
+            } else if let onSignIn {
+                profileActionButton("Sign In", systemImage: "person.crop.circle", iconColor: .orange, action: onSignIn)
             }
         }
         .padding(.top, 8)
@@ -505,28 +585,34 @@ struct UserView: View {
         }
     }
 
+    @ViewBuilder
     var postsList: some View {
-        StoryList(
-            feed: posts,
-            path: $path,
-            emptyState: EmptyFeedView(
-                title: "No Posts",
-                systemImage: "newspaper",
-                description: "Stories \(username) submits will show up here."
+        if let posts, let username {
+            StoryList(
+                feed: posts,
+                path: $path,
+                emptyState: EmptyFeedView(
+                    title: "No Posts",
+                    systemImage: "newspaper",
+                    description: "Stories \(username) submits will show up here."
+                )
             )
-        )
+        }
     }
 
+    @ViewBuilder
     var commentsList: some View {
-        PaginatedList(
-            feed: comments,
-            emptyState: EmptyFeedView(
-                title: "No Comments",
-                systemImage: "bubble.left.and.bubble.right",
-                description: "Comments \(username) posts will show up here."
-            )
-        ) { comment in
-            UserCommentRow(comment: comment, path: $path)
+        if let comments, let username {
+            PaginatedList(
+                feed: comments,
+                emptyState: EmptyFeedView(
+                    title: "No Comments",
+                    systemImage: "bubble.left.and.bubble.right",
+                    description: "Comments \(username) posts will show up here."
+                )
+            ) { comment in
+                UserCommentRow(comment: comment, path: $path)
+            }
         }
     }
 }

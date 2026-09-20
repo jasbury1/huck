@@ -13,8 +13,12 @@ enum FeedSettings {
     static let displayStoryDomainKey = "feed.displayStoryDomain"
 }
 
+/// The app's preferences, presented as a sheet from the Account tab's toolbar.
+/// It brings its own `NavigationStack` for the title bar, rather than joining
+/// the account tab's — that stack is for story navigation.
 struct SettingsView: View {
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+    @Environment(\.dismiss) private var dismiss
 
     /// Whether story cells show the link's domain after the title. Defaults on.
     @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
@@ -45,6 +49,11 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
             .alert("Clear Viewing History?", isPresented: $isConfirmingClearHistory) {
                 Button("Clear", role: .destructive) {
                     recentlyViewedStore.clearHistory()

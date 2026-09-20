@@ -51,13 +51,10 @@ struct ContentView: View {
             Tab("Feed", systemImage: "newspaper.fill") {
                 FeedView()
             }
+            // Settings isn't a destination of its own — it's reached from the
+            // gear in the Account tab's toolbar.
             Tab("Account", systemImage: "person.circle") {
                 AccountView()
-                //UserView(username: "zdw")
-            }
-            
-            Tab("Settings", systemImage: "gearshape.fill") {
-                SettingsView()
             }
             Tab(role: .search) {
                 SearchView()
