@@ -47,11 +47,15 @@ struct TabableContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SortableHeader(title: title)
             tabBarButtons
+                .padding(.top, 8)
             Divider()
             pages
         }
+        // The page title lives in the navigation bar — centered, and matching
+        // every other pushed screen — rather than in an in-content header.
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     /// Horizontally-paged tab content; both tapping a pill and swiping drive

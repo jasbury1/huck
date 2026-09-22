@@ -32,6 +32,10 @@ struct ContentView: View {
     /// home feed's collections section and the story options menu's picker.
     @State private var collectionsStore: CollectionsStore
 
+    /// The query driving the search tab. Held here, at the tab view, so the
+    /// search tab can adopt the system's separated search-button appearance.
+    @State private var searchText = ""
+
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -56,10 +60,17 @@ struct ContentView: View {
             Tab("Account", systemImage: "person.circle") {
                 AccountView()
             }
+            // The search field is declared inside this tab, not on the tab view:
+            // a `searchable` outside the `TabView` propagates into every tab and
+            // puts a search bar in each one's navigation bar.
             Tab(role: .search) {
-                SearchView()
+                NavigationStack {
+                    SearchView()
+                        .searchable(text: $searchText)
+                }
             }
         }
+        .tabViewSearchActivation(.searchTabSelection)
         .tint(.orange)
         .environment(session)
         .environment(interactionStore)

@@ -218,8 +218,9 @@ struct UserView: View {
             // Pinned region: the "Activity" title anchors to the top with the
             // tab pills directly beneath it, both staying put as content scrolls.
             VStack(alignment: .leading, spacing: 0) {
-                SortableHeader(title: "Activity")
+                //SortableHeader(title: "Activity")
                 tabBarButtons
+                    .padding(.top, 8)
                 Divider()
             }
             // White behind the tab bar, matching the content below it.

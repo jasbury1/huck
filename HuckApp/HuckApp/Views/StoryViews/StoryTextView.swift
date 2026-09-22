@@ -136,7 +136,7 @@ struct StoryTextView: View {
             // at the top of its cell, stays anchored in place.
             LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
                 storyDetailSection
-
+                Divider()
                 Section {
                     ForEach(commentFetcher.visibleComments, id: \.id) { comment in
                         let collapsed = commentFetcher.isCollapsed(comment)
@@ -193,7 +193,7 @@ struct StoryTextView: View {
                     }
                     commentsStatus
                 } header: {
-                    SortableHeader(title: "Comments")
+                    //SortableHeader(title: "Comments")
                 }
             }
         }
