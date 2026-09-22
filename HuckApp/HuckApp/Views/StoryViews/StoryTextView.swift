@@ -112,6 +112,10 @@ struct StoryTextView: View {
     /// Non-nil while the shared "More" options popover is presented.
     @State private var moreOptionsStory: StoryModel?
 
+    /// The comment the composer is replying to, set by the Reply swipe action
+    /// and cleared when the draft is discarded.
+    @State private var replyTarget: Comment?
+
     /// 0 while the large title is fully visible, 1 once it has scrolled off.
     private var titleCollapseProgress: CGFloat {
         titleHeight > 0 ? min(max(scrollOffset / titleHeight, 0), 1) : 0
@@ -148,7 +152,9 @@ struct StoryTextView: View {
                                 }
                                 .tint(.orange)
                                 Button {
-                                    // TODO: Reply to this comment
+                                    // Opens the composer with this comment as
+                                    // its target; posting is still a TODO.
+                                    replyTarget = comment
                                 } label: {
                                     Label("Reply", systemImage: "arrowshape.turn.up.left")
                                 }
@@ -225,9 +231,9 @@ struct StoryTextView: View {
         .storyOptionsPopover(for: $moreOptionsStory)
         // Floating Liquid Glass compose control in the bottom-trailing corner.
         .overlay(alignment: .bottomTrailing) {
-            CommentComposer { _ in
-                // TODO: post the comment once the news.ycombinator.com write
-                // API exists.
+            CommentComposer(replyTarget: $replyTarget) { _ in
+                // TODO: post the comment (or the reply to `replyTarget`) once
+                // the news.ycombinator.com write API exists.
             }
         }
         .task {

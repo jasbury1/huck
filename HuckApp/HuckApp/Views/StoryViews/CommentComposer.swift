@@ -49,6 +49,12 @@ enum CommentComposerState: Int, CaseIterable, Comparable {
 /// Dragging the grabber moves one state per swipe; the text box's glass shape
 /// morphs between sizes because every state shares one `glassEffectID`.
 struct CommentComposer: View {
+    /// The comment being replied to, or `nil` for a new top-level comment.
+    /// Setting it opens the composer; discarding the draft clears it. Owned by
+    /// the caller so a Reply action anywhere in the thread can drive the
+    /// composer, and so the caller knows where to post the draft.
+    @Binding var replyTarget: Comment?
+
     /// Called with the trimmed comment when the user taps send.
     let onSubmit: (String) -> Void
 
@@ -87,6 +93,13 @@ struct CommentComposer: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .offset(y: dragOffset)
+        // A Reply action elsewhere in the thread sets the target while the
+        // composer is closed, so open it — and focus the field — in response.
+        .onChange(of: replyTarget?.id) { _, id in
+            if id != nil, state == .cancelled {
+                move(to: .normal)
+            }
+        }
         // Keeps the state in step with focus changes the composer didn't drive:
         // tapping the field while collapsed starts writing, and dismissing the
         // keyboard (Return, or the keyboard's own gesture) collapses the box.
@@ -129,7 +142,10 @@ struct CommentComposer: View {
             isConfirmingDiscard = true
             return
         }
-        if newState == .cancelled { draft = "" }
+        if newState == .cancelled {
+            draft = ""
+            replyTarget = nil
+        }
         withAnimation(transition) { state = newState }
 
         if !newState.wantsKeyboard {
@@ -168,12 +184,16 @@ struct CommentComposer: View {
         .accessibilityLabel("Add a comment")
     }
 
-    /// The text box: a grabber for resizing, the field itself, and send.
+    /// The text box: a grabber for resizing, the reply header, the field
+    /// itself, and send.
     private var editor: some View {
         VStack(spacing: 8) {
             grabber
+            if let replyTarget {
+                replyHeader(author: replyTarget.author)
+            }
             HStack(alignment: .bottom, spacing: 8) {
-                TextField("Add a comment…", text: $draft, axis: .vertical)
+                TextField(replyTarget == nil ? "Add a comment…" : "Add a reply…", text: $draft, axis: .vertical)
                     .focused($isFocused)
                     .lineLimit(state.lineLimit)
                 Button {
@@ -193,6 +213,19 @@ struct CommentComposer: View {
         .frame(maxWidth: .infinity)
         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
         .glassEffectID("composer", in: namespace)
+    }
+
+    /// Names the comment being answered so the draft's destination stays
+    /// visible while writing. Sits inside the glass, between the grabber and
+    /// the field, and reads as secondary to the draft itself.
+    private func replyHeader(author: String) -> some View {
+        Text("Replying to \(author)…")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .transition(.opacity)
     }
 
     /// A separate glass circle that abandons the draft outright, mirroring the
@@ -245,8 +278,9 @@ struct CommentComposer: View {
 }
 
 #Preview {
+    @Previewable @State var replyTarget: Comment?
     ZStack(alignment: .bottomTrailing) {
         Color(.systemBackground)
-        CommentComposer { _ in }
+        CommentComposer(replyTarget: $replyTarget) { _ in }
     }
 }
