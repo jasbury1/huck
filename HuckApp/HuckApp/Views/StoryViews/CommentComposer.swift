@@ -84,9 +84,16 @@ struct CommentComposer: View {
             if state == .cancelled {
                 composeButton
             } else {
+                // The editor stays in one slot across every size: putting it in
+                // a second branch would rebuild the text field, dropping focus
+                // and tripping the observer below into collapsing the box.
                 HStack(spacing: 12) {
                     editor
-                    cancelButton
+                    // Expanding gives the text box the full width, so the glass
+                    // circle steps aside and the "X" moves inside the box.
+                    if state != .expanded {
+                        cancelButton
+                    }
                 }
             }
         }
@@ -184,11 +191,11 @@ struct CommentComposer: View {
         .accessibilityLabel("Add a comment")
     }
 
-    /// The text box: a grabber for resizing, the reply header, the field
-    /// itself, and send.
+    /// The text box: a top row for resizing and discarding, the reply header,
+    /// the field itself, and send.
     private var editor: some View {
         VStack(spacing: 8) {
-            grabber
+            topRow
             if let replyTarget {
                 replyHeader(author: replyTarget.author)
             }
@@ -208,7 +215,9 @@ struct CommentComposer: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 8)
+        // While expanded the top row carries the discard button's own 44pt tap
+        // target, which is inset enough on its own.
+        .padding(.top, state == .expanded ? 0 : 8)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity)
         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
@@ -228,8 +237,43 @@ struct CommentComposer: View {
             .transition(.opacity)
     }
 
+    /// The text box's top row. While expanded the box spans the full width, so
+    /// the discard "X" rides along the top edge and a matching leading inset
+    /// keeps the grabber centred under the finger.
+    private var topRow: some View {
+        // One HStack for every size, so the grabber — and the drag gesture that
+        // drives the whole ladder — keeps its identity as the "X" comes and goes.
+        HStack(spacing: 0) {
+            if state == .expanded {
+                // Balances the trailing button's width.
+                Color.clear
+                    .frame(width: 44, height: 44)
+            }
+            grabber
+            if state == .expanded {
+                discardButton
+            }
+        }
+    }
+
+    /// The expanded box's own discard control. Same "X" as the glass circle it
+    /// replaces, but plain: it already sits on the text box's glass.
+    private var discardButton: some View {
+        Button {
+            move(to: .cancelled)
+        } label: {
+            Image(systemName: "xmark")
+                .font(.subheadline.weight(.semibold))
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .accessibilityLabel("Discard comment")
+    }
+
     /// A separate glass circle that abandons the draft outright, mirroring the
-    /// App Store search field's trailing "X".
+    /// App Store search field's trailing "X". Shown while the box is compact;
+    /// once expanded, `discardButton` takes over inside the box.
     private var cancelButton: some View {
         Button {
             move(to: .cancelled)
