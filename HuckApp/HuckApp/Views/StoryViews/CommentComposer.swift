@@ -55,11 +55,23 @@ struct CommentComposer: View {
     /// composer, and so the caller knows where to post the draft.
     @Binding var replyTarget: Comment?
 
-    /// Called with the trimmed comment when the user taps send.
-    let onSubmit: (String) -> Void
+    /// Posts the trimmed comment when the user taps send. Throwing leaves the
+    /// draft in place and surfaces the error, so a refused or dropped comment is
+    /// never silently lost; returning normally means it's published.
+    let onSubmit: (String) async throws -> Void
+
+    /// Composing is only useful signed in, so the compose button routes through
+    /// the app's shared login gate rather than letting someone write a comment
+    /// they can't post.
+    @Environment(\.requireLogin) private var requireLogin
 
     @State private var state: CommentComposerState = .cancelled
     @State private var draft = ""
+    /// True while a post is in flight; holds the send button closed so one tap
+    /// can't become two comments.
+    @State private var isPosting = false
+    /// Set when a post fails, presenting the error over the still-intact draft.
+    @State private var postError: (any Error)?
     /// Live vertical drag on the grabber, so the composer follows the finger
     /// before the gesture commits to a state change.
     @State private var dragOffset: CGFloat = 0
@@ -100,6 +112,13 @@ struct CommentComposer: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .offset(y: dragOffset)
+        // Kept off the background view below, so it never competes with the
+        // discard confirmation for the same presentation slot.
+        .alert("Couldn't Post Comment", item: $postError) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { error in
+            Text(error.localizedDescription)
+        }
         // A Reply action elsewhere in the thread sets the target while the
         // composer is closed, so open it — and focus the field — in response.
         .onChange(of: replyTarget?.id) { _, id in
@@ -174,12 +193,36 @@ struct CommentComposer: View {
         move(to: .cancelled)
     }
 
+    /// Posts the draft, closing the composer only once it's actually published.
+    ///
+    /// A failed post keeps everything — the text, the reply target, the open
+    /// composer — so the writer can simply tap send again; only the error is
+    /// added. Losing a written comment to a dropped request would be the worst
+    /// thing this control could do.
+    private func submit() {
+        let text = trimmedDraft
+        guard !text.isEmpty, !isPosting else { return }
+        isPosting = true
+        Task {
+            defer { isPosting = false }
+            do {
+                try await onSubmit(text)
+                // Clear before transitioning: an empty draft is what lets
+                // `move(to:)` past its "discard this comment?" guard.
+                draft = ""
+                move(to: .cancelled)
+            } catch {
+                postError = error
+            }
+        }
+    }
+
     // MARK: - Pieces
 
     /// The compact button shown while cancelled; tapping it starts a comment.
     private var composeButton: some View {
         Button {
-            move(to: .normal)
+            requireLogin { move(to: .normal) }
         } label: {
             Image(systemName: "bubble.and.pencil")
                 .font(.title2)
@@ -204,13 +247,22 @@ struct CommentComposer: View {
                     .focused($isFocused)
                     .lineLimit(state.lineLimit)
                 Button {
-                    onSubmit(trimmedDraft)
+                    submit()
                 } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title2)
+                    // A fixed frame for both states, so the row doesn't shift
+                    // as the spinner takes the arrow's place.
+                    Group {
+                        if isPosting {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title2)
+                        }
+                    }
+                    .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
-                .disabled(trimmedDraft.isEmpty)
+                .disabled(trimmedDraft.isEmpty || isPosting)
                 .accessibilityLabel("Post comment")
             }
         }

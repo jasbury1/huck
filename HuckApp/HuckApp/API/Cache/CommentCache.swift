@@ -43,4 +43,13 @@ actor CommentCache {
     func store(_ thread: [Comment], for id: Int) async {
         await cache.insert(Entry(thread: thread, storedAt: .now), for: id)
     }
+
+    /// Drops the cached thread for a story, so the next read re-fetches it.
+    ///
+    /// The time-to-live covers threads going stale on their own; this covers the
+    /// case where we *know* one has, because the reader just added a comment to
+    /// it. Without this they'd post a comment and not see it.
+    func invalidate(_ id: Int) async {
+        await cache.remove(id)
+    }
 }

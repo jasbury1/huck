@@ -31,6 +31,17 @@ actor StoryCache {
         await cache.value(for: id) { await FirebaseAPIService.getStoryAsync(id: id) }
     }
 
+    /// Drops the cached story for `id`, so the next read re-fetches it.
+    ///
+    /// Unlike `CommentCache`, entries here never expire on their own, so a story
+    /// whose `descendants`/`kids` have changed stays wrong until something says
+    /// so — which matters when the reader has just commented on it, because the
+    /// comment machinery compares Algolia's tree against this `descendants` count
+    /// to decide whether its index is stale.
+    func invalidate(_ id: Int) async {
+        await cache.remove(id)
+    }
+
     /// Warms the cache for the given ids, fetching missing ones in parallel with a
     /// bounded degree of concurrency. Ids already cached or in flight cost nothing —
     /// `story(id:)` serves them without a network request.

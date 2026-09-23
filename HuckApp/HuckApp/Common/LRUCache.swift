@@ -75,6 +75,16 @@ actor LRUCache<Key: Hashable, Value> {
         evictIfNeeded()
     }
 
+    /// Drops the entry for `key`, if any. For when a cached value is known to be
+    /// out of date rather than merely old — an in-flight fetch is left alone, as
+    /// it will simply repopulate the key.
+    func remove(_ key: Key) {
+        entries[key] = nil
+        if let index = lru.firstIndex(of: key) {
+            lru.remove(at: index)
+        }
+    }
+
     // MARK: - Storage helpers
 
     /// Marks `key` as most-recently-used.

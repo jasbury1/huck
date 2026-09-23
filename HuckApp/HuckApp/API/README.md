@@ -14,7 +14,8 @@ HackerNewsAPI  ← the facade: the ONLY type the rest of the app calls
    │         │
    │         ├── WebService          (generic URL fetch + JSON decode)
    │         └── FirebaseThreadWalker(streams a comment thread in reading order)
-   └── Services/NewsYCService        (reverse-engineered HTML scraping: voting, favorites)
+   └── Services/NewsYCService        (reverse-engineered HTML scraping: voting, favorites,
+                                      commenting)
 
 `StoryCache` and `CommentCache` are both built on the generic `LRUCache` actor in
 `Common/` (alongside other reusable building blocks like `MinHeap`).
@@ -37,10 +38,11 @@ service — they are not returned above the facade.
 
 `NewsYCService` is the third category anticipated in `CLAUDE.md`: a
 reverse-engineered handler for `news.ycombinator.com` itself, for actions the JSON
-APIs don't offer (voting and favoriting, plus reading a user's `/upvoted` and
-`/favorites` lists). It **scrapes HTML** rather than decoding JSON, because HN embeds
-the per-user, per-item `auth` token that voting/favoriting requires inside its page
-markup. Requests are cookie-authenticated automatically via `HTTPCookieStorage.shared`
+APIs don't offer (voting, favoriting and commenting, plus reading a user's `/upvoted`
+and `/favorites` lists). It **scrapes HTML** rather than decoding JSON, because HN
+embeds the tokens these actions require inside its page markup: a per-user, per-item
+`auth` token for voting/favoriting, and a per-user, per-parent `hmac` in the comment
+form. Requests are cookie-authenticated automatically via `HTTPCookieStorage.shared`
 (note a user's `/favorites` is public, so it works for any username; `/upvoted` is
 private to its owner). All HTML parsing is localized to this file so an upstream
 markup change is a one-file fix. Like the others, it stays below the facade.
@@ -57,6 +59,8 @@ The types the app actually works with, decoupled from any single API:
 - `APIError` / `NetworkError` — error types.
 - `PostAge` — relative-time formatting (`Date.ageString()`).
 - `StringExtensions` — `normalizeHtmlText()`, converts HN's HTML to Markdown.
+- `FormBody` — strict percent-encoding for the `x-www-form-urlencoded` bodies the
+  `news.ycombinator.com` endpoints take (login, commenting).
 
 ## Conventions
 
@@ -93,6 +97,18 @@ The types the app actually works with, decoupled from any single API:
   APIs. Entries carry a short time-to-live because threads gain replies over time;
   once stale, the next open re-fetches. Only complete, non-empty threads are cached —
   a cancelled walk or an empty/failed load is left out so it can be retried.
+- Posting a comment (`HackerNewsAPI.postComment(parentId:storyId:text:)`) is a
+  two-step exchange, like voting. HN's comment form carries a per-user, per-parent
+  `hmac` it checks as a CSRF token, so the service first GETs the form — `/reply`,
+  which is a few hundred bytes, in preference to the story's whole `/item` page —
+  and scrapes *every* hidden input it declares rather than naming them one by one,
+  then POSTs them back to `/comment` with the text. A top-level comment and a reply
+  are the same request against a different `parent` (the story, or the comment being
+  answered). Success is signalled by a 302 and refusal by a 200 that re-renders the
+  form, so the POST goes through a non-redirecting session in order to tell them
+  apart. A successful post invalidates *both* the story's `CommentCache` thread and
+  its `StoryCache` entry — the latter because the stale `descendants` count is what
+  `planCommentFetch` consults to decide whether Algolia's tree is complete.
 - Session state (the logged-in user derived from cookies) lives in `UserSession`,
   outside this directory, and this layer does not read it. *Whether* a credential
   exists is answered from the cookie jar directly (`hasAuthCookie`), so the API

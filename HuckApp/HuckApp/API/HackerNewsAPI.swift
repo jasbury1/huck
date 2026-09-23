@@ -302,6 +302,34 @@ class HackerNewsAPI {
         await NewsYCService.favoriteStoryIds(username: username, page: page + 1)
     }
 
+    // MARK: - Commenting
+
+    /// Posts a comment as the logged-in user and returns once Hacker News has
+    /// accepted it.
+    ///
+    /// `parentId` is the item being answered: the story itself for a new
+    /// top-level comment, or a comment for a reply — Hacker News makes no
+    /// distinction between the two, so neither do we. `storyId` identifies the
+    /// thread the comment lands in, which is what HN's form redirects back to
+    /// and what we invalidate afterwards.
+    static func postComment(parentId: Int, storyId: Int, text: String) async throws {
+        guard hasAuthCookie else { throw APIError.notLoggedIn }
+        // Like voting, posting needs a token that only exists in the form's
+        // HTML, so scrape the form first and then send it back with the text.
+        guard let form = await NewsYCService.commentForm(parentId: parentId, storyId: storyId) else {
+            throw APIError.missingAuthToken
+        }
+        try await NewsYCService.postComment(fields: form, text: text)
+
+        // The thread now has a comment neither cache knows about. Both have to
+        // go: the cached thread would be served without it, and the cached story
+        // would still report the old `descendants`, which is the very number
+        // `planCommentFetch` uses to decide whether Algolia's copy is complete —
+        // leaving it in place would have us confidently serve a stale tree.
+        await CommentCache.shared.invalidate(storyId)
+        await StoryCache.shared.invalidate(storyId)
+    }
+
     // MARK: - Authentication
 
     // TODO: Eventually these will be able to pull dummy data with a mock API handler.
@@ -344,16 +372,14 @@ class HackerNewsAPI {
 
     /// Hacker News only evaluates credentials that arrive in a form POST body —
     /// a GET with `?acct=…&pw=…` is ignored and simply re-renders the login
-    /// form, which reads as a rejected password. Percent-encoded to the
-    /// unreserved set, because `URLComponents` would leave `+`, `&` and `=`
-    /// intact and a password containing any of them would corrupt the body.
+    /// form, which reads as a rejected password. `FormBody` handles the strict
+    /// percent-encoding a password demands.
     private static func loginFormBody(username: String, password: String) -> Data {
-        var unreserved = CharacterSet.alphanumerics
-        unreserved.insert(charactersIn: "-._~")
-        func encoded(_ value: String) -> String {
-            value.addingPercentEncoding(withAllowedCharacters: unreserved) ?? value
-        }
-        return Data("acct=\(encoded(username))&pw=\(encoded(password))&goto=news".utf8)
+        FormBody.encoded([
+            (name: "acct", value: username),
+            (name: "pw", value: password),
+            (name: "goto", value: "news"),
+        ])
     }
 
     /// Hacker News serves its reCAPTCHA challenge instead of checking the

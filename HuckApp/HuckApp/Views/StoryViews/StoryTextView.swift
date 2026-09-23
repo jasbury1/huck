@@ -92,6 +92,9 @@ struct StoryTextView: View {
     @Environment(InteractionStore.self) private var interactionStore
     @Environment(\.upvote) private var upvote
     @Environment(\.favorite) private var favorite
+    /// Gates commenting and replying, which need an account, behind the same
+    /// login sheet the story actions use.
+    @Environment(\.requireLogin) private var requireLogin
 
     /// Records this story as recently viewed when its comments are opened — the
     /// single choke point for every route into a story's comments/text.
@@ -153,8 +156,9 @@ struct StoryTextView: View {
                                 .tint(.orange)
                                 Button {
                                     // Opens the composer with this comment as
-                                    // its target; posting is still a TODO.
-                                    replyTarget = comment
+                                    // its target, behind the same login gate
+                                    // as the composer's own compose button.
+                                    requireLogin { replyTarget = comment }
                                 } label: {
                                     Label("Reply", systemImage: "arrowshape.turn.up.left")
                                 }
@@ -231,9 +235,21 @@ struct StoryTextView: View {
         .storyOptionsPopover(for: $moreOptionsStory)
         // Floating Liquid Glass compose control in the bottom-trailing corner.
         .overlay(alignment: .bottomTrailing) {
-            CommentComposer(replyTarget: $replyTarget) { _ in
-                // TODO: post the comment (or the reply to `replyTarget`) once
-                // the news.ycombinator.com write API exists.
+            CommentComposer(replyTarget: $replyTarget) { text in
+                // Hacker News treats a top-level comment and a reply as the
+                // same thing posted against a different parent: the story
+                // itself, or the comment being answered.
+                try await HackerNewsAPI.postComment(
+                    parentId: replyTarget?.id ?? storyId,
+                    storyId: storyId,
+                    text: text
+                )
+                // Posting invalidated the cached thread; re-read it to show the
+                // new comment in place. Deliberately not awaited — the comment
+                // has landed, so the composer shouldn't stay open behind a
+                // spinner while a long thread reloads. The fetcher shows its
+                // own progress, and its snapshots only ever append.
+                Task { await commentFetcher.fetchComments() }
             }
         }
         .task {

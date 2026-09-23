@@ -17,6 +17,10 @@ public enum APIError: Error, LocalizedError {
     case missingAuthToken
     case voteFailed
     case favoriteFailed
+    /// Hacker News refused the comment. It doesn't say why in a form we can
+    /// read, and the reasons are varied — a duplicate, posting too fast, a
+    /// stale form token, a thread that's been locked.
+    case commentFailed
     case unknown
 
     public var errorDescription: String? {
@@ -28,6 +32,8 @@ public enum APIError: Error, LocalizedError {
         case .missingAuthToken: return "Couldn't verify the action with Hacker News."
         case .voteFailed: return "Vote Failed."
         case .favoriteFailed: return "Favorite Failed."
+        case .commentFailed:
+            return "Hacker News wouldn't accept your comment. You may be posting too quickly — wait a moment and try again."
         case .unknown: return "Unknown Error."
         }
     }
