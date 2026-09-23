@@ -96,6 +96,10 @@ struct StoryTextView: View {
     /// login sheet the story actions use.
     @Environment(\.requireLogin) private var requireLogin
 
+    /// Names the author of a comment posted from here, so it can be shown in
+    /// the thread before the APIs have caught up.
+    @Environment(UserSession.self) private var session
+
     /// Records this story as recently viewed when its comments are opened — the
     /// single choke point for every route into a story's comments/text.
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
@@ -154,15 +158,20 @@ struct StoryTextView: View {
                                     Label("Upvote", systemImage: "arrow.up")
                                 }
                                 .tint(.orange)
-                                Button {
-                                    // Opens the composer with this comment as
-                                    // its target, behind the same login gate
-                                    // as the composer's own compose button.
-                                    requireLogin { replyTarget = comment }
-                                } label: {
-                                    Label("Reply", systemImage: "arrowshape.turn.up.left")
+                                // A comment posted moments ago has no real item
+                                // id yet, so there's nothing to hang a reply
+                                // off until the thread is reloaded.
+                                if !comment.isPending {
+                                    Button {
+                                        // Opens the composer with this comment
+                                        // as its target, behind the same login
+                                        // gate as the compose button.
+                                        requireLogin { replyTarget = comment }
+                                    } label: {
+                                        Label("Reply", systemImage: "arrowshape.turn.up.left")
+                                    }
+                                    .tint(.blue)
                                 }
-                                .tint(.blue)
                             }
                             // Trailing swipe (swipe left) folds the thread closed:
                             // the replies are removed and the row shrinks to just
@@ -236,20 +245,28 @@ struct StoryTextView: View {
         // Floating Liquid Glass compose control in the bottom-trailing corner.
         .overlay(alignment: .bottomTrailing) {
             CommentComposer(replyTarget: $replyTarget) { text in
+                // Read the target before posting: a successful post closes the
+                // composer, which clears it.
+                let parent = replyTarget
                 // Hacker News treats a top-level comment and a reply as the
                 // same thing posted against a different parent: the story
                 // itself, or the comment being answered.
-                try await HackerNewsAPI.postComment(
-                    parentId: replyTarget?.id ?? storyId,
+                let author = session.username ?? ""
+                // Comes back with the id Hacker News assigned, so the new
+                // comment can be replied to straight away like any other.
+                let postedId = try await HackerNewsAPI.postComment(
+                    parentId: parent?.id ?? storyId,
                     storyId: storyId,
-                    text: text
+                    text: text,
+                    username: author
                 )
-                // Posting invalidated the cached thread; re-read it to show the
-                // new comment in place. Deliberately not awaited — the comment
-                // has landed, so the composer shouldn't stay open behind a
-                // spinner while a long thread reloads. The fetcher shows its
-                // own progress, and its snapshots only ever append.
-                Task { await commentFetcher.fetchComments() }
+                // Show it immediately rather than re-reading the whole thread.
+                commentFetcher.insertPostedComment(
+                    id: postedId,
+                    text: text,
+                    author: author,
+                    replyingTo: parent
+                )
             }
         }
         .task {

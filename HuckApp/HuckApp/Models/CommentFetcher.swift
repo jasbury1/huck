@@ -39,6 +39,47 @@ class CommentFetcher {
         isLoading = false
     }
 
+    /// Places a comment the reader has just posted into the thread, where the
+    /// server will eventually put it.
+    ///
+    /// This is deliberately done instead of re-fetching. A refetch reads the
+    /// thread back as *growing* snapshots — the realtime walk starts from a
+    /// handful of comments and builds up — and assigning those over a list
+    /// that's already full empties the screen and refills it in front of the
+    /// reader. Posting already invalidated the caches, so the server's copy,
+    /// carrying a real id, arrives on the next load of the story.
+    /// `id` is the one Hacker News assigned, or `nil` if it couldn't be
+    /// confirmed — see `Comment.init(posted:author:id:nestingLevel:)`.
+    func insertPostedComment(id: Int?, text: String, author: String, replyingTo parent: Comment?) {
+        let comment = Comment(
+            posted: text,
+            author: author,
+            id: id,
+            nestingLevel: (parent?.nestingLevel ?? -1) + 1
+        )
+        withAnimation(.easeIn(duration: 0.2)) {
+            guard let parent,
+                  let parentIndex = comments.firstIndex(where: { $0.id == parent.id }) else {
+                // A new top-level comment goes at the foot of the thread.
+                comments.append(comment)
+                return
+            }
+            // Replying to a comment that's collapsed would file the reply out of
+            // sight, so open it back up.
+            collapsedIds.remove(parent.id)
+            // A reply joins the end of the parent's existing replies. In this
+            // flat pre-order list that's just past the run of deeper-nested
+            // comments following the parent — the same shape `visibleComments`
+            // relies on below.
+            var insertionIndex = parentIndex + 1
+            while insertionIndex < comments.count,
+                  comments[insertionIndex].nestingLevel > parent.nestingLevel {
+                insertionIndex += 1
+            }
+            comments.insert(comment, at: insertionIndex)
+        }
+    }
+
     /// The comments currently on screen: the flat, pre-order list with the reply
     /// subtree of every collapsed comment removed. Because the list is
     /// depth-first and each comment carries its `nestingLevel`, a collapsed

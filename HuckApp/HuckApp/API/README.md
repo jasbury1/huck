@@ -109,6 +109,16 @@ The types the app actually works with, decoupled from any single API:
   apart. A successful post invalidates *both* the story's `CommentCache` thread and
   its `StoryCache` entry — the latter because the stale `descendants` count is what
   `planCommentFetch` consults to decide whether Algolia's tree is complete.
+- **Recovering the new comment's id.** Neither the comment form nor its redirect
+  reports the id HN assigned (the redirect only echoes back the `goto` we sent), so
+  `postComment` recovers it afterwards from Firebase: the author's `submitted` list
+  is newest-first, putting the comment just written at the front. That guess is then
+  *confirmed* by fetching the item and checking its `by` and `parent` — Firebase
+  mirrors HN with a lag, and a miss doesn't return nothing, it returns the author's
+  **previous** comment. Without the check we'd hand back a real id belonging to a
+  different comment and a reply aimed at it would land in the wrong thread. A few
+  short retries cover the lag; failing that, `postComment` returns `nil`, meaning
+  "posted, but not yet addressable".
 - Session state (the logged-in user derived from cookies) lives in `UserSession`,
   outside this directory, and this layer does not read it. *Whether* a credential
   exists is answered from the cookie jar directly (`hasAuthCookie`), so the API

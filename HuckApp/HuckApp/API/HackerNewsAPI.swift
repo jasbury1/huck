@@ -304,15 +304,18 @@ class HackerNewsAPI {
 
     // MARK: - Commenting
 
-    /// Posts a comment as the logged-in user and returns once Hacker News has
-    /// accepted it.
+    /// Posts a comment as the logged-in user, returning the id Hacker News gave
+    /// it — or `nil` if the post succeeded but the id couldn't be confirmed.
     ///
     /// `parentId` is the item being answered: the story itself for a new
     /// top-level comment, or a comment for a reply — Hacker News makes no
     /// distinction between the two, so neither do we. `storyId` identifies the
     /// thread the comment lands in, which is what HN's form redirects back to
-    /// and what we invalidate afterwards.
-    static func postComment(parentId: Int, storyId: Int, text: String) async throws {
+    /// and what we invalidate afterwards. `username` is the author, needed only
+    /// to recover the new id.
+    ///
+    /// A `nil` id means the comment *is* posted; we just can't address it yet.
+    static func postComment(parentId: Int, storyId: Int, text: String, username: String) async throws -> Int? {
         guard hasAuthCookie else { throw APIError.notLoggedIn }
         // Like voting, posting needs a token that only exists in the form's
         // HTML, so scrape the form first and then send it back with the text.
@@ -328,6 +331,44 @@ class HackerNewsAPI {
         // leaving it in place would have us confidently serve a stale tree.
         await CommentCache.shared.invalidate(storyId)
         await StoryCache.shared.invalidate(storyId)
+
+        return await postedCommentId(username: username, parentId: parentId)
+    }
+
+    /// How many times to ask Firebase for the id of a comment just posted, and
+    /// how long to wait between tries. The official API mirrors HN with a short
+    /// lag, so the first ask can easily arrive before the comment does.
+    private static let postedCommentIdAttempts = 3
+    private static let postedCommentIdRetryDelay = Duration.milliseconds(400)
+
+    /// The id Hacker News assigned to a comment we just posted, or `nil` if it
+    /// can't be confirmed.
+    ///
+    /// Neither the comment form nor its redirect reports the new id — the
+    /// redirect only echoes back the `goto` we sent it. So we ask Firebase for
+    /// the author's submissions, which come newest-first, putting the comment we
+    /// just wrote at the front.
+    ///
+    /// The confirmation is what makes that guess safe rather than merely likely.
+    /// Firebase mirrors HN with a lag, and a miss doesn't return nothing — it
+    /// returns the author's *previous* comment, whose `parent` won't match the
+    /// one we posted to. Without the check we'd hand the caller a real id
+    /// belonging to a different comment, and a reply aimed at it would land in
+    /// the wrong thread entirely. An unaddressable comment is the safer failure.
+    private static func postedCommentId(username: String, parentId: Int) async -> Int? {
+        for attempt in 0..<postedCommentIdAttempts {
+            // Don't stall the first ask; only pause before asking *again*.
+            if attempt > 0 {
+                try? await Task.sleep(for: postedCommentIdRetryDelay)
+            }
+            guard let newest = await FirebaseAPIService.getUserAsync(username: username)?.submitted?.first,
+                  let comment = await FirebaseAPIService.getCommentAsync(id: newest),
+                  comment.by == username, comment.parent == parentId else {
+                continue
+            }
+            return newest
+        }
+        return nil
     }
 
     // MARK: - Authentication

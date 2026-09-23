@@ -41,6 +41,17 @@ struct FirebaseCommentData: Codable {
     let dead: Bool?
 }
 
+/// A user as returned by the official Firebase HN `user` endpoint.
+///
+/// `submitted` lists the ids of everything the user has posted, **newest
+/// first**. That ordering is what makes it the one realtime way to recover the
+/// id of a comment we've just written, which HN's comment form never reports
+/// back. It's optional because an account that has never posted omits it.
+struct FirebaseUserData: Codable {
+    let id: String
+    let submitted: [Int]?
+}
+
 // MARK: - Service
 
 struct FirebaseAPIService {
@@ -73,6 +84,15 @@ struct FirebaseAPIService {
             return nil
         }
         return story
+    }
+
+    static func getUserAsync(username: String) async -> FirebaseUserData? {
+        let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? username
+        let url = "\(baseUri)/v0/user/\(encoded).json?print=pretty"
+        guard let user: FirebaseUserData = await WebService().downloadData(fromURL: url) else {
+            return nil
+        }
+        return user
     }
 
     static func getCommentAsync(id: Int) async -> FirebaseCommentData? {

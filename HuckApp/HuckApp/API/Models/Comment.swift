@@ -28,6 +28,30 @@ class Comment {
         self.timestamp = Date(timeIntervalSince1970: TimeInterval(item.createdAtI))
     }
 
+    /// Builds a comment the reader has just posted, so the thread can show it
+    /// straight away instead of after a round trip.
+    ///
+    /// `id` is the one Hacker News assigned, recovered after the fact — the
+    /// comment form never reports it. Pass `nil` when it couldn't be confirmed
+    /// and the comment stands in with a negative id instead, which can never
+    /// collide with a real item id. `isPending` keys off exactly that: such a
+    /// comment is real and posted, but not yet addressable, so it can't be
+    /// replied to or voted on until the thread is reloaded.
+    init(posted text: String, author: String, id: Int?, nestingLevel: Int) {
+        self.id = id ?? Int.random(in: Int.min ..< 0)
+        self.nestingLevel = nestingLevel
+        self.text = text
+        self.points = 1
+        self.author = author
+        self.parent = nil
+        self.children = []
+        self.timestamp = .now
+    }
+
+    /// Whether this comment is posted but not yet addressable — its Hacker News
+    /// id couldn't be recovered, so it carries a stand-in one.
+    var isPending: Bool { id < 0 }
+
     /// Builds a comment from the realtime Firebase API, used as a fallback when a
     /// story is too new to be indexed by Algolia. Firebase omits a comment's
     /// score, so `points` defaults to 0.
