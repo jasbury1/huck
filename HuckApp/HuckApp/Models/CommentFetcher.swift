@@ -21,6 +21,13 @@ class CommentFetcher {
     /// Ids of comments whose reply subtrees are collapsed (hidden).
     var collapsedIds: Set<Int> = []
 
+    /// What's needed to recover the Hacker News id of a comment posted from this
+    /// thread, keyed by that comment's `id`, for as long as it's still unknown.
+    ///
+    /// Held here rather than on `Comment` so the model stays a model: this is
+    /// bookkeeping for one narrow case, not a property of a comment.
+    private var unresolvedPosts: [Int: (author: String, parentID: Int)] = [:]
+
     init(id: Int) {
         self.id = id
     }
@@ -48,15 +55,20 @@ class CommentFetcher {
     /// that's already full empties the screen and refills it in front of the
     /// reader. Posting already invalidated the caches, so the server's copy,
     /// carrying a real id, arrives on the next load of the story.
-    /// `id` is the one Hacker News assigned, or `nil` if it couldn't be
-    /// confirmed — see `Comment.init(posted:author:id:nestingLevel:)`.
-    func insertPostedComment(id: Int?, text: String, author: String, replyingTo parent: Comment?) {
+    /// The comment arrives with no Hacker News id, and no lookup is made to find
+    /// one — that waits until something actually needs it. See
+    /// `resolveItemID(for:)`.
+    func insertPostedComment(text: String, author: String, replyingTo parent: Comment?) {
         let comment = Comment(
             posted: text,
             author: author,
-            id: id,
             nestingLevel: (parent?.nestingLevel ?? -1) + 1
         )
+        // Note what a later lookup would need. The parent's own id is read now,
+        // while it's certainly known: a pending comment can only have been
+        // replied to through `resolveItemID`, which resolves it first, so a
+        // chain of self-replies never leaves a gap here.
+        unresolvedPosts[comment.id] = (author: author, parentID: parent?.itemID ?? id)
         withAnimation(.easeIn(duration: 0.2)) {
             guard let parent,
                   let parentIndex = comments.firstIndex(where: { $0.id == parent.id }) else {
@@ -78,6 +90,34 @@ class CommentFetcher {
             }
             comments.insert(comment, at: insertionIndex)
         }
+    }
+
+    /// The comment's Hacker News id, looking it up first if it isn't known yet.
+    /// `nil` only if the lookup couldn't confirm one.
+    ///
+    /// Resolution is deliberately lazy. Hacker News' comment form never reports
+    /// the id it assigns, and recovering one costs a couple of reads against a
+    /// mirror that trails the site — but the id is needed for exactly one thing:
+    /// replying to a comment the reader posted in this same sitting. That's rare,
+    /// so paying for it after every post was almost always waste. Waiting until
+    /// it's asked for also makes it far more likely to succeed: by the time
+    /// someone has read their comment and decided to answer it, the lag that made
+    /// an immediate lookup fail has long since passed.
+    ///
+    /// Assigning `itemID` (rather than `id`) keeps the row's identity stable, so
+    /// SwiftUI updates the comment in place instead of tearing it down.
+    func resolveItemID(for comment: Comment) async -> Int? {
+        if let itemID = comment.itemID { return itemID }
+        guard let post = unresolvedPosts[comment.id] else { return nil }
+
+        let resolved = await HackerNewsAPI.findPostedCommentId(
+            username: post.author,
+            parentID: post.parentID
+        )
+        guard let resolved else { return nil }
+        comment.itemID = resolved
+        unresolvedPosts[comment.id] = nil
+        return resolved
     }
 
     /// The comments currently on screen: the flat, pre-order list with the reply
@@ -105,6 +145,19 @@ class CommentFetcher {
 
     func isCollapsed(_ comment: Comment) -> Bool {
         collapsedIds.contains(comment.id)
+    }
+
+    /// Folds away the whole reply chain this comment sits in, collapsing it at
+    /// the top-level comment it descends from.
+    ///
+    /// In the flat pre-order list that root is simply the nearest comment at
+    /// nesting level 0 at or before this one — the same structure
+    /// `visibleComments` walks. A top-level comment is its own root, so this
+    /// behaves like `toggleCollapsed` for one.
+    func collapseThread(containing comment: Comment) {
+        guard let index = comments.firstIndex(where: { $0.id == comment.id }) else { return }
+        let root = comments[...index].last { $0.nestingLevel == 0 } ?? comment
+        collapsedIds.insert(root.id)
     }
 
     func toggleCollapsed(_ comment: Comment) {

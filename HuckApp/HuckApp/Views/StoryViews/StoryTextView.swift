@@ -6,21 +6,56 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct CommentCellView: View {
     @State private var commentData: Comment
     /// When true, the row shrinks to just the username and a down chevron; the
     /// timestamp, body, and this comment's replies are hidden.
     let isCollapsed: Bool
+    /// The story's submitter, so their own comments can be marked as such.
+    let storyAuthor: String
     @Binding var path: NavigationPath
+
+    /// Folds away just this comment's replies.
+    let onCollapse: () -> Void
+    /// Folds away the whole reply chain this comment sits in.
+    let onCollapseThread: () -> Void
+
+    /// Identifies the signed-in reader, so their own comments stand out.
+    @Environment(UserSession.self) private var session
 
     private var indentationLevel = 0
 
-    init(commentData: Comment, isCollapsed: Bool, path: Binding<NavigationPath>) {
+    init(
+        commentData: Comment,
+        isCollapsed: Bool,
+        storyAuthor: String,
+        path: Binding<NavigationPath>,
+        onCollapse: @escaping () -> Void,
+        onCollapseThread: @escaping () -> Void
+    ) {
         self.commentData = commentData
         self.isCollapsed = isCollapsed
+        self.storyAuthor = storyAuthor
         self._path = path
+        self.onCollapse = onCollapse
+        self.onCollapseThread = onCollapseThread
         indentationLevel = commentData.nestingLevel
+    }
+
+    /// Marks who is speaking: blue for the reader's own comments, orange for the
+    /// story's submitter (the convention other clients use for OP). When the
+    /// reader *is* the submitter, blue wins — "this is you" is the more useful
+    /// of the two, since they already know they posted the story.
+    private var authorColor: Color {
+        if let username = session.username, commentData.author == username {
+            .blue
+        } else if commentData.author == storyAuthor {
+            .orange
+        } else {
+            .primary
+        }
     }
 
     var body: some View {
@@ -36,6 +71,10 @@ struct CommentCellView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
+                // Everything in the header that isn't the username or the menu
+                // collapses the comment — the gap between them, and the
+                // timestamp. The nested controls keep their own taps, so this
+                // only claims the space nothing else wanted.
                 HStack {
                     // A Button (not a NavigationLink) keeps only the username
                     // tappable; a NavigationLink in a List row makes the whole
@@ -46,12 +85,14 @@ struct CommentCellView: View {
                         Text(commentData.author)
                             .font(.callout)
                             .fontWeight(.semibold)
+                            .foregroundStyle(authorColor)
                     }
                     .buttonStyle(.plain)
                     Spacer()
                     if isCollapsed {
                         // A down chevron signals a collapsed thread that can be
-                        // expanded again.
+                        // expanded again. The menu is left off a collapsed row:
+                        // it's a summary, and the parent disables its controls.
                         Image(systemName: "chevron.down")
                             .font(.footnote)
                             .foregroundStyle(.gray)
@@ -59,7 +100,15 @@ struct CommentCellView: View {
                         Text(commentData.timestamp.ageString())
                             .font(.footnote)
                             .foregroundStyle(.gray)
+                        optionsMenu
                     }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // Guarded rather than a toggle: a collapsed row is expanded
+                    // by the tap handler on the whole cell, which stays live
+                    // while these controls are disabled.
+                    if !isCollapsed { onCollapse() }
                 }
                 if !isCollapsed {
                     Text(try! AttributedString(markdown: commentData.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
@@ -74,6 +123,46 @@ struct CommentCellView: View {
             // only sits between the rails and the text, not to the right of it.
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// The comment's own options, as a plain dropdown anchored to the ellipsis —
+    /// the conventional affordance for a per-row control, and lighter than the
+    /// sheet the story's "More" button presents.
+    private var optionsMenu: some View {
+        Menu {
+            // A comment the reader posted seconds ago has no id yet, so there's
+            // no permalink to copy until it has one.
+            if let url = commentData.hackerNewsURL {
+                Button {
+                    UIPasteboard.general.url = url
+                } label: {
+                    Label("Copy Link", systemImage: "link")
+                }
+            }
+            Button {
+                onCollapse()
+            } label: {
+                Label("Collapse", systemImage: "chevron.up")
+            }
+            // Only a reply has a chain above it to fold; on a top-level comment
+            // this would do exactly what Collapse does.
+            if commentData.nestingLevel > 0 {
+                Button {
+                    onCollapseThread()
+                } label: {
+                    Label("Collapse Thread", systemImage: "arrow.up.to.line")
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.footnote)
+                .foregroundStyle(.gray)
+                // Wide and tall enough to hit comfortably without the header
+                // growing much taller than the text it holds.
+                .frame(width: 44, height: 30)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -147,7 +236,22 @@ struct StoryTextView: View {
                 Section {
                     ForEach(commentFetcher.visibleComments, id: \.id) { comment in
                         let collapsed = commentFetcher.isCollapsed(comment)
-                        CommentCellView(commentData: comment, isCollapsed: collapsed, path: $path)
+                        CommentCellView(
+                            commentData: comment,
+                            isCollapsed: collapsed,
+                            storyAuthor: storyData.by,
+                            path: $path,
+                            onCollapse: {
+                                withAnimation(.easeInOut) {
+                                    commentFetcher.toggleCollapsed(comment)
+                                }
+                            },
+                            onCollapseThread: {
+                                withAnimation(.easeInOut) {
+                                    commentFetcher.collapseThread(containing: comment)
+                                }
+                            }
+                        )
                             .padding(.horizontal, 16)
                             // Leading swipe (swipe right) exposes Upvote and Reply.
                             // Upvote is listed first so a full swipe triggers it. Both stubbed.
@@ -158,20 +262,17 @@ struct StoryTextView: View {
                                     Label("Upvote", systemImage: "arrow.up")
                                 }
                                 .tint(.orange)
-                                // A comment posted moments ago has no real item
-                                // id yet, so there's nothing to hang a reply
-                                // off until the thread is reloaded.
-                                if !comment.isPending {
-                                    Button {
-                                        // Opens the composer with this comment
-                                        // as its target, behind the same login
-                                        // gate as the compose button.
-                                        requireLogin { replyTarget = comment }
-                                    } label: {
-                                        Label("Reply", systemImage: "arrowshape.turn.up.left")
-                                    }
-                                    .tint(.blue)
+                                Button {
+                                    // Opens the composer with this comment as
+                                    // its target, behind the same login gate as
+                                    // the compose button. Offered for every
+                                    // comment, including one just posted — its
+                                    // id is looked up on send, if it's needed.
+                                    requireLogin { replyTarget = comment }
+                                } label: {
+                                    Label("Reply", systemImage: "arrowshape.turn.up.left")
                                 }
+                                .tint(.blue)
                             }
                             // Trailing swipe (swipe left) folds the thread closed:
                             // the replies are removed and the row shrinks to just
@@ -251,20 +352,29 @@ struct StoryTextView: View {
                 // Hacker News treats a top-level comment and a reply as the
                 // same thing posted against a different parent: the story
                 // itself, or the comment being answered.
-                let author = session.username ?? ""
-                // Comes back with the id Hacker News assigned, so the new
-                // comment can be replied to straight away like any other.
-                let postedId = try await HackerNewsAPI.postComment(
-                    parentId: parent?.id ?? storyId,
+                // Replying to a comment the reader posted in this same sitting
+                // is the one thing that needs its Hacker News id, so this is
+                // where that lookup happens — and the only place it happens.
+                // Throwing keeps the draft, so "try again" is real advice.
+                let parentId: Int
+                if let parent {
+                    guard let resolved = await commentFetcher.resolveItemID(for: parent) else {
+                        throw APIError.unknownReplyTarget
+                    }
+                    parentId = resolved
+                } else {
+                    parentId = storyId
+                }
+                try await HackerNewsAPI.postComment(
+                    parentId: parentId,
                     storyId: storyId,
-                    text: text,
-                    username: author
+                    text: text
                 )
                 // Show it immediately rather than re-reading the whole thread.
+                // Its own id catches up in the background a moment later.
                 commentFetcher.insertPostedComment(
-                    id: postedId,
                     text: text,
-                    author: author,
+                    author: session.username ?? "",
                     replyingTo: parent
                 )
             }
@@ -431,6 +541,41 @@ class CommentSectionData {
         let ids = await HackerNewsAPI.getStoryIds(filter: filter)
         self.storyIds = ids
     }
+}
+
+#Preview("Comment cells") {
+    /// Builds a comment at a given depth. `itemID` stands in for one already
+    /// published, which is what gives the menu its Copy Link row.
+    func comment(_ text: String, by author: String, level: Int, published: Bool = true) -> Comment {
+        let comment = Comment(posted: text, author: author, nestingLevel: level)
+        if published { comment.itemID = Int.random(in: 1...99_999_999) }
+        return comment
+    }
+
+    let cells: [(Comment, Bool)] = [
+        (comment("The story's submitter, so this name shows in orange.", by: "op_user", level: 0), false),
+        (comment("Someone else, one level in — the name stays in the primary colour.", by: "commenter", level: 1), false),
+        (comment("Deeper still. Only a reply offers Collapse Thread in its menu.", by: "third_party", level: 2), false),
+        (comment("A collapsed row: just the name and a chevron, no menu.", by: "commenter", level: 1), true),
+        (comment("Posted seconds ago, so it has no permalink to copy yet.", by: "op_user", level: 0, published: false), false),
+    ]
+
+    return ScrollView {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
+                CommentCellView(
+                    commentData: cell.0,
+                    isCollapsed: cell.1,
+                    storyAuthor: "op_user",
+                    path: .constant(NavigationPath()),
+                    onCollapse: {},
+                    onCollapseThread: {}
+                )
+                .padding(.horizontal, 16)
+            }
+        }
+    }
+    .environment(UserSession())
 }
 
 #Preview {

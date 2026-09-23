@@ -21,6 +21,10 @@ public enum APIError: Error, LocalizedError {
     /// read, and the reasons are varied — a duplicate, posting too fast, a
     /// stale form token, a thread that's been locked.
     case commentFailed
+    /// A reply was aimed at a comment the reader posted moments ago whose
+    /// Hacker News id still can't be confirmed, so there's nothing to hang the
+    /// reply off yet. Retrying usually resolves it.
+    case unknownReplyTarget
     case unknown
 
     public var errorDescription: String? {
@@ -34,6 +38,8 @@ public enum APIError: Error, LocalizedError {
         case .favoriteFailed: return "Favorite Failed."
         case .commentFailed:
             return "Hacker News wouldn't accept your comment. You may be posting too quickly — wait a moment and try again."
+        case .unknownReplyTarget:
+            return "Hacker News hasn't finished publishing the comment you're replying to. Wait a moment and try again — your reply is saved."
         case .unknown: return "Unknown Error."
         }
     }
