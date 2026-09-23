@@ -81,6 +81,19 @@ struct CommentComposer: View {
     /// Lets the button and the text box morph into one another.
     @Namespace private var namespace
 
+    /// The resting compose button's diameter.
+    private static let buttonDiameter: CGFloat = 56
+    /// How far the whole control floats above the bottom edge.
+    private static let bottomInset: CGFloat = 8
+
+    /// How much room the composer takes up at rest.
+    ///
+    /// A scrolling view underneath should inset its content by this, or its
+    /// last row ends up stranded behind the compose button — close enough to
+    /// read, but with its controls unreachable. Only the *resting* size counts:
+    /// once someone is writing, the composer is meant to cover the thread.
+    static var reservedHeight: CGFloat { buttonDiameter + bottomInset }
+
     /// One shared animation so every size change feels like the same control.
     private let transition = Animation.spring(response: 0.4, dampingFraction: 0.8)
     /// How far the grabber must travel (including fling) to change state.
@@ -110,7 +123,7 @@ struct CommentComposer: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 8)
+        .padding(.bottom, Self.bottomInset)
         .offset(y: dragOffset)
         // Kept off the background view below, so it never competes with the
         // discard confirmation for the same presentation slot.
@@ -226,7 +239,7 @@ struct CommentComposer: View {
         } label: {
             Image(systemName: "bubble.and.pencil")
                 .font(.title2)
-                .frame(width: 56, height: 56)
+                .frame(width: Self.buttonDiameter, height: Self.buttonDiameter)
         }
         .buttonStyle(.plain)
         .glassEffect(.regular.interactive(), in: .circle)

@@ -8,6 +8,23 @@
 import SwiftUI
 import UIKit
 
+private extension Color {
+    /// Marks the story's submitter on their own comments.
+    ///
+    /// Not plain `.orange`: at this text size, system orange against a light
+    /// background lands around 2:1 contrast, which is muddy for everyone and
+    /// unreadable for anyone who depends on contrast. This darkens it to about
+    /// 4.6:1 there, clearing WCAG AA while still reading as orange rather than
+    /// brown. Only the light appearance is changed — in dark mode the standard
+    /// orange already sits near 10:1 against the background, so darkening it
+    /// would take contrast away rather than add it.
+    static let storySubmitter = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? .systemOrange
+            : UIColor(red: 0.72, green: 0.36, blue: 0, alpha: 1)
+    })
+}
+
 struct CommentCellView: View {
     @State private var commentData: Comment
     /// When true, the row shrinks to just the username and a down chevron; the
@@ -52,7 +69,7 @@ struct CommentCellView: View {
         if let username = session.username, commentData.author == username {
             .blue
         } else if commentData.author == storyAuthor {
-            .orange
+            .storySubmitter
         } else {
             .primary
         }
@@ -212,19 +229,38 @@ struct StoryTextView: View {
     /// and cleared when the draft is discarded.
     @State private var replyTarget: Comment?
 
+    /// A comment to bring into view as soon as the thread contains it.
+    ///
+    /// Comments stream in, so a request to scroll to one routinely arrives
+    /// before the comment does — opening a story straight onto a comment is
+    /// exactly that case. The request waits here until it can be honoured.
+    @State private var pendingScrollTarget: Int?
+
     /// 0 while the large title is fully visible, 1 once it has scrolled off.
     private var titleCollapseProgress: CGFloat {
         titleHeight > 0 ? min(max(scrollOffset / titleHeight, 0), 1) : 0
     }
 
-    init(storyId: Int, path: Binding<NavigationPath>) {
+    /// `scrollTo` names a comment to open the story onto, brought into view once
+    /// the thread carrying it has loaded.
+    init(storyId: Int, path: Binding<NavigationPath>, scrollTo commentID: Int? = nil) {
         self.storyId = storyId
         self.storyData = StoryModel(id: storyId)
         self.commentFetcher = CommentFetcher(id: storyId)
         self._path = path
+        self._pendingScrollTarget = State(initialValue: commentID)
     }
 
     var body: some View {
+        // The reader wraps the whole view rather than just the scroll view, so
+        // that the composer overlay and each comment's own menu can all reach
+        // the same proxy.
+        ScrollViewReader { proxy in
+            content(scrollProxy: proxy)
+        }
+    }
+
+    private func content(scrollProxy: ScrollViewProxy) -> some View {
         ScrollView {
             // A plain LazyVStack (rather than a List) gives us direct control of
             // the layout, so collapsing a comment folds smoothly: the collapsed
@@ -247,8 +283,15 @@ struct StoryTextView: View {
                                 }
                             },
                             onCollapseThread: {
-                                withAnimation(.easeInOut) {
+                                // Folding at the root can swallow everything
+                                // between here and it, so follow the fold up to
+                                // the stub rather than leaving the reader
+                                // stranded somewhere they didn't choose.
+                                let root = withAnimation(.easeInOut) {
                                     commentFetcher.collapseThread(containing: comment)
+                                }
+                                if let root {
+                                    scroll(to: root.id, using: scrollProxy)
                                 }
                             }
                         )
@@ -313,6 +356,10 @@ struct StoryTextView: View {
         }
         // Enables the row `swipeActions` above outside of a List (iOS 27+).
         .swipeActionsContainer()
+        // Leaves room for the floating composer, so the last comment can scroll
+        // clear of it instead of coming to rest underneath, close enough to read
+        // but with its own controls unreachable.
+        .contentMargins(.bottom, CommentComposer.reservedHeight)
         .navigationBarTitleDisplayMode(.inline)
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
@@ -370,13 +417,15 @@ struct StoryTextView: View {
                     storyId: storyId,
                     text: text
                 )
-                // Show it immediately rather than re-reading the whole thread.
-                // Its own id catches up in the background a moment later.
-                commentFetcher.insertPostedComment(
+                // Show it immediately rather than re-reading the whole thread,
+                // and scroll to it — a reply lands at the end of its parent's
+                // replies, which is often off screen.
+                let posted = commentFetcher.insertPostedComment(
                     text: text,
                     author: session.username ?? "",
                     replyingTo: parent
                 )
+                scroll(to: posted.id, using: scrollProxy)
             }
         }
         .task {
@@ -384,6 +433,35 @@ struct StoryTextView: View {
             await storyData.fetchData()
             await commentFetcher.fetchComments()
         }
+        // The thread streams in, so a comment we were asked to scroll to may
+        // only just have arrived. Retry on every snapshot until it has.
+        .onChange(of: commentFetcher.comments.count) {
+            scrollToPendingTarget(using: scrollProxy)
+        }
+    }
+
+    // MARK: - Scrolling
+
+    /// Brings a comment to the top of the view.
+    ///
+    /// When it isn't on screen to scroll to — still streaming in, or tucked
+    /// inside a collapsed thread — the request is held rather than quietly
+    /// dropped, and retried as the thread changes.
+    private func scroll(to commentID: Int, using proxy: ScrollViewProxy) {
+        guard commentFetcher.visibleComments.contains(where: { $0.id == commentID }) else {
+            pendingScrollTarget = commentID
+            return
+        }
+        pendingScrollTarget = nil
+        withAnimation(.easeInOut) {
+            proxy.scrollTo(commentID, anchor: .top)
+        }
+    }
+
+    /// Retries a held scroll request now that the thread has changed.
+    private func scrollToPendingTarget(using proxy: ScrollViewProxy) {
+        guard let pendingScrollTarget else { return }
+        scroll(to: pendingScrollTarget, using: proxy)
     }
 
     /// The loading indicator that trails the comment list. While loading it's a
@@ -544,38 +622,49 @@ class CommentSectionData {
 }
 
 #Preview("Comment cells") {
-    /// Builds a comment at a given depth. `itemID` stands in for one already
-    /// published, which is what gives the menu its Copy Link row.
-    func comment(_ text: String, by author: String, level: Int, published: Bool = true) -> Comment {
+    CommentCellGallery()
+        .environment(UserSession())
+}
+
+/// Sample comment rows at several depths, covering the author colours, the
+/// options menu, and the collapsed row.
+///
+/// The samples are built in `body` rather than in the `#Preview` closure
+/// because `Comment` is main-actor isolated and that closure isn't.
+private struct CommentCellGallery: View {
+    /// Builds a comment at a given depth. A `published` comment gets an
+    /// `itemID`, which is what gives its menu the Copy Link row.
+    private func comment(_ text: String, by author: String, level: Int, published: Bool = true) -> Comment {
         let comment = Comment(posted: text, author: author, nestingLevel: level)
         if published { comment.itemID = Int.random(in: 1...99_999_999) }
         return comment
     }
 
-    let cells: [(Comment, Bool)] = [
-        (comment("The story's submitter, so this name shows in orange.", by: "op_user", level: 0), false),
-        (comment("Someone else, one level in — the name stays in the primary colour.", by: "commenter", level: 1), false),
-        (comment("Deeper still. Only a reply offers Collapse Thread in its menu.", by: "third_party", level: 2), false),
-        (comment("A collapsed row: just the name and a chevron, no menu.", by: "commenter", level: 1), true),
-        (comment("Posted seconds ago, so it has no permalink to copy yet.", by: "op_user", level: 0, published: false), false),
-    ]
+    var body: some View {
+        let cells: [(comment: Comment, isCollapsed: Bool)] = [
+            (comment("The story's submitter, so this name shows in orange.", by: "op_user", level: 0), false),
+            (comment("Someone else, one level in — the name stays in the primary colour.", by: "commenter", level: 1), false),
+            (comment("Deeper still. Only a reply offers Collapse Thread in its menu.", by: "third_party", level: 2), false),
+            (comment("A collapsed row: just the name and a chevron, no menu.", by: "commenter", level: 1), true),
+            (comment("Posted seconds ago, so it has no permalink to copy yet.", by: "op_user", level: 0, published: false), false),
+        ]
 
-    return ScrollView {
-        VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
-                CommentCellView(
-                    commentData: cell.0,
-                    isCollapsed: cell.1,
-                    storyAuthor: "op_user",
-                    path: .constant(NavigationPath()),
-                    onCollapse: {},
-                    onCollapseThread: {}
-                )
-                .padding(.horizontal, 16)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(cells.enumerated()), id: \.offset) { _, cell in
+                    CommentCellView(
+                        commentData: cell.comment,
+                        isCollapsed: cell.isCollapsed,
+                        storyAuthor: "op_user",
+                        path: .constant(NavigationPath()),
+                        onCollapse: {},
+                        onCollapseThread: {}
+                    )
+                    .padding(.horizontal, 16)
+                }
             }
         }
     }
-    .environment(UserSession())
 }
 
 #Preview {

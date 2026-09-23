@@ -58,7 +58,10 @@ class CommentFetcher {
     /// The comment arrives with no Hacker News id, and no lookup is made to find
     /// one — that waits until something actually needs it. See
     /// `resolveItemID(for:)`.
-    func insertPostedComment(text: String, author: String, replyingTo parent: Comment?) {
+    ///
+    /// Returns the comment as placed, so the caller can bring it into view.
+    @discardableResult
+    func insertPostedComment(text: String, author: String, replyingTo parent: Comment?) -> Comment {
         let comment = Comment(
             posted: text,
             author: author,
@@ -90,6 +93,7 @@ class CommentFetcher {
             }
             comments.insert(comment, at: insertionIndex)
         }
+        return comment
     }
 
     /// The comment's Hacker News id, looking it up first if it isn't known yet.
@@ -154,10 +158,16 @@ class CommentFetcher {
     /// nesting level 0 at or before this one — the same structure
     /// `visibleComments` walks. A top-level comment is its own root, so this
     /// behaves like `toggleCollapsed` for one.
-    func collapseThread(containing comment: Comment) {
-        guard let index = comments.firstIndex(where: { $0.id == comment.id }) else { return }
+    ///
+    /// Returns the comment it folded at, which is the one worth scrolling to:
+    /// the root can be far above the reply the reader acted on, and everything
+    /// between just disappeared.
+    @discardableResult
+    func collapseThread(containing comment: Comment) -> Comment? {
+        guard let index = comments.firstIndex(where: { $0.id == comment.id }) else { return nil }
         let root = comments[...index].last { $0.nestingLevel == 0 } ?? comment
         collapsedIds.insert(root.id)
+        return root
     }
 
     func toggleCollapsed(_ comment: Comment) {

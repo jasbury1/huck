@@ -626,7 +626,7 @@ struct UserCommentRow: View {
         VStack(alignment: .leading, spacing: 4) {
             if let title = comment.storyTitle, let storyId = comment.storyId {
                 Button {
-                    path.append(ItemNavigation.textStory(id: storyId))
+                    openInContext(storyId: storyId)
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.turn.up.left")
@@ -651,6 +651,20 @@ struct UserCommentRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+        // The whole row is the comment, so tapping anywhere on it opens the
+        // comment — not just the story link above it.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if let storyId = comment.storyId {
+                openInContext(storyId: storyId)
+            }
+        }
+    }
+
+    /// Opens the story's thread scrolled to this comment, so it's read in the
+    /// conversation it belongs to rather than on its own.
+    private func openInContext(storyId: Int) {
+        path.append(ItemNavigation.textStory(id: storyId, scrollTo: comment.id))
     }
 }
 

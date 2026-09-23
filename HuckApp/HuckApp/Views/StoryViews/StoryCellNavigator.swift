@@ -8,7 +8,10 @@
 import SwiftUI
 
 enum ItemNavigation: Hashable {
-    case textStory(id: Int)
+    /// A story's comments. `scrollTo` optionally names a comment to bring into
+    /// view once the thread has loaded, for opening one in context from
+    /// somewhere else in the app.
+    case textStory(id: Int, scrollTo: Int? = nil)
     case userProfile(user: String)
     case favorites(user: String)
     case liked
@@ -27,8 +30,8 @@ struct StoryDetailsView: View {
 
     var body: some View {
         switch navigation {
-        case let .textStory(id):
-            StoryTextView(storyId: id, path: $path)
+        case let .textStory(id, scrollTo):
+            StoryTextView(storyId: id, path: $path, scrollTo: scrollTo)
         case let .userProfile(user):
             UserView(username: user, path: $path)
         case let .favorites(user):
