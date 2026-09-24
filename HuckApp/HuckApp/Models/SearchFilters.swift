@@ -28,26 +28,58 @@ struct SearchFilters: Equatable {
         author.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// Whether anything is actually narrowing the search. Drives the toolbar
-    /// button's filled appearance and the summary strip under the tabs.
+    /// Whether any field is set, regardless of whether it applies to the tab
+    /// being searched. What's actually narrowing *these* results is
+    /// `activeFilters(for:)`.
     var isActive: Bool {
         !trimmedAuthor.isEmpty || minimumComments != nil || dateRange != .allTime
     }
 
-    /// The active filters, in the order they're shown in the sheet, as short
-    /// phrases for the summary strip.
-    func summaryPhrases(for tab: SearchTab) -> [String] {
-        var phrases: [String] = []
+    /// The active filters, in the order they appear in the sheet, as the
+    /// individually-removable tokens shown under the search tabs.
+    func activeFilters(for tab: SearchTab) -> [ActiveFilter] {
+        // A username lookup takes no refinements, so nothing set here is
+        // narrowing it — report none rather than tokens that do nothing.
+        guard tab.supportsFilters else { return [] }
+
+        var active: [ActiveFilter] = []
         if !trimmedAuthor.isEmpty {
-            phrases.append("by \(trimmedAuthor)")
+            // Prefixed, since a bare username alongside "Last month" wouldn't
+            // read as an author.
+            active.append(ActiveFilter(kind: .author, label: "by \(trimmedAuthor)"))
         }
         if tab.supportsCommentCountFilter, let minimumComments {
-            phrases.append("\(minimumComments)+ comments")
+            active.append(ActiveFilter(kind: .minimumComments, label: "\(minimumComments)+ comments"))
         }
         if let title = dateRange.summaryTitle {
-            phrases.append(title)
+            active.append(ActiveFilter(kind: .dateRange, label: title))
         }
-        return phrases
+        return active
+    }
+
+    /// Returns a single filter to its unset default, leaving the others alone —
+    /// what the x on a filter token does.
+    mutating func clear(_ kind: ActiveFilter.Kind) {
+        switch kind {
+        case .author: author = ""
+        case .minimumComments: minimumComments = nil
+        case .dateRange: dateRange = .allTime
+        }
+    }
+
+    /// One filter as presented in the summary strip: what it says, and which
+    /// field its x resets.
+    struct ActiveFilter: Identifiable, Equatable {
+        enum Kind: Hashable {
+            case author
+            case minimumComments
+            case dateRange
+        }
+
+        let kind: Kind
+        let label: String
+
+        var id: Kind { kind }
     }
 }
 

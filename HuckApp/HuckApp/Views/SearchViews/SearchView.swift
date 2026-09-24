@@ -29,12 +29,19 @@ struct SearchView: View {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// The filters to show as tokens. Not the same as `filters.isActive`: a
+    /// minimum-comment count is set but inapplicable on the Comments tab, and
+    /// the strip shouldn't appear empty because of it.
+    private var activeFilters: [SearchFilters.ActiveFilter] {
+        filters.activeFilters(for: currentTab)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
                 PillTabBar(tabs: SearchTab.allCases, selection: $currentTab)
                     .padding(.top, 8)
-                if filters.isActive {
+                if !activeFilters.isEmpty {
                     activeFilterSummary
                 }
             }
@@ -43,27 +50,31 @@ struct SearchView: View {
             results
         }
         .navigationTitle("Search")
+        // Inline, not large: a large title would be a second "Search" under the
+        // one in the bar, and the field below already dominates the screen.
+        .toolbarTitleDisplayMode(.inline)
         .toolbar {
-            // The navigation title itself is suppressed while search is active,
-            // so the title is supplied as a toolbar item — which survives the
-            // search presentation — rather than by `navigationTitle` alone.
-            ToolbarItem(placement: .title) {
-                Text("Search")
-                    .font(.headline)
-            }
             // Pinned so the filter button stays in the bar while the search
             // field is active, rather than collapsing into the overflow menu
-            // exactly when it's most likely to be wanted.
-            ToolbarItem(placement: .topBarPinnedTrailing) {
-                Button {
-                    isShowingFilters = true
-                } label: {
-                    Label(
-                        "Filters",
-                        systemImage: filters.isActive
-                            ? "line.3.horizontal.decrease.circle.fill"
-                            : "line.3.horizontal.decrease.circle"
-                    )
+            // exactly when it's most likely to be wanted. Absent entirely on
+            // the Users tab, where a username lookup has nothing to narrow.
+            if currentTab.supportsFilters {
+                ToolbarItem(placement: .topBarPinnedTrailing) {
+                    Button {
+                        isShowingFilters = true
+                    } label: {
+                        // Filled from the tokens rather than from
+                        // `filters.isActive` so the button and the strip can't
+                        // disagree: a minimum comment count that doesn't apply
+                        // to this tab is still remembered, but it isn't
+                        // narrowing anything here.
+                        Label(
+                            "Filters",
+                            systemImage: activeFilters.isEmpty
+                                ? "line.3.horizontal.decrease.circle"
+                                : "line.3.horizontal.decrease.circle.fill"
+                        )
+                    }
                 }
             }
         }
@@ -72,38 +83,60 @@ struct SearchView: View {
         }
     }
 
-    /// A quiet strip under the tabs listing what's narrowing the results, since
-    /// the toolbar button alone doesn't say *which* filters are on. Tapping it
-    /// reopens the sheet; the x clears everything.
+    /// A quiet strip under the tabs, one token per active filter, since the
+    /// toolbar button alone doesn't say *which* filters are on. Tapping a token
+    /// reopens the sheet; its x drops that one filter and leaves the rest.
+    ///
+    /// Scrolls only when the tokens don't fit, like the tab strip above it.
     private var activeFilterSummary: some View {
-        HStack(spacing: 8) {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                ForEach(activeFilters) { filter in
+                    filterToken(filter)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+        .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+    }
+
+    /// One filter as a removable token: a neutral capsule, deliberately quieter
+    /// than the colored tab pills above it, since this reports state rather than
+    /// offering a choice.
+    private func filterToken(_ filter: SearchFilters.ActiveFilter) -> some View {
+        HStack(spacing: 6) {
             Button {
                 isShowingFilters = true
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "line.3.horizontal.decrease")
-                    Text(filters.summaryPhrases(for: currentTab).joined(separator: " · "))
-                        .lineLimit(1)
-                }
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                Text(filter.label)
+                    .lineLimit(1)
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
-
-            Spacer(minLength: 0)
+            .accessibilityHint("Edit filters")
 
             Button {
-                withAnimation(.snappy(duration: 0.2)) { filters = SearchFilters() }
+                withAnimation(.snappy(duration: 0.2)) { filters.clear(filter.kind) }
             } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.footnote)
-                    .foregroundStyle(.tertiary)
+                Image(systemName: "xmark")
+                    .font(.caption2.weight(.bold))
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Clear filters")
+            .accessibilityLabel("Remove filter: \(filter.label)")
         }
-        .padding(.horizontal)
-        .padding(.bottom, 8)
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 11)
+        .background {
+            Capsule(style: .continuous)
+                .fill(Color(.secondarySystemFill))
+        }
+        // Removing one token should slide the others over rather than snap.
+        .transition(.opacity.combined(with: .scale(scale: 0.9)))
     }
 
     /// The results area. Empty for now — the query, paging, and result cells
@@ -114,7 +147,7 @@ struct SearchView: View {
                 EmptyFeedView(
                     title: "Search Hacker News",
                     systemImage: "magnifyingglass",
-                    description: "Find stories, comments, polls, and Show or Ask HN posts."
+                    description: "Find stories, comments, polls, Show and Ask HN posts, and users."
                 )
             } else {
                 // TODO: Replace with the tag's result list once search is wired up.
