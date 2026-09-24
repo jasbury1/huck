@@ -23,6 +23,10 @@ struct SettingsView: View {
     /// Whether story cells show the link's domain after the title. Defaults on.
     @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
 
+    /// Light/dark override. Applied at the app's root, not here — this is only
+    /// where it's chosen.
+    @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
+
     @State private var isConfirmingClearHistory = false
 
     var body: some View {
@@ -38,6 +42,23 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Appearance") {
+                    // The badge tracks the selection, so the row reads as the
+                    // current appearance at a glance.
+                    Picker(selection: $appearance) {
+                        ForEach(AppAppearance.allCases) { option in
+                            Label(option.title, systemImage: option.systemImage)
+                                .tag(option)
+                        }
+                    } label: {
+                        Label {
+                            Text("Theme")
+                        } icon: {
+                            SettingsIcon(systemImage: appearance.systemImage, color: .indigo)
+                        }
+                    }
+                }
+
                 Section("Feed Appearance") {
                     Toggle(isOn: $displayStoryDomain) {
                         Label {
@@ -49,6 +70,12 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            // Also applied here, not just at the app's root. A sheet takes the
+            // window's appearance when it's presented but doesn't restyle when
+            // that changes underneath it — and this sheet is the one place the
+            // setting can be changed, so without this the picker would appear
+            // to do nothing until it was dismissed.
+            .preferredColorScheme(appearance.colorScheme)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

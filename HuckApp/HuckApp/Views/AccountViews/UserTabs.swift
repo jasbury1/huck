@@ -48,3 +48,5 @@ enum ContentTab: CaseIterable, Hashable, Equatable {
         }
     }
 }
+
+extension ContentTab: PillTab {}

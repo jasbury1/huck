@@ -516,46 +516,8 @@ struct UserView: View {
     /// swiping the pager below drive `currentTab`, and the shared animation
     /// keeps the expand/collapse smooth either way.
     var tabBarButtons: some View {
-        HStack(spacing: 10) {
-            ForEach(availableTabs, id: \.self) { tab in
-                tabPill(for: tab)
-            }
-            Spacer()
-        }
-        .padding(.horizontal)
-        .padding(.top, 4)
-        .padding(.bottom, 8)
-        .background(cardBackgroundColor)
-        // Animate the pills for swipe-driven selection changes too.
-        .animation(.snappy(duration: 0.3), value: currentTab)
-    }
-
-    /// A single tab pill. Unselected it shows only its symbol on a neutral fill;
-    /// selected it fills with the tab's color and expands to include the title.
-    private func tabPill(for tab: ContentTab) -> some View {
-        let selected = currentTab == tab
-        return Button {
-            withAnimation(.snappy(duration: 0.3)) { currentTab = tab }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: tab.systemImage)
-                if selected {
-                    Text(tab.title)
-                        .fontWeight(.semibold)
-                        .fixedSize()
-                }
-            }
-            .font(.subheadline)
-            .foregroundStyle(selected ? Color.white : Color.secondary)
-            .padding(.vertical, 8)
-            .padding(.horizontal, selected ? 14 : 11)
-            .background {
-                Capsule(style: .continuous)
-                    .fill(selected ? AnyShapeStyle(tab.color) : AnyShapeStyle(Color(.secondarySystemFill)))
-            }
-            .contentShape(Capsule(style: .continuous))
-        }
-        .buttonStyle(.plain)
+        PillTabBar(tabs: availableTabs, selection: $currentTab)
+            .background(cardBackgroundColor)
     }
 
     // MARK: - Tab Content

@@ -38,6 +38,12 @@ struct ContentView: View {
 
     @Environment(\.scenePhase) private var scenePhase
 
+    /// The light/dark override, chosen in Settings. Applied here at the root of
+    /// the window's content so it reaches every tab, and every sheet and popover
+    /// presented from them — those follow the window's scheme, not the view they
+    /// were presented from.
+    @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
+
     init() {
         // Built here as one graph rather than defaulting independently: each of
         // these depends on the session, and the sync also writes into the store.
@@ -65,13 +71,19 @@ struct ContentView: View {
             // puts a search bar in each one's navigation bar.
             Tab(role: .search) {
                 NavigationStack {
-                    SearchView()
+                    SearchView(searchText: $searchText)
                         .searchable(text: $searchText)
+                        // Search activates the moment this tab is selected, and
+                        // by default that collapses the navigation bar to focus
+                        // on the field — taking the title and the filter button
+                        // with it. Keep them on screen instead.
+                        .searchPresentationToolbarBehavior(.avoidHidingContent)
                 }
             }
         }
         .tabViewSearchActivation(.searchTabSelection)
         .tint(.orange)
+        .preferredColorScheme(appearance.colorScheme)
         .environment(session)
         .environment(interactionStore)
         .environment(interactionSync)
