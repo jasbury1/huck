@@ -68,17 +68,11 @@ struct ContentView: View {
             }
             // The search field is declared inside this tab, not on the tab view:
             // a `searchable` outside the `TabView` propagates into every tab and
-            // puts a search bar in each one's navigation bar.
+            // puts a search bar in each one's navigation bar. `SearchView`
+            // brings its own navigation stack, since opening a result has to
+            // push within search rather than into another tab's stack.
             Tab(role: .search) {
-                NavigationStack {
-                    SearchView(searchText: $searchText)
-                        .searchable(text: $searchText)
-                        // Search activates the moment this tab is selected, and
-                        // by default that collapses the navigation bar to focus
-                        // on the field — taking the title and the filter button
-                        // with it. Keep them on screen instead.
-                        .searchPresentationToolbarBehavior(.avoidHidingContent)
-                }
+                SearchView(searchText: $searchText)
             }
         }
         .tabViewSearchActivation(.searchTabSelection)

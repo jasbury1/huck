@@ -8,7 +8,11 @@
 import SwiftUI
 
 @Observable
-class User {
+class User: Identifiable {
+    /// The username is the identity — Hacker News has no other user key — which
+    /// is what lets a user stand as an element of a list.
+    var id: String { username }
+
     let username: String
     
     var karma: Int

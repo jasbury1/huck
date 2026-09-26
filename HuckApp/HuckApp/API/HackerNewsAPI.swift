@@ -222,6 +222,37 @@ class HackerNewsAPI {
         }
     }
 
+    // MARK: - Search
+
+    /// Searches for stories, polls, or Show/Ask HN posts, returning their ids.
+    ///
+    /// `tags` and `numericFilters` are Algolia's own vocabulary, built by
+    /// `SearchQuery` — the category tag, an optional `author_`, and numeric
+    /// bounds on `num_comments`/`created_at_i`. Passing them through rather than
+    /// re-deriving them here keeps one translation of a search in the app.
+    static func searchStoryIds(
+        query: String,
+        tags: [String],
+        numericFilters: [String],
+        page: Int = 0
+    ) async -> (ids: [Int], hasMore: Bool) {
+        await AlgoliaAPIService.searchStoryIds(
+            query: query, tags: tags, numericFilters: numericFilters, page: page
+        )
+    }
+
+    /// Searches comments, returning them ready to display.
+    static func searchComments(
+        query: String,
+        tags: [String],
+        numericFilters: [String],
+        page: Int = 0
+    ) async -> (comments: [UserComment], hasMore: Bool) {
+        await AlgoliaAPIService.searchComments(
+            query: query, tags: tags, numericFilters: numericFilters, page: page
+        )
+    }
+
     // MARK: - Users
 
     static func getUser(for username: String) async -> User? {

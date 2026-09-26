@@ -12,7 +12,7 @@ import SwiftUI
 /// Deliberately limited to what the Algolia search endpoint can express on its
 /// own — an `author_` tag, a `num_comments` bound, and a `created_at_i` bound —
 /// so no filter has to be re-applied client-side over a partial page of results.
-struct SearchFilters: Equatable {
+struct SearchFilters: Hashable {
     /// An HN username, unprefixed. Empty means "any author".
     var author: String = ""
 
@@ -84,7 +84,7 @@ struct SearchFilters: Equatable {
 }
 
 /// How far back a search reaches, as a `created_at_i` lower bound.
-enum SearchDateRange: CaseIterable, Identifiable {
+enum SearchDateRange: Hashable, CaseIterable, Identifiable {
     case day
     case week
     case month

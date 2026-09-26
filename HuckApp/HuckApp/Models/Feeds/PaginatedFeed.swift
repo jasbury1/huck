@@ -64,4 +64,38 @@ extension PaginatedFeed where Element == UserComment {
             return (result.comments, result.hasMore)
         }
     }
+
+    /// Comment search results, paged via Algolia. Comments arrive complete from
+    /// the search index — text, author, and the story they sit in — so unlike
+    /// story results they need no second fetch to render.
+    static func searchComments(_ query: SearchQuery) -> PaginatedFeed {
+        PaginatedFeed { page in
+            let result = await HackerNewsAPI.searchComments(
+                query: query.text,
+                tags: query.tags,
+                numericFilters: query.numericFilters,
+                page: page
+            )
+            return (result.comments, result.hasMore)
+        }
+    }
+}
+
+// MARK: - User feeds
+
+extension PaginatedFeed where Element == User {
+    /// A username lookup, as a one-page feed of at most one user.
+    ///
+    /// Algolia indexes no people: the only user endpoint is `/users/:username`,
+    /// an exact match, so there is nothing to page through and nothing to match
+    /// loosely. Modelling the answer as a feed anyway lets the Users tab reuse
+    /// the same list, empty state, and paging plumbing as every other tab.
+    static func user(named username: String) -> PaginatedFeed {
+        PaginatedFeed { page in
+            guard page == 0, let user = await HackerNewsAPI.getUser(for: username) else {
+                return ([], false)
+            }
+            return ([user], false)
+        }
+    }
 }

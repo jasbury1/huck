@@ -163,6 +163,25 @@ extension StoryFeed {
         }
     }
 
+    /// Search results for a story-shaped category — stories, polls, Show HN,
+    /// Ask HN — paged via Algolia.
+    ///
+    /// Algolia returns only ids here, so each story's details are then read
+    /// through `StoryCache` exactly as the main feed's are. That keeps the
+    /// cells, thumbnails, and prefetch-ahead identical to every other story
+    /// list, and puts the per-story requests on Firebase rather than on
+    /// Algolia's hourly allowance.
+    static func search(_ query: SearchQuery) -> StoryFeed {
+        StoryFeed { page in
+            await HackerNewsAPI.searchStoryIds(
+                query: query.text,
+                tags: query.tags,
+                numericFilters: query.numericFilters,
+                page: page
+            )
+        }
+    }
+
     /// A one-page feed over a fixed list of story ids — for curated, static
     /// sources such as a Huck collection.
     static func fixed(_ ids: [Int]) -> StoryFeed {

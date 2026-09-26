@@ -580,56 +580,6 @@ struct UserView: View {
     }
 }
 
-struct UserCommentRow: View {
-    let comment: UserComment
-    @Binding var path: NavigationPath
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            if let title = comment.storyTitle, let storyId = comment.storyId {
-                Button {
-                    openInContext(storyId: storyId)
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.turn.up.left")
-                            .font(.caption2)
-                        Text(title)
-                            .font(.footnote)
-                            .lineLimit(1)
-                    }
-                    .foregroundStyle(.orange)
-                }
-                .buttonStyle(.plain)
-            }
-            Text(comment.text)
-                .font(.body)
-                .lineLimit(4)
-            Text(comment.timestamp.ageString())
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        // The enclosing LazyVStack centers its rows, so a short comment would
-        // otherwise appear indented. Fill the width and pin content leading.
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        // The whole row is the comment, so tapping anywhere on it opens the
-        // comment — not just the story link above it.
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if let storyId = comment.storyId {
-                openInContext(storyId: storyId)
-            }
-        }
-    }
-
-    /// Opens the story's thread scrolled to this comment, so it's read in the
-    /// conversation it belongs to rather than on its own.
-    private func openInContext(storyId: Int) {
-        path.append(ItemNavigation.textStory(id: storyId, scrollTo: comment.id))
-    }
-}
-
 /// A sheet that shows a user's full bio, scrollable, for bios too long to fit
 /// in the profile card.
 struct BioSheet: View {
