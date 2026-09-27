@@ -301,22 +301,46 @@ class HackerNewsAPI {
 
     /// Upvotes a story on behalf of the logged-in user.
     static func upvoteStory(id: Int) async throws {
-        try await vote(storyId: id, how: .up)
+        try await vote(itemId: id, how: .up)
     }
 
     /// Removes the logged-in user's upvote from a story.
     static func unvoteStory(id: Int) async throws {
-        try await vote(storyId: id, how: .unvote)
+        try await vote(itemId: id, how: .unvote)
     }
 
-    private static func vote(storyId: Int, how: NewsYCService.VoteAction) async throws {
+    /// Upvotes a comment on behalf of the logged-in user.
+    ///
+    /// The same request as upvoting a story: Hacker News votes on *items*, and a
+    /// comment is an item. These exist as their own names only because the
+    /// callers are different, and because comment votes are tracked separately —
+    /// see `InteractionStore`.
+    static func upvoteComment(id: Int) async throws {
+        try await vote(itemId: id, how: .up)
+    }
+
+    /// Removes the logged-in user's upvote from a comment.
+    static func unvoteComment(id: Int) async throws {
+        try await vote(itemId: id, how: .unvote)
+    }
+
+    private static func vote(itemId: Int, how: NewsYCService.VoteAction) async throws {
         guard hasAuthCookie else { throw APIError.notLoggedIn }
         // The vote requires the item's per-user `auth` token, which only lives in
         // the item page's HTML, so fetch it first, then cast the vote.
-        guard let voteAuth = await NewsYCService.voteAuth(forItem: storyId) else {
+        guard let voteAuth = await NewsYCService.voteAuth(forItem: itemId) else {
             throw APIError.missingAuthToken
         }
-        try await NewsYCService.castVote(id: storyId, how: how, auth: voteAuth.auth)
+        try await NewsYCService.castVote(id: itemId, how: how, auth: voteAuth.auth)
+    }
+
+    /// A user's upvoted comments, most-recent first, for their own profile's
+    /// Likes. Hacker News shows `/upvoted` only to its owner, so `username` must
+    /// be the signed-in user. `page` is 0-based to match the other user feeds.
+    /// `nil` means the page couldn't be fetched, as distinct from an empty page.
+    static func getLikedComments(username: String, page: Int = 0) async -> (comments: [UserComment], hasMore: Bool)? {
+        // NewsYCService pages the /upvoted list 1-based.
+        await NewsYCService.upvotedComments(username: username, page: page + 1)
     }
 
     // MARK: - Favorites

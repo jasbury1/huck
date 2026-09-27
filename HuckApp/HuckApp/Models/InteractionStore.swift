@@ -51,6 +51,7 @@ class InteractionStore {
     /// `/upvoted` lists — see `ListWalk` and `reconcile`.
     private var favoritesWalk = ListWalk()
     private var upvotedWalk = ListWalk()
+    private var upvotedCommentsWalk = ListWalk()
 
     init(session: UserSession) {
         self.session = session
@@ -131,6 +132,61 @@ class InteractionStore {
         }
         if username == self.username {
             reconcile(&upvotedWalk, page: page, result: result, into: \.upvoted)
+        }
+        return result
+    }
+
+    // MARK: - Comment votes
+
+    /// Whether the reader has upvoted a comment. Read by every comment row to
+    /// colour its arrow.
+    func isCommentUpvoted(_ id: Int) -> Bool {
+        interactions.upvotedComments.contains(id)
+    }
+
+    /// Toggles the upvote on a comment: flips local state optimistically, calls
+    /// the API, and rolls back if the request fails. No-op when logged out
+    /// (callers route to login first).
+    ///
+    /// No score delta, unlike a story: Hacker News doesn't publish a comment's
+    /// score, so there's no number on screen for a vote to move.
+    func toggleCommentUpvote(id: Int) async {
+        guard session.isSignedIn else { return }
+
+        let wasUpvoted = interactions.upvotedComments.contains(id)
+        setCommentUpvoted(!wasUpvoted, for: id)
+
+        do {
+            if wasUpvoted {
+                try await HackerNewsAPI.unvoteComment(id: id)
+            } else {
+                try await HackerNewsAPI.upvoteComment(id: id)
+            }
+            persist()
+        } catch {
+            setCommentUpvoted(wasUpvoted, for: id)
+            print("Comment vote failed for \(id): \(error)")
+        }
+    }
+
+    /// A page of a user's upvoted comments for display, most-recent first.
+    ///
+    /// As with `likedStories`, `/upvoted` is authoritative for the list it
+    /// covers, so each page is folded into the store — which is what fills in
+    /// orange arrows for comments upvoted on the web or before this install.
+    /// Hacker News shows the list to no one but its owner, so in practice
+    /// `username` is always the signed-in user.
+    func likedComments(username: String, page: Int = 0) async -> (comments: [UserComment], hasMore: Bool) {
+        guard let result = await HackerNewsAPI.getLikedComments(username: username, page: page) else {
+            return ([], false)
+        }
+        if username == self.username {
+            reconcile(
+                &upvotedCommentsWalk,
+                page: page,
+                result: (result.comments.map(\.id), result.hasMore),
+                into: \.upvotedComments
+            )
         }
         return result
     }
@@ -226,6 +282,14 @@ class InteractionStore {
             interactions.upvoted.insert(id)
         } else {
             interactions.upvoted.remove(id)
+        }
+    }
+
+    private func setCommentUpvoted(_ value: Bool, for id: Int) {
+        if value {
+            interactions.upvotedComments.insert(id)
+        } else {
+            interactions.upvotedComments.remove(id)
         }
     }
 

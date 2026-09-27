@@ -65,6 +65,18 @@ extension PaginatedFeed where Element == UserComment {
         }
     }
 
+    /// A user's upvoted comments, scraped from news.ycombinator. Routed through
+    /// `InteractionStore` rather than the API directly so each page also
+    /// reconciles comment-upvote state — otherwise rows in a list of comments
+    /// the reader has upvoted could show grey arrows, which is absurd on its
+    /// face.
+    static func likedComments(username: String, in store: InteractionStore) -> PaginatedFeed {
+        PaginatedFeed { page in
+            let result = await store.likedComments(username: username, page: page)
+            return (result.comments, result.hasMore)
+        }
+    }
+
     /// Comment search results, paged via Algolia. Comments arrive complete from
     /// the search index — text, author, and the story they sit in — so unlike
     /// story results they need no second fetch to render.

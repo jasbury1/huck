@@ -25,22 +25,24 @@ private extension Color {
 }
 
 extension Color {
-    /// Marks who is speaking: red for the reader's own comments, orange for
-    /// the story's submitter (the convention other clients use for OP). When
-    /// the reader *is* the submitter, red wins — "this is you" is the more
-    /// useful of the two, since they already know they posted the story.
+    /// Marks who is speaking within a thread: red for the reader's own
+    /// comments, orange for the story's submitter (the convention other clients
+    /// use for OP). When the reader *is* the submitter, red wins — "this is
+    /// you" is the more useful of the two, since they already know they posted
+    /// the story.
     ///
-    /// `storyAuthor` is `nil` wherever a comment is read outside its thread, on
-    /// a profile or in search results: there's no story in view to be the
-    /// author of, so there's nothing for the orange to mean.
+    /// Only a thread calls this. A name is coloured to place it *among others* —
+    /// which is you, which is the person everyone is replying to. Read on a
+    /// profile or in search results there's no conversation to place it in, so
+    /// those rows leave the name plain.
     static func commentAuthor(
         _ author: String,
         reader: String?,
-        storyAuthor: String? = nil
+        storyAuthor: String
     ) -> Color {
         if let reader, author == reader {
             .red
-        } else if let storyAuthor, author == storyAuthor {
+        } else if author == storyAuthor {
             .storySubmitter
         } else {
             .primary
@@ -59,9 +61,12 @@ extension Color {
 /// hands over only a timestamp and puts the story's title above it.
 struct CommentContent<Accessory: View>: View {
     let author: String
-    /// See `Color.commentAuthor(_:reader:storyAuthor:)`. Passed in rather than
-    /// derived, since only the caller knows whose story this is.
-    let authorColor: Color
+
+    /// Plain by default, since that's how a name reads everywhere except inside
+    /// a thread. A thread passes its own colouring — see
+    /// `Color.commentAuthor(_:reader:storyAuthor:)`, which only it can compute,
+    /// being the only place that knows whose story this is.
+    var authorColor: Color = .primary
 
     /// The comment's text, or `nil` for a collapsed thread row, which shows
     /// its header alone.
@@ -105,7 +110,10 @@ struct CommentContent<Accessory: View>: View {
 
     @ViewBuilder
     private var header: some View {
-        let row = HStack {
+        // No spacing of its own: the trailing controls carry their tap targets
+        // as padding, so stack spacing on top of that would land *between* the
+        // targets and read as a gap twice the size. See `CommentHeaderMetrics`.
+        let row = HStack(spacing: 0) {
             // A Button (not a NavigationLink) keeps only the username tappable;
             // a NavigationLink in a List row makes the whole row the tap target.
             Button {
@@ -117,7 +125,7 @@ struct CommentContent<Accessory: View>: View {
                     .foregroundStyle(authorColor)
             }
             .buttonStyle(.plain)
-            Spacer()
+            Spacer(minLength: CommentHeaderMetrics.iconInset)
             accessory()
         }
 
@@ -144,6 +152,27 @@ struct CommentContent<Accessory: View>: View {
     }
 }
 
+/// The metrics the trailing controls in a comment's header share.
+///
+/// They have to agree on one number, because each control's tap target is
+/// padding around a small glyph: what the eye measures is the distance between
+/// glyphs, which is the sum of the padding on either side of the gap. Left to
+/// choose their own, the arrow and the ellipsis produced gaps of 16pt and 31pt
+/// in a row that should read as one evenly-spaced group.
+enum CommentHeaderMetrics {
+    /// Padding around an icon inside its tap target. Half of a gap between two
+    /// adjacent icons, and the whole gap between the timestamp and the first
+    /// icon — which is why the timestamp carries it too.
+    static let iconInset: CGFloat = 8
+
+    /// An icon's own size, before its inset. `footnote` for these symbols.
+    static let iconSize: CGFloat = 14
+
+    /// The tap target around one icon: comfortable to hit, and identical for
+    /// every control so the gaps either side of the middle one match.
+    static var controlSize: CGFloat { iconSize + iconInset * 2 }
+}
+
 /// The timestamp as both views show it, in the accessory position.
 struct CommentAgeLabel: View {
     let timestamp: Date
@@ -152,6 +181,47 @@ struct CommentAgeLabel: View {
         Text(timestamp.ageString())
             .font(.footnote)
             .foregroundStyle(.gray)
+            // Matches an icon's inset, so the gap from the timestamp to the
+            // arrow equals the gap from the arrow to the ellipsis. Text has no
+            // tap target of its own to supply it.
+            .padding(.trailing, CommentHeaderMetrics.iconInset)
+    }
+}
+
+/// A comment's upvote arrow, orange once upvoted, as it is on a story cell.
+///
+/// Takes the comment's item id rather than a model, since the two kinds of
+/// comment row hold different types and a vote needs only the id. Sits between
+/// the timestamp and the options menu wherever a comment is shown.
+///
+/// No score beside it, unlike a story's arrow: Hacker News doesn't publish a
+/// comment's points, so there's no number to show or to move.
+struct CommentUpvoteButton: View {
+    let id: Int
+
+    /// Drives the arrow's colour. Shared app-wide, so voting here colours the
+    /// same comment everywhere it appears — a thread, a profile, search.
+    @Environment(InteractionStore.self) private var interactionStore
+    /// Handles the login gate and the toggle; see `storyActionsEnabled()`.
+    @Environment(\.upvoteComment) private var upvoteComment
+
+    private var isUpvoted: Bool { interactionStore.isCommentUpvoted(id) }
+
+    var body: some View {
+        Button {
+            upvoteComment(id: id)
+        } label: {
+            Image(systemName: "arrow.up")
+                .font(.footnote)
+                .foregroundStyle(isUpvoted ? .orange : .gray)
+                .frame(
+                    width: CommentHeaderMetrics.controlSize,
+                    height: CommentHeaderMetrics.controlSize
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isUpvoted ? "Remove upvote" : "Upvote")
     }
 }
 
@@ -172,9 +242,13 @@ struct CommentOptionsMenu<Content: View>: View {
             Image(systemName: "ellipsis")
                 .font(.footnote)
                 .foregroundStyle(.gray)
-                // Wide and tall enough to hit comfortably without the header
-                // growing much taller than the text it holds.
-                .frame(width: 44, height: 30)
+                // The same target as the upvote arrow. It used to be wider,
+                // which put half again as much space before it as the arrow had
+                // before it.
+                .frame(
+                    width: CommentHeaderMetrics.controlSize,
+                    height: CommentHeaderMetrics.controlSize
+                )
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

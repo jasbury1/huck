@@ -22,6 +22,10 @@ struct LikedView: View {
     /// view is on screen. Kept as a single instance thereafter.
     @State private var liked: StoryFeed?
 
+    /// The same user's upvoted comments, built alongside `liked` and for the
+    /// same reason — it reconciles through `InteractionStore` too.
+    @State private var likedComments: PaginatedFeed<UserComment>?
+
     var body: some View {
         Group {
             if let liked {
@@ -33,6 +37,7 @@ struct LikedView: View {
                         systemImage: "arrow.up",
                         description: "Stories you like will show up here."
                     ),
+                    commentsFeed: likedComments,
                     commentsEmptyState: EmptyFeedView(
                         title: "No Liked Comments",
                         systemImage: "bubble.left.and.bubble.right",
@@ -51,6 +56,7 @@ struct LikedView: View {
             // the signed-in profile.
             guard let username = session.username else { return }
             liked = liked ?? .liked(username: username, in: interactionStore)
+            likedComments = likedComments ?? .likedComments(username: username, in: interactionStore)
         }
     }
 }

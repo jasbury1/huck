@@ -79,11 +79,22 @@ struct CommentCellView: View {
                     // A down chevron signals a collapsed thread that can be
                     // expanded again. The menu is left off a collapsed row:
                     // it's a summary, and the parent disables its controls.
+                    // Sized like the controls it stands in for, so collapsing a
+                    // comment doesn't shift the trailing edge.
                     Image(systemName: "chevron.down")
                         .font(.footnote)
                         .foregroundStyle(.gray)
+                        .frame(
+                            width: CommentHeaderMetrics.controlSize,
+                            height: CommentHeaderMetrics.controlSize
+                        )
                 } else {
                     CommentAgeLabel(timestamp: commentData.timestamp)
+                    // Only a comment Hacker News has given an id can be voted
+                    // on; one just posted gets its arrow when the id arrives.
+                    if let itemID = commentData.itemID {
+                        CommentUpvoteButton(id: itemID)
+                    }
                     optionsMenu
                 }
             }

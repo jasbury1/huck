@@ -233,6 +233,123 @@ struct NewsYCService {
         return (ids, hasMore)
     }
 
+    // MARK: - Comment-list history
+
+    /// Scrapes one page of the user's upvoted comments — `/upvoted?comments=t`,
+    /// which Hacker News shows only to its owner. `nil` if the page couldn't be
+    /// fetched, which callers must tell apart from an empty final page.
+    ///
+    /// The page carries everything a comment row needs to render: the text, the
+    /// author, the age, and the story it sits in. So one request per page does
+    /// the whole job, where ids alone would mean a fetch per comment — and then
+    /// a walk up its parents just to name the story it belongs to.
+    static func upvotedComments(username: String, page: Int = 1) async -> (comments: [UserComment], hasMore: Bool)? {
+        await commentListPage(path: "upvoted", username: username, page: page)
+    }
+
+    private static func commentListPage(
+        path: String,
+        username: String,
+        page: Int
+    ) async -> (comments: [UserComment], hasMore: Bool)? {
+        let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? username
+        guard let url = URL(string: "\(baseUri)/\(path)?id=\(encoded)&comments=t&p=\(page)"),
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+        // A `morelink` anchor at the bottom means there's another page.
+        let hasMore = contains(in: html, pattern: "class=['\"]morelink['\"]")
+        return (comments(in: html), hasMore)
+    }
+
+    /// Every comment on a Hacker News comment-list page, in page order.
+    ///
+    /// Each comment is an `<tr class="athing …" id="…">` row, so the rows are
+    /// located first and each one's markup taken as the span up to the next —
+    /// which keeps a field pattern from ever reaching into a neighbouring
+    /// comment and attributing one reader's words to another.
+    ///
+    /// The class is matched loosely because Hacker News doesn't spell it the
+    /// same way on every page: `/upvoted?comments=t` uses a bare `athing`,
+    /// while `/threads` adds `comtr`.
+    private static func comments(in html: String) -> [UserComment] {
+        guard let rowRegex = try? NSRegularExpression(
+            pattern: "<tr[^>]*class=['\"]athing[^'\"]*['\"][^>]*id=['\"](\\d+)['\"]",
+            options: [.caseInsensitive]
+        ) else {
+            return []
+        }
+        let matches = rowRegex.matches(in: html, range: NSRange(html.startIndex..., in: html))
+        return matches.enumerated().compactMap { index, match in
+            guard let matchRange = Range(match.range, in: html),
+                  let idRange = Range(match.range(at: 1), in: html),
+                  let id = Int(html[idRange]) else {
+                return nil
+            }
+            let nextRowStart = index + 1 < matches.count
+                ? Range(matches[index + 1].range, in: html)?.lowerBound
+                : nil
+            let row = String(html[matchRange.upperBound..<(nextRowStart ?? html.endIndex)])
+            return comment(id: id, row: row)
+        }
+    }
+
+    /// One comment from its row's markup, or `nil` if it has no text — a
+    /// flagged or deleted comment, which there's nothing to show for.
+    private static func comment(id: Int, row: String) -> UserComment? {
+        // `[\s\S]` rather than `.` because a comment's text spans lines.
+        guard let text = firstMatch(
+            in: row,
+            pattern: "class=['\"]commtext[^'\"]*['\"]>([\\s\\S]*?)</div>"
+        ) else {
+            return nil
+        }
+        // The `onstory` span names the story. Its link text is truncated with an
+        // ellipsis, so the headline comes from the anchor's `title` instead.
+        let storyId = firstMatch(
+            in: row,
+            pattern: "class=['\"]onstory['\"]>[\\s\\S]*?<a href=['\"]item\\?id=(\\d+)['\"]"
+        ).flatMap(Int.init)
+        let storyTitle = firstMatch(
+            in: row,
+            pattern: "class=['\"]onstory['\"]>[\\s\\S]*?<a[^>]*title=['\"]([^'\"]*)['\"]"
+        ).map(htmlUnescaped)
+
+        return UserComment(
+            id: id,
+            author: firstMatch(in: row, pattern: "class=['\"]hnuser['\"][^>]*>([^<]*)</a>") ?? "",
+            text: htmlUnescaped(text).normalizeHtmlText(),
+            storyTitle: storyTitle,
+            storyId: storyId,
+            timestamp: commentDate(in: row) ?? .now
+        )
+    }
+
+    /// When a comment was posted, from the `age` span's `title`.
+    ///
+    /// That attribute is either an ISO timestamp or an ISO timestamp followed by
+    /// the same moment in Unix seconds, depending on the page's vintage. The
+    /// number is preferred where present, being unambiguous about its zone; the
+    /// ISO form is read as UTC, which is what Hacker News serves.
+    private static func commentDate(in row: String) -> Date? {
+        guard let title = firstMatch(in: row, pattern: "class=['\"]age['\"][^>]*title=['\"]([^'\"]*)['\"]") else {
+            return nil
+        }
+        let parts = title.split(separator: " ")
+        if parts.count > 1, let seconds = TimeInterval(parts[1]) {
+            return Date(timeIntervalSince1970: seconds)
+        }
+        return isoDateFormatter.date(from: String(parts[0]))
+    }
+
+    private static let isoDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
     // MARK: - HTML fetching
 
     private static func fetchHTML(from url: URL) async throws -> String {

@@ -15,6 +15,14 @@ struct UpvoteAction {
     func callAsFunction(_ story: StoryModel) { handler(story) }
 }
 
+/// Requests an upvote toggle for a comment. Takes an item id rather than a
+/// model because the two kinds of comment row hold different types — a thread's
+/// `Comment` and a standalone `UserComment` — and the id is all a vote needs.
+struct UpvoteCommentAction {
+    let handler: (Int) -> Void
+    func callAsFunction(id: Int) { handler(id) }
+}
+
 /// Requests a favorite toggle for a story. The favorites counterpart to
 /// `UpvoteAction`, sharing the same login gate.
 struct FavoriteAction {
@@ -33,6 +41,7 @@ struct RequireLoginAction {
 
 extension EnvironmentValues {
     @Entry var upvote = UpvoteAction { _ in }
+    @Entry var upvoteComment = UpvoteCommentAction { _ in }
     @Entry var favorite = FavoriteAction { _ in }
     @Entry var requireLogin = RequireLoginAction { $0() }
 }
@@ -50,6 +59,9 @@ private struct StoryActionsModifier: ViewModifier {
         content
             .environment(\.upvote, UpvoteAction { story in
                 perform { await store.toggleUpvote(story) }
+            })
+            .environment(\.upvoteComment, UpvoteCommentAction { id in
+                perform { await store.toggleCommentUpvote(id: id) }
             })
             .environment(\.favorite, FavoriteAction { story in
                 perform { await store.toggleFavorite(story) }

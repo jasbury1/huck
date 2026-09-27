@@ -21,8 +21,6 @@ struct UserCommentRow: View {
     let comment: UserComment
     @Binding var path: NavigationPath
 
-    @Environment(UserSession.self) private var session
-
     /// How much of a long comment to show before clamping. Generous enough to
     /// read the point being made, short enough that one comment can't take over
     /// a list of results — the full text is a tap away in the thread.
@@ -33,8 +31,8 @@ struct UserCommentRow: View {
             storyLink
             CommentContent(
                 author: comment.author,
-                // No story author to compare against out here, so no OP colour.
-                authorColor: .commentAuthor(comment.author, reader: session.username),
+                // Plain, including the reader's own name: a colour places a name
+                // within a conversation, and there's no conversation here.
                 text: comment.text,
                 lineLimit: Self.bodyLineLimit,
                 // The enclosing list already draws a separator between rows.
@@ -42,6 +40,7 @@ struct UserCommentRow: View {
                 path: $path
             ) {
                 CommentAgeLabel(timestamp: comment.timestamp)
+                CommentUpvoteButton(id: comment.id)
                 optionsMenu
             }
         }
@@ -140,5 +139,4 @@ struct UserCommentRow: View {
             Divider()
         }
     }
-    .environment(UserSession())
 }

@@ -16,6 +16,12 @@ struct TabableContentView: View {
     /// Placeholder shown when the Posts tab has no stories. Caller-supplied so
     /// the wording matches the context (favorites vs. likes).
     private let postsEmptyState: EmptyFeedView
+    /// The comment feed shown in the Comments tab, or `nil` where that list
+    /// doesn't exist yet — favorited comments, which Hacker News keeps on a
+    /// page of their own that nothing here reads. A `nil` feed shows the empty
+    /// state, so the tab stays honest rather than promising a list it can't
+    /// fill.
+    private let commentsFeed: PaginatedFeed<UserComment>?
     /// Placeholder shown when the Comments tab has no comments.
     private let commentsEmptyState: EmptyFeedView
     @Binding private var path: NavigationPath
@@ -35,12 +41,14 @@ struct TabableContentView: View {
         title: String,
         postsFeed: StoryFeed,
         postsEmptyState: EmptyFeedView,
+        commentsFeed: PaginatedFeed<UserComment>? = nil,
         commentsEmptyState: EmptyFeedView,
         path: Binding<NavigationPath>
     ) {
         self.title = title
         self.postsFeed = postsFeed
         self.postsEmptyState = postsEmptyState
+        self.commentsFeed = commentsFeed
         self.commentsEmptyState = commentsEmptyState
         self._path = path
     }
@@ -83,8 +91,13 @@ struct TabableContentView: View {
                     emptyState: postsEmptyState
                 )
             case .comments:
-                // TODO: Show the user's favorited/liked comments once that feed exists.
-                commentsEmptyState
+                if let commentsFeed {
+                    PaginatedList(feed: commentsFeed, emptyState: commentsEmptyState) { comment in
+                        UserCommentRow(comment: comment, path: $path)
+                    }
+                } else {
+                    commentsEmptyState
+                }
             case .recentlyViewed:
                 EmptyView()
             }

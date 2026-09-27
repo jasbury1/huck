@@ -7,13 +7,24 @@
 
 import Foundation
 
-/// The user's per-story interaction state, in the shape we persist to disk.
+/// The user's interaction state, in the shape we persist to disk.
 ///
-/// Only `upvoted` is used today; `favorited` and `hidden` are here so those features
-/// can be added later without a storage migration — an older file simply decodes
-/// them as empty sets. (A separate `saved` concept is planned for the future.)
+/// `hidden` is here so that feature can be added later without a storage
+/// migration — an older file simply decodes it as an empty set. (A separate
+/// `saved` concept is planned for the future.)
 struct PersistedInteractions: Codable {
+    /// Upvoted *stories*.
     var upvoted: Set<Int> = []
+
+    /// Upvoted *comments*, kept apart from `upvoted` rather than pooled with it
+    /// even though Hacker News item ids share one namespace.
+    ///
+    /// They have to be: `/upvoted` lists only stories, and when a walk of it
+    /// completes it is treated as the whole truth for what it covers, replacing
+    /// the set. Pooled, every comment vote would be erased the first time the
+    /// story list was read to its end.
+    var upvotedComments: Set<Int> = []
+
     var favorited: Set<Int> = []
     var hidden: Set<Int> = []
 }
