@@ -8,23 +8,6 @@
 import SwiftUI
 import UIKit
 
-private extension Color {
-    /// Marks the story's submitter on their own comments.
-    ///
-    /// Not plain `.orange`: at this text size, system orange against a light
-    /// background lands around 2:1 contrast, which is muddy for everyone and
-    /// unreadable for anyone who depends on contrast. This darkens it to about
-    /// 4.6:1 there, clearing WCAG AA while still reading as orange rather than
-    /// brown. Only the light appearance is changed — in dark mode the standard
-    /// orange already sits near 10:1 against the background, so darkening it
-    /// would take contrast away rather than add it.
-    static let storySubmitter = Color(UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? .systemOrange
-            : UIColor(red: 0.72, green: 0.36, blue: 0, alpha: 1)
-    })
-}
-
 struct CommentCellView: View {
     @State private var commentData: Comment
     /// When true, the row shrinks to just the username and a down chevron; the
@@ -61,20 +44,6 @@ struct CommentCellView: View {
         indentationLevel = commentData.nestingLevel
     }
 
-    /// Marks who is speaking: blue for the reader's own comments, orange for the
-    /// story's submitter (the convention other clients use for OP). When the
-    /// reader *is* the submitter, blue wins — "this is you" is the more useful
-    /// of the two, since they already know they posted the story.
-    private var authorColor: Color {
-        if let username = session.username, commentData.author == username {
-            .blue
-        } else if commentData.author == storyAuthor {
-            .storySubmitter
-        } else {
-            .primary
-        }
-    }
-
     var body: some View {
         HStack(spacing: 12) {
             // Full-height indentation rails. Because the row has no vertical
@@ -87,66 +56,46 @@ struct CommentCellView: View {
                     .frame(width: 1)
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                // Everything in the header that isn't the username or the menu
-                // collapses the comment — the gap between them, and the
-                // timestamp. The nested controls keep their own taps, so this
-                // only claims the space nothing else wanted.
-                HStack {
-                    // A Button (not a NavigationLink) keeps only the username
-                    // tappable; a NavigationLink in a List row makes the whole
-                    // row the tap target.
-                    Button {
-                        path.append(ItemNavigation.userProfile(user: commentData.author))
-                    } label: {
-                        Text(commentData.author)
-                            .font(.callout)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(authorColor)
-                    }
-                    .buttonStyle(.plain)
-                    Spacer()
-                    if isCollapsed {
-                        // A down chevron signals a collapsed thread that can be
-                        // expanded again. The menu is left off a collapsed row:
-                        // it's a summary, and the parent disables its controls.
-                        Image(systemName: "chevron.down")
-                            .font(.footnote)
-                            .foregroundStyle(.gray)
-                    } else {
-                        Text(commentData.timestamp.ageString())
-                            .font(.footnote)
-                            .foregroundStyle(.gray)
-                        optionsMenu
-                    }
+            // The comment itself looks the same here as it does on a profile or
+            // in search results — see `CommentContent`. What's particular to a
+            // thread is what's handed to it: the collapse behaviour, the options
+            // menu, and the rails beside it.
+            CommentContent(
+                author: commentData.author,
+                authorColor: .commentAuthor(
+                    commentData.author,
+                    reader: session.username,
+                    storyAuthor: storyAuthor
+                ),
+                // A collapsed row shrinks to its header alone.
+                text: isCollapsed ? nil : commentData.text,
+                path: $path,
+                // Guarded rather than a toggle: a collapsed row is expanded by
+                // the tap handler on the whole cell, which stays live while
+                // these controls are disabled.
+                onHeaderTap: { if !isCollapsed { onCollapse() } }
+            ) {
+                if isCollapsed {
+                    // A down chevron signals a collapsed thread that can be
+                    // expanded again. The menu is left off a collapsed row:
+                    // it's a summary, and the parent disables its controls.
+                    Image(systemName: "chevron.down")
+                        .font(.footnote)
+                        .foregroundStyle(.gray)
+                } else {
+                    CommentAgeLabel(timestamp: commentData.timestamp)
+                    optionsMenu
                 }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    // Guarded rather than a toggle: a collapsed row is expanded
-                    // by the tap handler on the whole cell, which stays live
-                    // while these controls are disabled.
-                    if !isCollapsed { onCollapse() }
-                }
-                if !isCollapsed {
-                    Text(try! AttributedString(markdown: commentData.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
-                        .font(.callout)
-                    //Text(commentData.text)
-                }
-                Divider()
             }
             // Padding lives inside the text column so the rails stay full-height.
             .padding(.top, 8)
-            // Fill the trailing edge instead of a Spacer so the HStack's spacing
-            // only sits between the rails and the text, not to the right of it.
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    /// The comment's own options, as a plain dropdown anchored to the ellipsis —
-    /// the conventional affordance for a per-row control, and lighter than the
-    /// sheet the story's "More" button presents.
+    /// The comment's own options. The collapse actions are what a thread adds
+    /// to the set a lone comment offers (see `UserCommentRow`).
     private var optionsMenu: some View {
-        Menu {
+        CommentOptionsMenu {
             // A comment the reader posted seconds ago has no id yet, so there's
             // no permalink to copy until it has one.
             if let url = commentData.hackerNewsURL {
@@ -170,16 +119,7 @@ struct CommentCellView: View {
                     Label("Collapse Thread", systemImage: "arrow.up.to.line")
                 }
             }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.footnote)
-                .foregroundStyle(.gray)
-                // Wide and tall enough to hit comfortably without the header
-                // growing much taller than the text it holds.
-                .frame(width: 44, height: 30)
-                .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
     }
 }
 

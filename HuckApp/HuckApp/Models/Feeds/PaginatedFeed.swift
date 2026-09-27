@@ -87,12 +87,13 @@ extension PaginatedFeed where Element == User {
     /// A username lookup, as a one-page feed of at most one user.
     ///
     /// Algolia indexes no people: the only user endpoint is `/users/:username`,
-    /// an exact match, so there is nothing to page through and nothing to match
-    /// loosely. Modelling the answer as a feed anyway lets the Users tab reuse
-    /// the same list, empty state, and paging plumbing as every other tab.
+    /// an exact match, so there is nothing to page through. Modelling the
+    /// answer as a feed anyway lets the Users tab reuse the same list, empty
+    /// state, and paging plumbing as every other tab. Capitalisation is
+    /// forgiven — see `HackerNewsAPI.findUser(named:)`.
     static func user(named username: String) -> PaginatedFeed {
         PaginatedFeed { page in
-            guard page == 0, let user = await HackerNewsAPI.getUser(for: username) else {
+            guard page == 0, let user = await HackerNewsAPI.findUser(named: username) else {
                 return ([], false)
             }
             return ([user], false)

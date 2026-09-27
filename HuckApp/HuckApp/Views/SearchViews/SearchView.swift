@@ -33,6 +33,7 @@ struct SearchView: View {
     /// rather than reaching into the feed tab's stack.
     @State private var path = NavigationPath()
 
+
     private let cardBackgroundColor = Color(UIColor.systemBackground)
 
     private var trimmedQuery: String {
@@ -50,6 +51,11 @@ struct SearchView: View {
         NavigationStack(path: $path) {
             searchContent
                 .searchable(text: $searchText)
+                // Nothing searched here wants a capital: Hacker News usernames
+                // are lowercase, and titles match regardless. Left on, the
+                // automatic capital on the first letter is a wrong username
+                // every time — which is how it was found.
+                .textInputAutocapitalization(.never)
                 // Search activates the moment this tab is selected, and by
                 // default that collapses the navigation bar to focus on the
                 // field — taking the title and the filter button with it. Keep
@@ -205,6 +211,16 @@ struct SearchView: View {
             }
         }
         .scrollDismissesKeyboard(.immediately)
+        // A scroll view per category, rather than one whose contents swap.
+        // Sharing one means sharing its offset, so switching tabs used to land
+        // you partway down a list you'd never scrolled. Each category now opens
+        // at the top, which is where a different set of results should start.
+        //
+        // Resuming each tab where it was left would be nicer still, but a
+        // remembered offset can't be restored reliably into a lazy list: at the
+        // moment the new scroll view appears only the first screen of rows
+        // exists, so a deep offset clamps to the bottom of what's realised.
+        .id(currentTab)
     }
 
     private var prompt: EmptyFeedView {
@@ -220,9 +236,10 @@ struct SearchView: View {
             title: "No Results",
             systemImage: currentTab.systemImage,
             description: currentTab == .users
-                // The Users tab resolves a name exactly — there's no user index
-                // to match loosely — so a near miss is worth explaining.
-                ? "No user named “\(trimmedQuery)”. Usernames are case-sensitive."
+                // A name, not a phrase: the Users tab resolves one username
+                // rather than searching an index, so "no match" means no such
+                // person — not that the words didn't rank.
+                ? "No user named “\(trimmedQuery)”."
                 : "No \(currentTab.resultNoun) match “\(trimmedQuery)”."
         )
     }

@@ -262,6 +262,23 @@ class HackerNewsAPI {
         return User(from: userdata)
     }
 
+    /// Finds a user by name, tolerating the capitalisation someone typed.
+    ///
+    /// Algolia indexes no people: `/users/:username` is an exact match, and
+    /// there's no user index to search loosely. So on a miss this retries the
+    /// name lowercased — which is precisely what iOS's automatic
+    /// capitalisation costs, and Hacker News names are overwhelmingly
+    /// lowercase. Only the miss pays for a second request; `getUser(for:)`
+    /// stays exact for callers that already hold a real username.
+    static func findUser(named username: String) async -> User? {
+        if let user = await getUser(for: username) {
+            return user
+        }
+        let lowercased = username.lowercased()
+        guard lowercased != username else { return nil }
+        return await getUser(for: lowercased)
+    }
+
     static func getUserStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
         await AlgoliaAPIService.getUserStoryIds(username: username, page: page)
     }

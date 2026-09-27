@@ -20,4 +20,11 @@ struct UserComment: Identifiable {
     let storyTitle: String?
     let storyId: Int?
     let timestamp: Date
+
+    /// This comment's permalink on Hacker News, matching `Comment`'s. Always
+    /// available here, unlike in a thread: a comment only reaches a profile or
+    /// the search index once Hacker News has given it an id.
+    var hackerNewsURL: URL? {
+        URL(string: "https://news.ycombinator.com/item?id=\(id)")
+    }
 }
