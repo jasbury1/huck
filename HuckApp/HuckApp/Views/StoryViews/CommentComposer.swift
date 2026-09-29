@@ -275,6 +275,22 @@ struct CommentComposer: View {
                 )
                 .focused($isFocused)
                 .lineLimit(state.lineLimit)
+                // The formatting controls ride in the keyboard's floating bar,
+                // as in Notes. Only the expanded editor, where longer and
+                // formatted comments get written, offers them.
+                .toolbar {
+                    if state == .expanded {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            // Neutral icons, as in Notes, rather than the
+                            // app's orange tint.
+                            Group {
+                                formatButton("Code", systemImage: "chevron.left.forwardslash.chevron.right", format: .code)
+                                formatButton("Italic", systemImage: "italic", format: .italic)
+                            }
+                            .tint(.primary)
+                        }
+                    }
+                }
                 Button {
                     submit()
                 } label: {
@@ -294,12 +310,6 @@ struct CommentComposer: View {
                 .disabled(trimmedDraft.isEmpty || isPosting)
                 .accessibilityLabel("Post comment")
             }
-            // The larger editor is where longer, formatted comments get
-            // written, so that's where the formatting controls live.
-            if state == .expanded {
-                formattingBar
-                    .transition(.opacity)
-            }
         }
         .padding(.horizontal, 16)
         // While expanded the top row carries the discard button's own 44pt tap
@@ -311,45 +321,45 @@ struct CommentComposer: View {
         .glassEffectID("composer", in: namespace)
     }
 
-    /// The highlighted range of the draft, or `nil` when nothing is highlighted
-    /// (just a cursor, or a multi-range selection, which the field doesn't
-    /// produce on iOS).
-    private var selectedRange: Range<String.Index>? {
-        guard case .selection(let range) = selection?.indices, !range.isEmpty else { return nil }
+    /// The draft's selection or cursor. Before the field reports one, the
+    /// cursor is taken to be at the end of the draft.
+    ///
+    /// The field's selection can lag the text it indexes — an empty draft has
+    /// been seen reporting a range past its end — and slicing with those
+    /// indices traps, so anything out of bounds falls back to the end.
+    private var selectedRange: Range<String.Index> {
+        let end = draft.endIndex..<draft.endIndex
+        guard case .selection(let range) = selection?.indices,
+              range.lowerBound >= draft.startIndex,
+              range.upperBound <= draft.endIndex
+        else { return end }
         return range
     }
 
-    /// Orange pills that apply Hacker News formatting to the highlighted text.
-    private var formattingBar: some View {
-        HStack(spacing: 8) {
-            formatButton("Format Code", systemImage: "chevron.left.forwardslash.chevron.right", format: .code)
-            formatButton("Italicize", systemImage: "italic", format: .italic)
-            Spacer()
-        }
-    }
-
-    /// One formatting pill. Disabled until some text is highlighted, since
-    /// there's nothing to format otherwise.
+    /// One formatting button in the keyboard bar. Formats (or unformats) the
+    /// highlighted text, or with just a cursor, inserts the markup to type into.
     private func formatButton(
         _ title: LocalizedStringKey,
         systemImage: String,
         format: CommentFormat
     ) -> some View {
         Button {
-            guard let range = selectedRange else { return }
-            let result = format.apply(to: draft, range: range)
+            let result = format.apply(to: draft, range: selectedRange)
             draft = result.text
-            // Keep the freshly formatted passage highlighted, so the change is
-            // visible and another format can be applied on top of it.
-            selection = TextSelection(range: result.range)
+            // Select the formatted passage, so the change is visible and can be
+            // toggled straight back — or place the cursor inside new markup.
+            selection = result.range.isEmpty
+                ? TextSelection(insertionPoint: result.range.lowerBound)
+                : TextSelection(range: result.range)
         } label: {
-            Label(title, systemImage: systemImage)
-                .font(.subheadline.weight(.semibold))
+            // Spelled out beside the symbol, since the markup these insert
+            // isn't self-explanatory. A plain HStack rather than a `Label`:
+            // toolbars reduce a `Label` to its icon, ignoring `labelStyle`.
+            HStack(spacing: 4) {
+                Image(systemName: systemImage)
+                Text(title)
+            }
         }
-        .buttonStyle(.borderedProminent)
-        .buttonBorderShape(.capsule)
-        .tint(.orange)
-        .disabled(selectedRange == nil)
     }
 
     /// Names where the draft will land — the comment being answered, or the
