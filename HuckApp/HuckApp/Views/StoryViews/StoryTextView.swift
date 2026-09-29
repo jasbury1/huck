@@ -339,7 +339,7 @@ struct StoryTextView: View {
         }
         // Floating Liquid Glass compose control in the bottom-trailing corner.
         .overlay(alignment: .bottomTrailing) {
-            CommentComposer(replyTarget: $replyTarget) { text in
+            CommentComposer(replyTarget: $replyTarget, storyTitle: storyData.title) { text in
                 // Read the target before posting: a successful post closes the
                 // composer, which clears it.
                 let parent = replyTarget

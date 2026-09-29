@@ -55,6 +55,10 @@ struct CommentComposer: View {
     /// composer, and so the caller knows where to post the draft.
     @Binding var replyTarget: Comment?
 
+    /// The story being commented on, named in the header of a new top-level
+    /// comment the way a reply names its author.
+    let storyTitle: String
+
     /// Posts the trimmed comment when the user taps send. Throwing leaves the
     /// draft in place and surfaces the error, so a refused or dropped comment is
     /// never silently lost; returning normally means it's published.
@@ -67,6 +71,8 @@ struct CommentComposer: View {
 
     @State private var state: CommentComposerState = .cancelled
     @State private var draft = ""
+    /// The field's selection, which the formatting buttons act on.
+    @State private var selection: TextSelection?
     /// True while a post is in flight; holds the send button closed so one tap
     /// can't become two comments.
     @State private var isPosting = false
@@ -112,12 +118,17 @@ struct CommentComposer: View {
                 // The editor stays in one slot across every size: putting it in
                 // a second branch would rebuild the text field, dropping focus
                 // and tripping the observer below into collapsing the box.
-                HStack(spacing: 12) {
+                // Bottom-aligned so the "X" stays level with the box's bottom
+                // edge, with the expand button stacked above it.
+                HStack(alignment: .bottom, spacing: 12) {
                     editor
                     // Expanding gives the text box the full width, so the glass
-                    // circle steps aside and the "X" moves inside the box.
+                    // circles step aside and the "X" moves inside the box.
                     if state != .expanded {
-                        cancelButton
+                        VStack(spacing: 12) {
+                            expandButton
+                            cancelButton
+                        }
                     }
                 }
             }
@@ -183,6 +194,8 @@ struct CommentComposer: View {
         }
         if newState == .cancelled {
             draft = ""
+            // A range into the old draft would be invalid in the next one.
+            selection = nil
             replyTarget = nil
         }
         withAnimation(transition) { state = newState }
@@ -252,13 +265,16 @@ struct CommentComposer: View {
     private var editor: some View {
         VStack(spacing: 8) {
             topRow
-            if let replyTarget {
-                replyHeader(author: replyTarget.author)
-            }
+            destinationHeader
             HStack(alignment: .bottom, spacing: 8) {
-                TextField(replyTarget == nil ? "Add a comment…" : "Add a reply…", text: $draft, axis: .vertical)
-                    .focused($isFocused)
-                    .lineLimit(state.lineLimit)
+                TextField(
+                    replyTarget == nil ? "Add a comment…" : "Add a reply…",
+                    text: $draft,
+                    selection: $selection,
+                    axis: .vertical
+                )
+                .focused($isFocused)
+                .lineLimit(state.lineLimit)
                 Button {
                     submit()
                 } label: {
@@ -278,6 +294,12 @@ struct CommentComposer: View {
                 .disabled(trimmedDraft.isEmpty || isPosting)
                 .accessibilityLabel("Post comment")
             }
+            // The larger editor is where longer, formatted comments get
+            // written, so that's where the formatting controls live.
+            if state == .expanded {
+                formattingBar
+                    .transition(.opacity)
+            }
         }
         .padding(.horizontal, 16)
         // While expanded the top row carries the discard button's own 44pt tap
@@ -289,36 +311,103 @@ struct CommentComposer: View {
         .glassEffectID("composer", in: namespace)
     }
 
-    /// Names the comment being answered so the draft's destination stays
-    /// visible while writing. Sits inside the glass, between the grabber and
-    /// the field, and reads as secondary to the draft itself.
-    private func replyHeader(author: String) -> some View {
-        Text("Replying to \(author)…")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .transition(.opacity)
+    /// The highlighted range of the draft, or `nil` when nothing is highlighted
+    /// (just a cursor, or a multi-range selection, which the field doesn't
+    /// produce on iOS).
+    private var selectedRange: Range<String.Index>? {
+        guard case .selection(let range) = selection?.indices, !range.isEmpty else { return nil }
+        return range
+    }
+
+    /// Orange pills that apply Hacker News formatting to the highlighted text.
+    private var formattingBar: some View {
+        HStack(spacing: 8) {
+            formatButton("Format Code", systemImage: "chevron.left.forwardslash.chevron.right", format: .code)
+            formatButton("Italicize", systemImage: "italic", format: .italic)
+            Spacer()
+        }
+    }
+
+    /// One formatting pill. Disabled until some text is highlighted, since
+    /// there's nothing to format otherwise.
+    private func formatButton(
+        _ title: LocalizedStringKey,
+        systemImage: String,
+        format: CommentFormat
+    ) -> some View {
+        Button {
+            guard let range = selectedRange else { return }
+            let result = format.apply(to: draft, range: range)
+            draft = result.text
+            // Keep the freshly formatted passage highlighted, so the change is
+            // visible and another format can be applied on top of it.
+            selection = TextSelection(range: result.range)
+        } label: {
+            Label(title, systemImage: systemImage)
+                .font(.subheadline.weight(.semibold))
+        }
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.capsule)
+        .tint(.orange)
+        .disabled(selectedRange == nil)
+    }
+
+    /// Names where the draft will land — the comment being answered, or the
+    /// story itself for a top-level comment — so it stays visible while
+    /// writing. Sits inside the glass, between the grabber and the field, and
+    /// reads as secondary to the draft itself.
+    private var destinationHeader: some View {
+        // A branch rather than a ternary inside `Text`, so both stay
+        // `LocalizedStringKey`s.
+        Group {
+            if let replyTarget {
+                Text("Replying to \(replyTarget.author)…")
+            } else {
+                Text("Posting to \(storyTitle)…")
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .truncationMode(.tail)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .transition(.opacity)
     }
 
     /// The text box's top row. While expanded the box spans the full width, so
-    /// the discard "X" rides along the top edge and a matching leading inset
-    /// keeps the grabber centred under the finger.
+    /// the discard "X" rides along the top edge, balanced by a shrink button on
+    /// the leading edge that keeps the grabber centred under the finger.
     private var topRow: some View {
         // One HStack for every size, so the grabber — and the drag gesture that
-        // drives the whole ladder — keeps its identity as the "X" comes and goes.
+        // drives the whole ladder — keeps its identity as the buttons come and go.
         HStack(spacing: 0) {
             if state == .expanded {
-                // Balances the trailing button's width.
-                Color.clear
-                    .frame(width: 44, height: 44)
+                shrinkButton
             }
             grabber
             if state == .expanded {
                 discardButton
             }
         }
+    }
+
+    /// The expanded box's way back to the everyday size — the counterpart to
+    /// `expandButton`, and a tappable alternative to swiping the grabber down.
+    /// Plain like `discardButton`, since it also sits on the text box's glass.
+    private var shrinkButton: some View {
+        Button {
+            move(to: .normal)
+        } label: {
+            Image(systemName: "arrow.down.right.and.arrow.up.left")
+                .font(.subheadline.weight(.semibold))
+                .frame(width: 44, height: 44)
+                // A plain button only hit-tests what it draws; without this
+                // the tap target would shrink to the glyph itself.
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .accessibilityLabel("Shrink composer")
     }
 
     /// The expanded box's own discard control. Same "X" as the glass circle it
@@ -330,6 +419,8 @@ struct CommentComposer: View {
             Image(systemName: "xmark")
                 .font(.subheadline.weight(.semibold))
                 .frame(width: 44, height: 44)
+                // As with `shrinkButton`: keep the full 44pt target.
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .foregroundStyle(.secondary)
@@ -337,8 +428,9 @@ struct CommentComposer: View {
     }
 
     /// A separate glass circle that abandons the draft outright, mirroring the
-    /// App Store search field's trailing "X". Shown while the box is compact;
-    /// once expanded, `discardButton` takes over inside the box.
+    /// App Store search field's trailing "X". Shown while the box is compact,
+    /// beneath `expandButton`; once expanded, `discardButton` takes over inside
+    /// the box.
     private var cancelButton: some View {
         Button {
             move(to: .cancelled)
@@ -353,6 +445,23 @@ struct CommentComposer: View {
         .glassEffect(.regular.interactive(), in: .circle)
         .glassEffectID("cancel", in: namespace)
         .accessibilityLabel("Discard comment")
+    }
+
+    /// A glass circle above the "X" that jumps straight to the expanded editor —
+    /// a tappable alternative to swiping the grabber up. Shown alongside the
+    /// "X", so it steps aside too once the box is expanded.
+    private var expandButton: some View {
+        Button {
+            move(to: .expanded)
+        } label: {
+            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                .font(.subheadline.weight(.semibold))
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .circle)
+        .glassEffectID("expand", in: namespace)
+        .accessibilityLabel("Expand composer")
     }
 
     /// The grab handle above the text box. Each swipe steps one state: up
@@ -390,6 +499,6 @@ struct CommentComposer: View {
     @Previewable @State var replyTarget: Comment?
     ZStack(alignment: .bottomTrailing) {
         Color(.systemBackground)
-        CommentComposer(replyTarget: $replyTarget) { _ in }
+        CommentComposer(replyTarget: $replyTarget, storyTitle: "Show HN: A Hacker News client") { _ in }
     }
 }
