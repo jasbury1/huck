@@ -27,7 +27,14 @@ struct AccountView: View {
         // The profile is shown either way — signed out it drops to the tabs and
         // actions that work without an account, and offers its own login sheet.
         NavigationStack(path: $path) {
-            UserView(username: session.username, path: $path, onSignIn: { showingLogin = true })
+            // The profile's own options live in `accountMenu` instead, so the
+            // nav bar keeps a single ellipsis.
+            UserView(
+                username: session.username,
+                path: $path,
+                onSignIn: { showingLogin = true },
+                showsOptionsMenu: false
+            )
                 .navigationDestination(for: ItemNavigation.self) { navigation in
                     StoryDetailsView(from: navigation, path: $path)
                 }
@@ -62,29 +69,44 @@ struct AccountView: View {
         .storyActionsEnabled()
     }
 
-    /// The account tab's overflow menu: the session action that applies right
-    /// now. It's a menu rather than a bare button so further account-level
-    /// actions have somewhere to go.
+    /// The account tab's overflow menu: the options for your profile, then the
+    /// session action that applies right now.
     private var accountMenu: some View {
         Menu {
-            if session.isSignedIn {
-                Button(role: .destructive) {
-                    // Clearing the session cascades: `ContentView` observes the
-                    // account and re-points every per-user store, and the
-                    // profile below falls back to its signed-out state.
-                    session.signOut()
-                } label: {
-                    Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
-                }
-            } else {
-                Button {
-                    showingLogin = true
-                } label: {
-                    Label("Sign In", systemImage: "person.crop.circle")
-                }
+            if let username = session.username {
+                ProfileOptions(username: username)
+                    // Icons match their text, not the app's orange tint.
+                    .tint(.primary)
+                Divider()
             }
+            sessionAction
         } label: {
             Label("Account Options", systemImage: "ellipsis")
+        }
+    }
+
+    /// Log Out when signed in, Sign In when signed out. A menu icon takes the
+    /// tint even on a destructive row (the role only colors the text), so Log
+    /// Out is tinted red to keep its icon matching.
+    @ViewBuilder
+    private var sessionAction: some View {
+        if session.isSignedIn {
+            Button(role: .destructive) {
+                // Clearing the session cascades: `ContentView` observes the
+                // account and re-points every per-user store, and the
+                // profile below falls back to its signed-out state.
+                session.signOut()
+            } label: {
+                Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+            }
+            .tint(.red)
+        } else {
+            Button {
+                showingLogin = true
+            } label: {
+                Label("Sign In", systemImage: "person.crop.circle")
+            }
+            .tint(.primary)
         }
     }
 }

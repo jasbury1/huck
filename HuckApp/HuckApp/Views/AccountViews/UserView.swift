@@ -35,6 +35,11 @@ struct UserView: View {
     /// username and never show the card, so they can leave it unset.
     let onSignIn: (() -> Void)?
 
+    /// Whether the page adds its own overflow menu to the nav bar. The account
+    /// tab turns this off: it already has an account menu there, and folds the
+    /// profile options into it rather than showing two ellipses side by side.
+    let showsOptionsMenu: Bool
+
     /// Per-user record of recently-viewed stories, shown in the (current-user-only)
     /// "Recently viewed" tab.
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
@@ -43,10 +48,16 @@ struct UserView: View {
     /// Rebuilt whenever the tab is shown so newly-opened stories appear.
     @State private var recentlyViewed: StoryFeed?
 
-    init(username: String?, path: Binding<NavigationPath>, onSignIn: (() -> Void)? = nil) {
+    init(
+        username: String?,
+        path: Binding<NavigationPath>,
+        onSignIn: (() -> Void)? = nil,
+        showsOptionsMenu: Bool = true
+    ) {
         self.username = username
         self._path = path
         self.onSignIn = onSignIn
+        self.showsOptionsMenu = showsOptionsMenu
         // The feeds are (re)built by `loadProfile()`, which also runs on any
         // later change of `username` — signing in or out, without this view
         // losing its identity. Seeding them here keeps a real profile's first
@@ -131,6 +142,20 @@ struct UserView: View {
                 Text(displayName)
                     .font(.headline)
                     .opacity(collapseProgress)
+            }
+            // Signed out there's no profile to act on.
+            if showsOptionsMenu, let username {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        ProfileOptions(username: username)
+                            // Menu icons match their text rather than the app's
+                            // orange tint. Set on the content, not the `Menu`,
+                            // so the ellipsis button itself keeps the tint.
+                            .tint(.primary)
+                    } label: {
+                        Label("Profile Options", systemImage: "ellipsis")
+                    }
+                }
             }
         }
         // Keyed on `username` so signing in or out reloads in place rather than
@@ -576,6 +601,24 @@ struct UserView: View {
             ) { comment in
                 UserCommentRow(comment: comment, path: $path)
             }
+        }
+    }
+}
+
+/// The actions offered for a profile, as menu rows. Shared by the profile's own
+/// overflow menu and the account tab's menu, which shows your own profile.
+struct ProfileOptions: View {
+    let username: String
+
+    var body: some View {
+        let url = User.hackerNewsURL(for: username)
+        Button {
+            UIPasteboard.general.url = url
+        } label: {
+            Label("Copy Profile Link", systemImage: "link")
+        }
+        ShareLink(item: url) {
+            Label("Share Profile", systemImage: "square.and.arrow.up")
         }
     }
 }

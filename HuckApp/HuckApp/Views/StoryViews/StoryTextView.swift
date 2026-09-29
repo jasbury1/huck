@@ -173,9 +173,6 @@ struct StoryTextView: View {
     @State private var titleHeight: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
 
-    /// Non-nil while the shared "More" options popover is presented.
-    @State private var moreOptionsStory: StoryModel?
-
     /// The comment the composer is replying to, set by the Reply swipe action
     /// and cleared when the draft is discarded.
     @State private var replyTarget: Comment?
@@ -330,17 +327,16 @@ struct StoryTextView: View {
                     .opacity(titleCollapseProgress)
             }
             ToolbarItem(placement: .topBarTrailing) {
-                // Opens the same shared "More" options popover as the feed.
-                Button {
-                    moreOptionsStory = storyData
+                // The same options as a feed row's long-press menu.
+                Menu {
+                    StoryOptions(story: storyData)
+                        // Icons match their text, not the app's orange tint.
+                        .tint(.primary)
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.title2)
+                    Label("Story Options", systemImage: "ellipsis")
                 }
             }
         }
-        // "More" options pop-up, shared with the story feed.
-        .storyOptionsPopover(for: $moreOptionsStory)
         // Floating Liquid Glass compose control in the bottom-trailing corner.
         .overlay(alignment: .bottomTrailing) {
             CommentComposer(replyTarget: $replyTarget) { text in

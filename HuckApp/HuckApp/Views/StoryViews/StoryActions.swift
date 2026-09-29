@@ -30,6 +30,15 @@ struct FavoriteAction {
     func callAsFunction(_ story: StoryModel) { handler(story) }
 }
 
+/// Presents the collection picker for a story, behind the login gate, since
+/// collections are per-user. The sheet is owned by `storyActionsEnabled()`
+/// rather than the caller because the usual caller is a menu row, and a menu
+/// is gone by the time a sheet attached to it would present.
+struct AddToCollectionAction {
+    let handler: (StoryModel) -> Void
+    func callAsFunction(_ story: StoryModel) { handler(story) }
+}
+
 /// Runs a closure only when signed in, otherwise presenting the login screen —
 /// the same gate as upvote/favorite, exposed for actions that aren't tied to a
 /// single story (e.g. creating a collection). The default runs the closure
@@ -43,6 +52,7 @@ extension EnvironmentValues {
     @Entry var upvote = UpvoteAction { _ in }
     @Entry var upvoteComment = UpvoteCommentAction { _ in }
     @Entry var favorite = FavoriteAction { _ in }
+    @Entry var addToCollection = AddToCollectionAction { _ in }
     @Entry var requireLogin = RequireLoginAction { $0() }
 }
 
@@ -54,6 +64,8 @@ private struct StoryActionsModifier: ViewModifier {
     @Environment(InteractionStore.self) private var store
     @Environment(UserSession.self) private var session
     @State private var isPresentingLogin = false
+    /// The story whose collection picker is showing, if any.
+    @State private var collectionStory: StoryModel?
 
     func body(content: Content) -> some View {
         content
@@ -66,15 +78,15 @@ private struct StoryActionsModifier: ViewModifier {
             .environment(\.favorite, FavoriteAction { story in
                 perform { await store.toggleFavorite(story) }
             })
-            .environment(\.requireLogin, RequireLoginAction { action in
-                if session.isSignedIn {
-                    action()
-                } else {
-                    isPresentingLogin = true
-                }
+            .environment(\.addToCollection, AddToCollectionAction { story in
+                requireLogin { collectionStory = story }
             })
+            .environment(\.requireLogin, RequireLoginAction(handler: requireLogin))
             .sheet(isPresented: $isPresentingLogin) {
                 LoginView()
+            }
+            .sheet(item: $collectionStory) { story in
+                AddToCollectionView(story: story)
             }
             // Signing in is what the sheet was for, so dismiss it once it has.
             // The per-user reload is not this modifier's job — it happens once,
@@ -82,6 +94,15 @@ private struct StoryActionsModifier: ViewModifier {
             .onChange(of: session.account) {
                 if session.isSignedIn { isPresentingLogin = false }
             }
+    }
+
+    /// Runs `action` when signed in, or presents login when signed out.
+    private func requireLogin(_ action: @escaping () -> Void) {
+        if session.isSignedIn {
+            action()
+        } else {
+            isPresentingLogin = true
+        }
     }
 
     /// Runs a store action when signed in, or routes to login when signed out.
@@ -95,8 +116,9 @@ private struct StoryActionsModifier: ViewModifier {
 }
 
 extension View {
-    /// Enables `@Environment(\.upvote)`, `@Environment(\.favorite)`, and
-    /// `@Environment(\.requireLogin)` for this view's subtree, routing taps through
+    /// Enables `@Environment(\.upvote)`, `@Environment(\.favorite)`,
+    /// `@Environment(\.addToCollection)`, and `@Environment(\.requireLogin)` for
+    /// this view's subtree, routing taps through
     /// the interaction store and presenting login when signed out. Apply it once
     /// per navigation stack, above the story views that show these actions.
     func storyActionsEnabled() -> some View {

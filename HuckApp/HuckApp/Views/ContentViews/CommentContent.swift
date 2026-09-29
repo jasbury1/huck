@@ -227,7 +227,7 @@ struct CommentUpvoteButton: View {
 
 /// The ellipsis a comment's options hang from — a plain dropdown anchored to
 /// the trailing edge of the header, which is the conventional affordance for a
-/// per-row control and lighter than the sheet a story's "More" button presents.
+/// per-row control.
 ///
 /// Shared so the affordance is identical wherever a comment appears; only the
 /// contents differ, since a thread comment can be collapsed and a standalone
@@ -238,6 +238,8 @@ struct CommentOptionsMenu<Content: View>: View {
     var body: some View {
         Menu {
             content()
+                // Icons match their text, not the app's orange tint.
+                .tint(.primary)
         } label: {
             Image(systemName: "ellipsis")
                 .font(.footnote)

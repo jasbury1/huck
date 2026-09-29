@@ -22,10 +22,6 @@ struct StoryFeedView: View {
     /// Backing text for the search field revealed by pulling the feed down.
     @State private var searchText = ""
 
-    /// The story whose "More" swipe action was tapped, driving the options
-    /// pop-up. Non-nil while the confirmation dialog is presented.
-    @State private var moreOptionsStory: StoryModel?
-
     /// Upvote and favorite actions (each handles the login gate and the toggle).
     @Environment(\.upvote) private var upvote
     @Environment(\.favorite) private var favorite
@@ -54,10 +50,10 @@ struct StoryFeedView: View {
                     .onAppear {
                         Task { await feed.prefetchAhead(after: story.id) }
                     }
-                    // Leading swipe hides or marks the story read; a full swipe
+                    // Trailing swipe hides or marks the story read; a full swipe
                     // hides it. Hide is listed first so it's the full-swipe
                     // action. Behavior is stubbed for now.
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button {
                             // TODO: Hide this story
                         } label: {
@@ -81,9 +77,10 @@ struct StoryFeedView: View {
                         }
                         .tint(.indigo)
                     }
-                    // Trailing swipe exposes Upvote, Save, and More. Upvote is
-                    // listed first so a full swipe triggers it. All stubbed.
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    // Leading swipe exposes Upvote and Favorite, matching the
+                    // comment rows' leading Upvote. Upvote is listed first so a
+                    // full swipe triggers it.
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             upvote(story)
                         } label: {
@@ -96,18 +93,17 @@ struct StoryFeedView: View {
                             Label("Favorite", systemImage: "heart")
                         }
                         .tint(.red)
-                        Button {
-                            moreOptionsStory = story
-                        } label: {
-                            Label("More", systemImage: "ellipsis")
-                        }
-                        .tint(.gray)
+                    }
+                    // Long-press shows the same options as the story's toolbar
+                    // ellipsis.
+                    .contextMenu {
+                        StoryOptions(story: story)
+                            // Icons match their text, not the app's orange tint.
+                            .tint(.primary)
                     }
             }
         }
         .listStyle(.plain)
-        // "More" swipe action pop-up, shared with the story text view.
-        .storyOptionsPopover(for: $moreOptionsStory)
         // A small pull-down reveals the search field (it stays hidden while
         // scrolled, per the drawer's automatic display mode); pulling further
         // triggers the refresh below.
@@ -150,25 +146,29 @@ struct StoryFeedView: View {
         .navigationTitle(storyFilter.displayName())
         .navigationBarTitleDisplayMode(.inline)
         .toolbarTitleMenu {
-            Button("Top", systemImage: "arrow.up") {
-                storyFilter = .topStories
+            Group {
+                Button("Top", systemImage: "arrow.up") {
+                    storyFilter = .topStories
+                }
+                Button("Best", systemImage: "trophy") {
+                    storyFilter = .bestStories
+                }
+                Button("New", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90") {
+                    storyFilter = .newStories
+                }
+                Divider()
+                Button("Ask Hacker News", systemImage: "questionmark.bubble") {
+                    storyFilter = .askStories
+                }
+                Button("Show Hacker News", systemImage: "eye") {
+                    storyFilter = .showStories
+                }
+                Button("Job Listings", systemImage: "briefcase") {
+                    storyFilter = .jobStories
+                }
             }
-            Button("Best", systemImage: "trophy") {
-                storyFilter = .bestStories
-            }
-            Button("New", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90") {
-                storyFilter = .newStories
-            }
-            Divider()
-            Button("Ask Hacker News", systemImage: "questionmark.bubble") {
-                storyFilter = .askStories
-            }
-            Button("Show Hacker News", systemImage: "eye") {
-                storyFilter = .showStories
-            }
-            Button("Job Listings", systemImage: "briefcase") {
-                storyFilter = .jobStories
-            }
+            // Icons match their text, not the app's orange tint.
+            .tint(.primary)
         }
     }
 

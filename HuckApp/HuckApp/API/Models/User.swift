@@ -29,5 +29,13 @@ class User: Identifiable {
         self.about = userdata.about?.normalizeHtmlText() ?? ""
         self.karma = userdata.karma ?? 0
     }
-    
+
+    /// A user's Hacker News profile page. Static so a profile's link is
+    /// available from its username alone, before the `User` itself has loaded.
+    /// Usernames are limited to letters, digits, `-` and `_`, so the string is
+    /// always a valid URL.
+    static func hackerNewsURL(for username: String) -> URL {
+        URL(string: "https://news.ycombinator.com/user?id=\(username)")!
+    }
+
 }
