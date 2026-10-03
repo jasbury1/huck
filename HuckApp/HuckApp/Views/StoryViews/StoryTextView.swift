@@ -149,6 +149,7 @@ struct StoryTextView: View {
     @Environment(InteractionStore.self) private var interactionStore
     @Environment(\.upvote) private var upvote
     @Environment(\.favorite) private var favorite
+    @Environment(\.upvoteComment) private var upvoteComment
     /// Gates commenting and replying, which need an account, behind the same
     /// login sheet the story actions use.
     @Environment(\.requireLogin) private var requireLogin
@@ -245,12 +246,18 @@ struct StoryTextView: View {
                         )
                             .padding(.horizontal, 16)
                             // Leading swipe (swipe right) exposes Upvote and Reply.
-                            // Upvote is listed first so a full swipe triggers it. Both stubbed.
+                            // Upvote is listed first so a full swipe triggers it. It
+                            // goes through the same action as the comment's arrow,
+                            // so a second swipe removes the vote.
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                let isUpvoted = interactionStore.isCommentUpvoted(comment.id)
                                 Button {
-                                    // TODO: Upvote this comment
+                                    upvoteComment(id: comment.id)
                                 } label: {
-                                    Label("Upvote", systemImage: "arrow.up")
+                                    Label(
+                                        isUpvoted ? "Remove Upvote" : "Upvote",
+                                        systemImage: isUpvoted ? "arrow.uturn.down" : "arrow.up"
+                                    )
                                 }
                                 .tint(.orange)
                                 Button {
