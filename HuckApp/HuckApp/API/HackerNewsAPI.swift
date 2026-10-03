@@ -334,6 +334,16 @@ class HackerNewsAPI {
         try await NewsYCService.castVote(id: itemId, how: how, auth: voteAuth.auth)
     }
 
+    /// The points on one of the logged-in user's own comments. Hacker News
+    /// shows a comment's score only to its author, so this is `nil` for anyone
+    /// else's comment, when logged out, or if the page couldn't be read.
+    /// `username` is the logged-in user, whose `/threads` the scores are read
+    /// from in bulk — see `CommentScoreCache`.
+    static func ownCommentScore(id: Int, username: String) async -> Int? {
+        guard hasAuthCookie else { return nil }
+        return await CommentScoreCache.shared.score(for: id, username: username)
+    }
+
     /// A user's upvoted comments, most-recent first, for their own profile's
     /// Likes. Hacker News shows `/upvoted` only to its owner, so `username` must
     /// be the signed-in user. `page` is 0-based to match the other user feeds.

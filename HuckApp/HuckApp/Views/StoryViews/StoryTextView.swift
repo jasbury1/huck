@@ -104,8 +104,14 @@ struct CommentCellView: View {
                     CommentAgeLabel(timestamp: commentData.timestamp)
                     // Only a comment Hacker News has given an id can be voted
                     // on; one just posted gets its arrow when the id arrives.
+                    // The reader's own comments can't be voted on, but their
+                    // score is shown to them instead.
                     if let itemID = commentData.itemID {
-                        CommentUpvoteButton(id: itemID)
+                        if commentData.author == session.username {
+                            CommentScoreLabel(id: itemID)
+                        } else {
+                            CommentUpvoteButton(id: itemID)
+                        }
                     }
                     optionsMenu
                 }

@@ -9,6 +9,7 @@ HackerNewsAPI  ← the facade: the ONLY type the rest of the app calls
    │
    ├── Cache/StoryCache              (actor; caches stories behind the facade)
    ├── Cache/CommentCache            (actor; caches whole comment threads, short TTL)
+   ├── Cache/CommentScoreCache       (actor; the reader's own comment scores, scraped from /threads in bulk, short TTL)
    ├── Services/AlgoliaAPIService    (historic data, whole comment threads, user search)
    ├── Services/FirebaseAPIService   (realtime story lists and items)
    │         │
@@ -59,6 +60,8 @@ The types the app actually works with, decoupled from any single API:
 - `APIMetrics` — per-source, per-endpoint request counts for the Debug tab.
   Every request goes through `URLSession.countedData(for:)` rather than
   `data(for:)`, which is where the counting happens.
+- `AsyncSemaphore` (in `Common/`) — LIFO limiter for scroll-driven fetches
+  (thumbnails, own-comment scores).
 - `APIError` / `NetworkError` — error types.
 - `PostAge` — relative-time formatting (`Date.ageString()`).
 - `StringExtensions` — `normalizeHtmlText()`, converts HN's HTML to Markdown.

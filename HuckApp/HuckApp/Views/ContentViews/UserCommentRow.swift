@@ -59,7 +59,13 @@ struct UserCommentRow: View {
                 path: $path
             ) {
                 CommentAgeLabel(timestamp: comment.timestamp)
-                CommentUpvoteButton(id: comment.id)
+                // The reader's own comments show their score instead of an
+                // arrow they couldn't use.
+                if comment.author == session.username {
+                    CommentScoreLabel(id: comment.id)
+                } else {
+                    CommentUpvoteButton(id: comment.id)
+                }
                 optionsMenu
             }
         }

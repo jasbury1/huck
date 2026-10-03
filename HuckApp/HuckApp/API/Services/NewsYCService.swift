@@ -174,6 +174,79 @@ struct NewsYCService {
         }
     }
 
+    // MARK: - Comment scores
+
+    /// The points on one of the reader's own comments, or `nil` if the page
+    /// doesn't show them. The fallback for a comment too old for
+    /// `threadScores(username:next:)` to reach.
+    ///
+    /// Hacker News publishes a comment's score to no one but its author, and
+    /// only in the page markup — neither JSON API carries it (Algolia's
+    /// `points` is always null for comments). The comment's own `/item` page is
+    /// read rather than its story's, which for a busy thread is the whole
+    /// conversation.
+    static func commentScore(id: Int) async -> Int? {
+        guard let url = URL(string: "\(baseUri)/item?id=\(id)"),
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+        // `<span class="score" id="score_<ID>">12 points</span>`, scoped to this
+        // id so a reply's score on the same page can't be picked up instead.
+        return firstMatch(
+            in: html,
+            pattern: "id=['\"]score_\(id)['\"][^>]*>\\s*(\\d+)\\s+points?"
+        ).flatMap(Int.init)
+    }
+
+    /// One page of the reader's `/threads` — their comments, newest first,
+    /// each with the replies beneath it — as the scores it shows, or `nil` if
+    /// the page couldn't be fetched.
+    ///
+    /// This is how scores are read in bulk: Hacker News marks the score on
+    /// every one of the reader's own comments on the page, so one request
+    /// covers a page of them rather than one each. `oldestID` is the lowest
+    /// comment id on the page (ids rise over time, so everything newer than it
+    /// has been seen), and `next` is the cursor for the page after it.
+    static func threadScores(
+        username: String,
+        next: Int? = nil
+    ) async -> (scores: [Int: Int], oldestID: Int?, next: Int?)? {
+        var components = URLComponents(string: "\(baseUri)/threads")
+        components?.queryItems = [URLQueryItem(name: "id", value: username)]
+            + (next.map { [URLQueryItem(name: "next", value: String($0))] } ?? [])
+        guard let url = components?.url,
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+
+        var scores: [Int: Int] = [:]
+        if let regex = try? NSRegularExpression(
+            pattern: "id=['\"]score_(\\d+)['\"][^>]*>\\s*(\\d+)\\s+points?",
+            options: [.caseInsensitive]
+        ) {
+            for match in regex.matches(in: html, range: NSRange(html.startIndex..., in: html)) {
+                guard let idRange = Range(match.range(at: 1), in: html),
+                      let scoreRange = Range(match.range(at: 2), in: html),
+                      let id = Int(html[idRange]),
+                      let score = Int(html[scoreRange]) else { continue }
+                scores[id] = score
+            }
+        }
+        // Every comment row, the reader's and the replies alike, bounds what
+        // the page covers.
+        let oldestID = allMatches(
+            in: html,
+            pattern: "<tr[^>]*class=['\"]athing[^'\"]*['\"][^>]*id=['\"](\\d+)['\"]"
+        ).compactMap(Int.init).min()
+        // The More link carries the cursor: `threads?id=<user>&next=<id>`. The
+        // tag is found first, so attribute order doesn't matter.
+        let nextCursor = allTags(in: html, pattern: "<a[^>]*morelink[^>]*>")
+            .first
+            .flatMap { firstMatch(in: $0, pattern: "next=(\\d+)") }
+            .flatMap(Int.init)
+        return (scores, oldestID, nextCursor)
+    }
+
     // MARK: - Deleting
 
     /// The hidden fields of Hacker News' delete confirmation form for one of

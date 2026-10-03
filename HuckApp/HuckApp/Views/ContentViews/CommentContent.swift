@@ -196,8 +196,9 @@ struct CommentAgeLabel: View {
 /// comment row hold different types and a vote needs only the id. Sits between
 /// the timestamp and the options menu wherever a comment is shown.
 ///
-/// No score beside it, unlike a story's arrow: Hacker News doesn't publish a
-/// comment's points, so there's no number to show or to move.
+/// No score beside it, unlike a story's arrow: Hacker News shows a comment's
+/// points only to its author, so there's no number to show or to move. (The
+/// author sees `CommentScoreLabel` in its place.)
 struct CommentUpvoteButton: View {
     let id: Int
 
@@ -224,6 +225,46 @@ struct CommentUpvoteButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isUpvoted ? "Remove upvote" : "Upvote")
+    }
+}
+
+/// The score on one of the reader's own comments, in place of the upvote
+/// arrow — Hacker News doesn't let anyone vote on their own comment, but does
+/// show its author the points it has earned, and no one else.
+///
+/// The score is scraped — a page of the reader's comments at a time, see
+/// `CommentScoreCache` — so it's asked for only once the row is on screen, and
+/// the arrow is drawn straight away so the header doesn't shift when the
+/// number lands. If it can't be read, the arrow stands alone.
+struct CommentScoreLabel: View {
+    let id: Int
+
+    /// The reader, whose comment this is.
+    @Environment(UserSession.self) private var session
+    @State private var score: Int?
+
+    var body: some View {
+        HStack(spacing: 2) {
+            Image(systemName: "arrow.up")
+            if let score {
+                Text(score, format: .number)
+                    .monospacedDigit()
+                    .transition(.opacity)
+            }
+        }
+        .font(.footnote)
+        .foregroundStyle(.gray)
+        // The same inset as the other controls, so the arrow alone occupies
+        // exactly the upvote button's footprint and the gaps stay even.
+        .padding(.horizontal, CommentHeaderMetrics.iconInset)
+        .frame(height: CommentHeaderMetrics.controlSize)
+        .animation(.default, value: score)
+        .task(id: id) {
+            guard let username = session.username else { return }
+            score = await HackerNewsAPI.ownCommentScore(id: id, username: username)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(score.map { "\($0) points" } ?? "Your comment")
     }
 }
 
