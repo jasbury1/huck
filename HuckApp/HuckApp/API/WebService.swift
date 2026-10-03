@@ -19,7 +19,7 @@ class WebService {
     func downloadData<T: Codable>(fromURL: String) async -> T? {
         do {
             guard let url = URL(string: fromURL) else { throw NetworkError.badUrl }
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await URLSession.shared.countedData(for: URLRequest(url: url))
             guard let response = response as? HTTPURLResponse else {
                 throw NetworkError.badResponse
             }

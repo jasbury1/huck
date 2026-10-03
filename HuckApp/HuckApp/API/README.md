@@ -56,6 +56,9 @@ The types the app actually works with, decoupled from any single API:
 
 ### Support
 - `WebService` — low-level generic `downloadData<T: Codable>(fromURL:)`.
+- `APIMetrics` — per-source, per-endpoint request counts for the Debug tab.
+  Every request goes through `URLSession.countedData(for:)` rather than
+  `data(for:)`, which is where the counting happens.
 - `APIError` / `NetworkError` — error types.
 - `PostAge` — relative-time formatting (`Date.ageString()`).
 - `StringExtensions` — `normalizeHtmlText()`, converts HN's HTML to Markdown.

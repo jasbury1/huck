@@ -531,7 +531,7 @@ class HackerNewsAPI {
         // The redirect must stay blocked: a successful login is a 302 carrying
         // the `user` cookie, and following it would drop the `Set-Cookie` header
         // we're here for (the session deliberately doesn't store cookies itself).
-        let (data, response) = try await session.data(for: request, delegate: RedirectBlocker())
+        let (data, response) = try await session.countedData(for: request, delegate: RedirectBlocker())
         guard let response = response as? HTTPURLResponse else {
             print("Bad response: \(response)")
             throw NetworkError.badResponse

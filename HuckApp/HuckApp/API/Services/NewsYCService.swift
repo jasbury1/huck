@@ -69,7 +69,7 @@ struct NewsYCService {
 
         var request = URLRequest(url: url)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await URLSession.shared.countedData(for: request)
         guard let http = response as? HTTPURLResponse,
               (200..<300).contains(http.statusCode) else {
             throw APIError.voteFailed
@@ -110,7 +110,7 @@ struct NewsYCService {
 
         var request = URLRequest(url: url)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await URLSession.shared.countedData(for: request)
         guard let http = response as? HTTPURLResponse,
               (200..<300).contains(http.statusCode) else {
             throw APIError.favoriteFailed
@@ -166,7 +166,7 @@ struct NewsYCService {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
 
-        let (_, response) = try await postingSession.data(for: request)
+        let (_, response) = try await postingSession.countedData(for: request)
         // HN redirects on success and re-renders the form (200) on refusal, so
         // the status code is the whole answer — see `postingSession`.
         guard let http = response as? HTTPURLResponse, http.statusCode == 302 else {
@@ -355,7 +355,7 @@ struct NewsYCService {
     private static func fetchHTML(from url: URL) async throws -> String {
         var request = URLRequest(url: url)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.countedData(for: request)
         guard let http = response as? HTTPURLResponse,
               (200..<300).contains(http.statusCode) else {
             throw NetworkError.badStatus

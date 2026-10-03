@@ -120,12 +120,12 @@ actor ThumbnailCache {
     private static func loadThumbnail(for pageURL: URL) async -> UIImage? {
         // 1. Prefer the page's Open Graph / Twitter card image.
         if let imageURL = await openGraphImageURL(for: pageURL),
-           let image = await downloadImage(from: imageURL) {
+           let image = await downloadImage(from: imageURL, endpoint: "Open Graph image") {
             return image
         }
         // 2. Fall back to the site's favicon.
         if let faviconURL = faviconURL(for: pageURL),
-           let image = await downloadImage(from: faviconURL) {
+           let image = await downloadImage(from: faviconURL, endpoint: "Favicon") {
             return image
         }
         return nil
@@ -138,7 +138,7 @@ actor ThumbnailCache {
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("text/html", forHTTPHeaderField: "Accept")
 
-        guard let (data, response) = try? await session.data(for: request),
+        guard let (data, response) = try? await session.countedData(for: request, endpoint: "Article page"),
               let http = response as? HTTPURLResponse,
               (200..<300).contains(http.statusCode) else {
             return nil
@@ -173,11 +173,12 @@ actor ThumbnailCache {
         return URL(string: "https://www.google.com/s2/favicons?sz=128&domain=\(host)")
     }
 
-    private static func downloadImage(from url: URL) async -> UIImage? {
+    /// `endpoint` names the kind of image for the debug screen's request counts.
+    private static func downloadImage(from url: URL, endpoint: String) async -> UIImage? {
         var request = URLRequest(url: url)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
 
-        guard let (data, response) = try? await session.data(for: request),
+        guard let (data, response) = try? await session.countedData(for: request, endpoint: endpoint),
               let http = response as? HTTPURLResponse,
               (200..<300).contains(http.statusCode) else {
             return nil

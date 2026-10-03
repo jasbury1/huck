@@ -27,6 +27,10 @@ struct SettingsView: View {
     /// where it's chosen.
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
 
+    /// Shows the Debug tab. Only offered where `DebugMode.isAvailable`.
+    @AppStorage(DebugMode.enabledKey) private var isDebugModeEnabled = false
+    @Environment(UserSession.self) private var session
+
     @State private var isConfirmingClearHistory = false
 
     var body: some View {
@@ -66,6 +70,22 @@ struct SettingsView: View {
                         } icon: {
                             SettingsIcon(systemImage: "globe", color: .blue)
                         }
+                    }
+                }
+
+                if DebugMode.isAvailable(for: session.username) {
+                    Section {
+                        Toggle(isOn: $isDebugModeEnabled) {
+                            Label {
+                                Text("Debug Mode")
+                            } icon: {
+                                SettingsIcon(systemImage: "ladybug", color: .gray)
+                            }
+                        }
+                    } header: {
+                        Text("Developer")
+                    } footer: {
+                        Text("Adds a Debug tab with counts of every API request the app makes.")
                     }
                 }
             }
@@ -132,4 +152,5 @@ private struct SettingsIcon: View {
 #Preview {
     SettingsView()
         .environment(RecentlyViewedStore(session: UserSession()))
+        .environment(UserSession())
 }

@@ -44,6 +44,13 @@ struct ContentView: View {
     /// were presented from.
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
 
+    /// Debug mode, switched on in Settings. Re-checked against the session so
+    /// the tab goes away if the developer account signs out of a release build.
+    @AppStorage(DebugMode.enabledKey) private var isDebugModeEnabled = false
+    private var showsDebugTab: Bool {
+        isDebugModeEnabled && DebugMode.isAvailable(for: session.username)
+    }
+
     init() {
         // Built here as one graph rather than defaulting independently: each of
         // these depends on the session, and the sync also writes into the store.
@@ -65,6 +72,11 @@ struct ContentView: View {
             // gear in the Account tab's toolbar.
             Tab("Account", systemImage: "person.circle") {
                 AccountView()
+            }
+            if showsDebugTab {
+                Tab("Debug", systemImage: "ladybug") {
+                    DebugView()
+                }
             }
             // The search field is declared inside this tab, not on the tab view:
             // a `searchable` outside the `TabView` propagates into every tab and
