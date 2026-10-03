@@ -10,7 +10,7 @@ import Foundation
 // MARK: - Firebase Response Data
 
 /// A story item as returned by the official Firebase HN `item` endpoint.
-struct FirebaseStoryData: Codable {
+nonisolated struct FirebaseStoryData: Codable, Sendable {
     let title: String
     let by: String
     let score: Int
@@ -30,7 +30,7 @@ struct FirebaseStoryData: Codable {
 /// Most fields are optional because leaf comments omit `kids` and
 /// deleted/dead comments omit `by` and `text`; requiring them would fail the
 /// decode and drop the whole comment.
-struct FirebaseCommentData: Codable {
+nonisolated struct FirebaseCommentData: Codable, Sendable {
     let id: Int
     let by: String?
     let kids: [Int]?
@@ -47,7 +47,7 @@ struct FirebaseCommentData: Codable {
 /// first**. That ordering is what makes it the one realtime way to recover the
 /// id of a comment we've just written, which HN's comment form never reports
 /// back. It's optional because an account that has never posted omits it.
-struct FirebaseUserData: Codable {
+nonisolated struct FirebaseUserData: Codable, Sendable {
     let id: String
     let submitted: [Int]?
 }

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum StoryFilter {
+nonisolated enum StoryFilter {
     case topStories
     case bestStories
     case newStories

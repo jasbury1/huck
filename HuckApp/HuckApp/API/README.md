@@ -7,7 +7,8 @@ This directory contains everything Huck uses to talk to Hacker News.
 ```
 HackerNewsAPI  ← the facade: the ONLY type the rest of the app calls
    │
-   ├── Cache/StoryCache              (actor; caches stories behind the facade)
+   ├── Cache/StoryCache              (actor; caches stories behind the facade, 1000 max)
+   ├── Cache/StoryListCache          (actor; the main feeds' ranked id lists, short TTL)
    ├── Cache/CommentCache            (actor; caches whole comment threads, short TTL)
    ├── Cache/CommentScoreCache       (actor; the reader's own comment scores, scraped from /threads in bulk, short TTL)
    ├── Services/AlgoliaAPIService    (historic data, whole comment threads, user search)

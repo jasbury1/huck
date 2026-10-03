@@ -18,7 +18,12 @@ import Foundation
 actor StoryCache {
     static let shared = StoryCache()
 
-    private let cache = LRUCache<Int, FirebaseStoryData>(capacity: 500)
+    /// How many stories are kept. Sized to hold the launch warm-up — most of
+    /// the Top, Best, New and Show lists at once (see
+    /// `HackerNewsAPI.warmLaunchFeeds()`) — with room to browse beyond them.
+    static let capacity = 1000
+
+    private let cache = LRUCache<Int, FirebaseStoryData>(capacity: capacity)
 
     /// Maximum number of concurrent fetches during a prefetch pass.
     private let maxConcurrentPrefetches = 8

@@ -48,8 +48,84 @@ class HackerNewsAPI {
 
     // MARK: - Stories
 
+    /// A feed's ranked story ids, served from `StoryListCache` while fresh.
     static func getStoryIds(filter: StoryFilter) async -> [Int] {
-        await FirebaseAPIService.getStoryIdsAsync(filter: filter)
+        await StoryListCache.shared.ids(for: filter)
+    }
+
+    /// Like `getStoryIds(filter:)`, but always fetches the current ranking —
+    /// for pull-to-refresh, where a cached list would defeat the point.
+    static func refreshStoryIds(filter: StoryFilter) async -> [Int] {
+        await StoryListCache.shared.refresh(filter)
+    }
+
+    /// The feeds warmed at launch, most likely to be opened first.
+    private static let launchFeeds: [StoryFilter] = [.topStories, .bestStories, .newStories, .showStories]
+
+    /// How many stories the launch warm-up may cache in all, short of the
+    /// cache's capacity so browsing afterwards has room before anything warmed
+    /// is evicted.
+    private static let launchWarmBudget = StoryCache.capacity * 9 / 10
+
+    /// Warms the main feeds at launch so opening any of them is immediate:
+    /// their id lists, then every feed's first screen (details and thumbnails),
+    /// then as much of the rest as the budget allows.
+    ///
+    /// Top Stories goes first throughout — it's the feed most likely to be
+    /// opened, and opened soonest. Its first screen's details are fetched
+    /// before anyone else's, and its thumbnails are loaded to completion before
+    /// the other feeds' are even queued: the thumbnail queue serves the newest
+    /// request first, so queuing them together would put Top's at the back.
+    /// That thumbnail chain runs alongside the story warming rather than ahead
+    /// of it, so a slow image host can't hold up the rest.
+    ///
+    /// The deeper pass takes the feeds a rank at a time — every feed's 16th
+    /// story, then every feed's 17th, and so on — rather than one feed after
+    /// another, so if the budget runs out, or the app is closed partway, each
+    /// feed is covered to the same depth instead of one completely and the last
+    /// not at all. Stories in more than one feed are fetched once.
+    static func warmLaunchFeeds() async {
+        // The lists themselves: four requests, all at once.
+        let lists = await withTaskGroup(of: (Int, [Int]).self) { group in
+            for (index, filter) in launchFeeds.enumerated() {
+                group.addTask { (index, await getStoryIds(filter: filter)) }
+            }
+            var lists = Array(repeating: [Int](), count: launchFeeds.count)
+            for await (index, ids) in group { lists[index] = ids }
+            return lists
+        }
+
+        let firstScreens = interleavedByRank(lists.map { Array($0.prefix(thumbnailPrefetchWindow)) })
+        let topFirstScreen = Array(lists[0].prefix(thumbnailPrefetchWindow))
+        let otherFirstScreens = firstScreens.filter { !topFirstScreen.contains($0) }
+
+        await prefetchStories(ids: topFirstScreen)
+        async let thumbnails: Void = {
+            await loadThumbnails(ids: topFirstScreen)
+            await prefetchThumbnails(ids: otherFirstScreens)
+        }()
+
+        await prefetchStories(ids: otherFirstScreens)
+        await prefetchStories(ids: Array(interleavedByRank(lists).prefix(launchWarmBudget)))
+
+        // The first screens were cached first, which makes them the first to
+        // go when the cache fills. Reading them again — all hits, no requests —
+        // marks them most recently used, so they're the last instead.
+        await prefetchStories(ids: firstScreens)
+        await thumbnails
+    }
+
+    /// Merges lists rank by rank — every list's first item, then every list's
+    /// second — dropping ids already taken from an earlier list.
+    private static func interleavedByRank(_ lists: [[Int]]) -> [Int] {
+        var seen = Set<Int>()
+        var merged: [Int] = []
+        for rank in 0..<(lists.map(\.count).max() ?? 0) {
+            for list in lists where rank < list.count && seen.insert(list[rank]).inserted {
+                merged.append(list[rank])
+            }
+        }
+        return merged
     }
 
     /// Returns a single story, served from the cache when available.
@@ -72,6 +148,23 @@ class HackerNewsAPI {
     /// run) and hands the link URLs to the thumbnail cache. Text posts, which
     /// have no URL, are skipped.
     static func prefetchThumbnails(ids: [Int]) async {
+        await ThumbnailCache.shared.prefetch(urls: thumbnailURLs(for: ids))
+    }
+
+    /// Like `prefetchThumbnails(ids:)`, but returns only once every thumbnail
+    /// has loaded (or failed), for when what follows should wait on them.
+    private static func loadThumbnails(ids: [Int]) async {
+        let urls = await thumbnailURLs(for: ids)
+        await withTaskGroup(of: Void.self) { group in
+            for url in urls {
+                group.addTask { _ = await ThumbnailCache.shared.thumbnail(for: url) }
+            }
+        }
+    }
+
+    /// The linked pages of the given stories, in order. Text posts, which have
+    /// no URL, are skipped.
+    private static func thumbnailURLs(for ids: [Int]) async -> [URL] {
         var urls: [URL] = []
         for id in ids {
             guard let story = await StoryCache.shared.story(id: id),
@@ -79,7 +172,7 @@ class HackerNewsAPI {
                   let url = URL(string: urlString) else { continue }
             urls.append(url)
         }
-        await ThumbnailCache.shared.prefetch(urls: urls)
+        return urls
     }
 
     // MARK: - Comments

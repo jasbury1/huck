@@ -11,7 +11,7 @@ import OSLog
 // MARK: - Algolia Response Data
 
 /// A single item (story or comment) as returned by the Algolia `items` endpoint.
-struct AlgoliaItemData: Codable {
+nonisolated struct AlgoliaItemData: Codable, Sendable {
     let id: Int
     let createdAt: String
     let createdAtI: Int
@@ -38,7 +38,7 @@ struct AlgoliaItemData: Codable {
 }
 
 /// A user profile as returned by the Algolia `users` endpoint.
-struct AlgoliaUserData: Codable {
+nonisolated struct AlgoliaUserData: Codable, Sendable {
     let username: String
     let about: String?
     let karma: Int?
@@ -46,21 +46,21 @@ struct AlgoliaUserData: Codable {
     let submitted: [Int]?
 }
 
-private struct AlgoliaSearchResponse: Codable {
+private nonisolated struct AlgoliaSearchResponse: Codable, Sendable {
     let hits: [AlgoliaHit]
     let nbPages: Int
 }
 
-private struct AlgoliaHit: Codable {
+private nonisolated struct AlgoliaHit: Codable, Sendable {
     let objectID: String
 }
 
-private struct AlgoliaCommentSearchResponse: Codable {
+private nonisolated struct AlgoliaCommentSearchResponse: Codable, Sendable {
     let hits: [AlgoliaCommentHit]
     let nbPages: Int
 }
 
-private struct AlgoliaCommentHit: Codable {
+private nonisolated struct AlgoliaCommentHit: Codable, Sendable {
     let objectID: String
     let author: String?
     let commentText: String?

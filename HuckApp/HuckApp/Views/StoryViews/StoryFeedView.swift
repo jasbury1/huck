@@ -116,7 +116,7 @@ struct StoryFeedView: View {
         // opportunity to reconcile upvote/favorite state so the arrows and hearts
         // on the refreshed rows reflect anything done outside the app.
         .refreshable {
-            async let reload: Void = feed.reload()
+            async let reload: Void = refreshFeed()
             async let interactions: Void = interactionSync.refresh()
             _ = await (reload, interactions)
         }
@@ -172,4 +172,11 @@ struct StoryFeedView: View {
         }
     }
 
+    /// Pull-to-refresh. The feed's id list is cached for a couple of minutes
+    /// so opening it is instant; a pull is an explicit ask for the current
+    /// ranking, so it fetches a fresh list first, which the reload then reads.
+    private func refreshFeed() async {
+        _ = await HackerNewsAPI.refreshStoryIds(filter: storyFilter)
+        await feed.reload()
+    }
 }

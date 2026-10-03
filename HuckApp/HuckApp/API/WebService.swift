@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum NetworkError: Error {
+nonisolated enum NetworkError: Error {
     case badUrl
     case invalidRequest
     case badResponse
@@ -16,7 +16,12 @@ enum NetworkError: Error {
 }
 
 class WebService {
-    func downloadData<T: Codable>(fromURL: String) async -> T? {
+    /// Fetches and decodes JSON. `@concurrent`, so the decoding runs on the
+    /// global executor rather than the caller's: most callers are main-actor
+    /// code, and the launch warm-up alone decodes hundreds of stories, which
+    /// would otherwise all land on the main thread.
+    @concurrent
+    nonisolated func downloadData<T: Decodable & Sendable>(fromURL: String) async -> T? {
         do {
             guard let url = URL(string: fromURL) else { throw NetworkError.badUrl }
             let (data, response) = try await URLSession.shared.countedData(for: URLRequest(url: url))
