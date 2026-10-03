@@ -89,6 +89,9 @@ struct SettingsView: View {
                     }
                 }
             }
+            // Toggles and the picker are content, so they keep the app's orange;
+            // the toolbar and the alert below follow the primary chrome tint.
+            .tint(.orange)
             .navigationTitle("Settings")
             // Also applied here, not just at the app's root. A sheet takes the
             // window's appearance when it's presented but doesn't restyle when

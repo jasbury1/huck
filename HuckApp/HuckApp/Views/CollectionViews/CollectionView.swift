@@ -15,6 +15,10 @@ struct CollectionView: View {
     @Binding var path: NavigationPath
 
     @Environment(CollectionsStore.self) private var collectionsStore
+    @Environment(\.dismiss) private var dismiss
+
+    /// Set while the reader is confirming deletion of this collection.
+    @State private var collectionToDelete: StoryCollection?
 
     /// A one-page feed over the collection's ids, reloaded when its contents
     /// change so newly added (or removed) stories appear. Kept as a single
@@ -42,6 +46,9 @@ struct CollectionView: View {
                                 } label: {
                                     Label("Remove", systemImage: "trash")
                                 }
+                                // Explicit, or the inherited tint wins over
+                                // the destructive role's red.
+                                .tint(.red)
                             }
                     }
                 }
@@ -61,6 +68,34 @@ struct CollectionView: View {
         }
         .navigationTitle(collection?.name ?? "Collection")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let collection {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Group {
+                            // A menu icon takes the tint even on a destructive
+                            // row, so Delete is tinted red to keep its icon
+                            // matching its text.
+                            Button(role: .destructive) {
+                                collectionToDelete = collection
+                            } label: {
+                                Label("Delete Collection", systemImage: "trash")
+                            }
+                            .tint(.red)
+                        }
+                        // Icons match their text, not the app's orange tint. Set
+                        // on the content, not the `Menu`, so the ellipsis button
+                        // itself keeps the tint.
+                        .tint(.primary)
+                    } label: {
+                        Label("Collection Options", systemImage: "ellipsis")
+                    }
+                }
+            }
+        }
+        // Leave before the collection goes, so this screen never shows a
+        // collection that no longer exists.
+        .confirmsCollectionDeletion(of: $collectionToDelete) { dismiss() }
         .task {
             let feed = feed ?? StoryFeed.collection(collectionID, in: collectionsStore)
             self.feed = feed

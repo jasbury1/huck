@@ -98,6 +98,8 @@ struct CommentContent<Accessory: View>: View {
                 Text(Self.formatted(text))
                     .font(.callout)
                     .lineLimit(lineLimit)
+                    // Links take the tint, which is primary outside content.
+                    .tint(.orange)
             }
             if showsDivider {
                 Divider()
@@ -268,7 +270,7 @@ private struct CommentDeletionModifier<Item>: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .confirmationDialog("Delete this comment?", item: $target, titleVisibility: .visible) { item in
+            .alert("Delete Comment?", item: $target) { item in
                 Button("Delete", role: .destructive) {
                     Task {
                         do {

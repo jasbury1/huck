@@ -99,6 +99,8 @@ private struct CollectionsSection: View {
 
     @State private var isNamingNewCollection = false
     @State private var newCollectionName = ""
+    /// The collection awaiting confirmation of its deletion.
+    @State private var collectionToDelete: StoryCollection?
 
     var body: some View {
         Section(header: Text("Your Collections")) {
@@ -110,6 +112,19 @@ private struct CollectionsSection: View {
                         Image(systemName: "folder.fill")
                             .foregroundStyle(.orange)
                     }
+                }
+                // Swipe to delete, as with any list row. Not a full swipe: the
+                // confirmation would interrupt the gesture's own commit.
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        collectionToDelete = collection
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    // Explicit, or the app's orange tint wins over the
+                    // destructive role's red and the action stops reading as
+                    // destructive.
+                    .tint(.red)
                 }
             }
 
@@ -128,6 +143,7 @@ private struct CollectionsSection: View {
             }
         }
         .headerProminence(.increased)
+        .confirmsCollectionDeletion(of: $collectionToDelete)
         .alert("New Collection", isPresented: $isNamingNewCollection) {
             TextField("Name", text: $newCollectionName)
             Button("Cancel", role: .cancel) { newCollectionName = "" }

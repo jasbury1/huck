@@ -110,6 +110,9 @@ struct UserCommentRow: View {
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }
+                // The menu tints its icons primary, and the role colors only
+                // the text, so the icon is tinted red to match.
+                .tint(.red)
             }
         }
     }

@@ -149,6 +149,9 @@ struct CommentCellView: View {
                 } label: {
                     Label("Delete", systemImage: "trash")
                 }
+                // The menu tints its icons primary, and the role colors only
+                // the text, so the icon is tinted red to match.
+                .tint(.red)
             }
         }
     }
@@ -485,6 +488,8 @@ struct StoryTextView: View {
             storyHeader
             if let text = storyData.text {
                 Text(try! AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+                    // Links take the tint, which is primary outside content.
+                    .tint(.orange)
             }
             // Only the username is tappable, navigating to the author's profile;
             // a plain Button keeps the tap target limited to the name itself.

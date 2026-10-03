@@ -67,15 +67,18 @@ struct ContentView: View {
         TabView {
             Tab("Feed", systemImage: "newspaper.fill") {
                 FeedView()
+                    .tint(.primary)
             }
             // Settings isn't a destination of its own — it's reached from the
             // gear in the Account tab's toolbar.
             Tab("Account", systemImage: "person.circle") {
                 AccountView()
+                    .tint(.primary)
             }
             if showsDebugTab {
                 Tab("Debug", systemImage: "ladybug") {
                     DebugView()
+                        .tint(.primary)
                 }
             }
             // The search field is declared inside this tab, not on the tab view:
@@ -85,9 +88,17 @@ struct ContentView: View {
             // push within search rather than into another tab's stack.
             Tab(role: .search) {
                 SearchView(searchText: $searchText)
+                    .tint(.primary)
             }
         }
         .tabViewSearchActivation(.searchTabSelection)
+        // Orange is the tab bar's selection color. Each tab's content is tinted
+        // primary instead, because that's what its navigation chrome follows:
+        // toolbar buttons, and the buttons of any alert shown inside it. Alerts
+        // read the tint at their navigation stack, not where they're declared,
+        // so this is the only level a neutral Cancel can be set from — and it
+        // matches iOS's monochrome Liquid Glass bars. Content that should be
+        // orange (links, toggles) is tinted where it's drawn.
         .tint(.orange)
         .preferredColorScheme(appearance.colorScheme)
         .environment(session)

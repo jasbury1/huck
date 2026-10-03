@@ -160,14 +160,11 @@ struct CommentComposer: View {
                 move(to: .collapsed)
             }
         }
-        // Alerts are presented by UIKit, which ignores tints set on individual
-        // buttons and colors them with the app's accent instead. Presenting from
-        // a clear background view lets the alert inherit a neutral tint — so
-        // Cancel reads as plain text — without recoloring the composer itself.
-        // (Discard stays red: destructive buttons ignore the tint.)
+        // On its own background view so it never competes with the post-error
+        // alert above for the same presentation slot. Its button colors come
+        // from the navigation stack's tint (see `ContentView`), not from here.
         .background {
             Color.clear
-                .tint(.primary)
                 .alert("Discard this comment?", isPresented: $isConfirmingDiscard) {
                     Button("Discard", role: .destructive) { discard() }
                     Button("Cancel", role: .cancel) {}
