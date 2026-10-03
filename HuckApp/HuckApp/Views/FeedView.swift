@@ -25,6 +25,21 @@ struct FeedView: View {
                         .listRowBackground(Color.orange)
                     }
                     .headerProminence(.increased)
+                    // The other front-page rankings, in their own group as plain
+                    // rows: only Top Stories, the default way in, is highlighted.
+                    Section() {
+                        HStack {
+                            Image(systemName: "trophy.fill")
+                                .foregroundColor(.orange)
+                            NavigationLink("Best", value: StoryFilter.bestStories)
+                        }
+                        HStack {
+                            Image(systemName: "clock.fill")
+                                .foregroundColor(.orange)
+                            NavigationLink("New", value: StoryFilter.newStories)
+                        }
+                    }
+                    .listSectionSpacing(.custom(14))
                     Section() {
                         HStack {
                             Image(systemName: "questionmark.message.fill")
