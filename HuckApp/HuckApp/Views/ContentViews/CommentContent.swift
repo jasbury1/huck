@@ -256,3 +256,47 @@ struct CommentOptionsMenu<Content: View>: View {
         .buttonStyle(.plain)
     }
 }
+
+/// Asks the reader to confirm deleting one of their comments, runs the
+/// deletion, and reports a failure — the same exchange wherever a comment can
+/// be deleted, whether from its thread or from the reader's profile.
+private struct CommentDeletionModifier<Item>: ViewModifier {
+    @Binding var target: Item?
+    let delete: (Item) async throws -> Void
+
+    @State private var error: (any Error)?
+
+    func body(content: Content) -> some View {
+        content
+            .confirmationDialog("Delete this comment?", item: $target, titleVisibility: .visible) { item in
+                Button("Delete", role: .destructive) {
+                    Task {
+                        do {
+                            try await delete(item)
+                        } catch {
+                            self.error = error
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { _ in
+                Text("It will be removed from Hacker News. This can't be undone.")
+            }
+            .alert("Couldn't Delete Comment", item: $error) { _ in
+                Button("OK", role: .cancel) {}
+            } message: { error in
+                Text(error.localizedDescription)
+            }
+    }
+}
+
+extension View {
+    /// Confirms and performs a comment deletion whenever `target` is set.
+    /// `delete` throws to report a failure, which is shown in an alert.
+    func confirmsCommentDeletion<Item>(
+        of target: Binding<Item?>,
+        delete: @escaping (Item) async throws -> Void
+    ) -> some View {
+        modifier(CommentDeletionModifier(target: target, delete: delete))
+    }
+}

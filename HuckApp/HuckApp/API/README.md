@@ -38,7 +38,7 @@ service — they are not returned above the facade.
 
 `NewsYCService` is the third category anticipated in `CLAUDE.md`: a
 reverse-engineered handler for `news.ycombinator.com` itself, for actions the JSON
-APIs don't offer (voting, favoriting and commenting, plus reading a user's `/upvoted`
+APIs don't offer (voting, favoriting, commenting and deleting comments, plus reading a user's `/upvoted`
 and `/favorites` lists). It **scrapes HTML** rather than decoding JSON, because HN
 embeds the tokens these actions require inside its page markup: a per-user, per-item
 `auth` token for voting/favoriting, and a per-user, per-parent `hmac` in the comment

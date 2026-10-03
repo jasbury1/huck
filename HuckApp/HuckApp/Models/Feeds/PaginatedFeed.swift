@@ -52,6 +52,15 @@ final class PaginatedFeed<Element> {
         hasMore = result.hasMore
         nextPage += 1
     }
+
+    /// Drops loaded items, for when the reader has removed one at the source —
+    /// deleting their own comment, say — and the list shouldn't wait for a
+    /// reload to reflect it.
+    func removeAll(where shouldRemove: (Element) -> Bool) {
+        withAnimation {
+            items.removeAll(where: shouldRemove)
+        }
+    }
 }
 
 // MARK: - Comment feeds

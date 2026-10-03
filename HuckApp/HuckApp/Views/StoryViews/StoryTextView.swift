@@ -21,6 +21,9 @@ struct CommentCellView: View {
     let onCollapse: () -> Void
     /// Folds away the whole reply chain this comment sits in.
     let onCollapseThread: () -> Void
+    /// Asks to delete this comment. Offered only on the reader's own comments,
+    /// while Hacker News still allows it.
+    let onDelete: () -> Void
 
     /// Identifies the signed-in reader, so their own comments stand out.
     @Environment(UserSession.self) private var session
@@ -33,7 +36,8 @@ struct CommentCellView: View {
         storyAuthor: String,
         path: Binding<NavigationPath>,
         onCollapse: @escaping () -> Void,
-        onCollapseThread: @escaping () -> Void
+        onCollapseThread: @escaping () -> Void,
+        onDelete: @escaping () -> Void
     ) {
         self.commentData = commentData
         self.isCollapsed = isCollapsed
@@ -41,7 +45,15 @@ struct CommentCellView: View {
         self._path = path
         self.onCollapse = onCollapse
         self.onCollapseThread = onCollapseThread
+        self.onDelete = onDelete
         indentationLevel = commentData.nestingLevel
+    }
+
+    /// Whether to offer Delete: the reader wrote it, and it's still inside the
+    /// window Hacker News allows.
+    private var isDeletable: Bool {
+        commentData.author == session.username
+            && HackerNewsAPI.isWithinDeleteWindow(commentData.timestamp)
     }
 
     var body: some View {
@@ -130,6 +142,14 @@ struct CommentCellView: View {
                     Label("Collapse Thread", systemImage: "arrow.up.to.line")
                 }
             }
+            if isDeletable {
+                Divider()
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
         }
     }
 }
@@ -177,6 +197,9 @@ struct StoryTextView: View {
     /// The comment the composer is replying to, set by the Reply swipe action
     /// and cleared when the draft is discarded.
     @State private var replyTarget: Comment?
+
+    /// The reader's comment awaiting confirmation of its deletion.
+    @State private var deleteTarget: Comment?
 
     /// A comment to bring into view as soon as the thread contains it.
     ///
@@ -242,7 +265,8 @@ struct StoryTextView: View {
                                 if let root {
                                     scroll(to: root.id, using: scrollProxy)
                                 }
-                            }
+                            },
+                            onDelete: { deleteTarget = comment }
                         )
                             .padding(.horizontal, 16)
                             // Leading swipe (swipe right) exposes Upvote and Reply.
@@ -382,6 +406,7 @@ struct StoryTextView: View {
                 scroll(to: posted.id, using: scrollProxy)
             }
         }
+        .confirmsCommentDeletion(of: $deleteTarget, delete: delete)
         .task {
             recentlyViewedStore.recordView(storyId)
             await storyData.fetchData()
@@ -392,6 +417,21 @@ struct StoryTextView: View {
         .onChange(of: commentFetcher.comments.count) {
             scrollToPendingTarget(using: scrollProxy)
         }
+    }
+
+    // MARK: - Deleting
+
+    /// Deletes one of the reader's comments, then takes it out of the thread.
+    /// A comment posted in this sitting has no Hacker News id yet, so it's
+    /// looked up first — deleting a comment just written is the common case.
+    private func delete(_ comment: Comment) async throws {
+        // Not found yet means the mirror hasn't caught up; "try again in a
+        // moment" is the right advice for that too.
+        guard let itemID = await commentFetcher.resolveItemID(for: comment) else {
+            throw APIError.deleteFailed
+        }
+        try await HackerNewsAPI.deleteComment(id: itemID, storyId: storyId)
+        commentFetcher.removeDeletedComment(comment)
     }
 
     // MARK: - Scrolling
@@ -621,7 +661,8 @@ private struct CommentCellGallery: View {
                         storyAuthor: "op_user",
                         path: .constant(NavigationPath()),
                         onCollapse: {},
-                        onCollapseThread: {}
+                        onCollapseThread: {},
+                        onDelete: {}
                     )
                     .padding(.horizontal, 16)
                 }

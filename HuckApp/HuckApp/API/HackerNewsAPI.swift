@@ -405,6 +405,33 @@ class HackerNewsAPI {
         await StoryCache.shared.invalidate(storyId)
     }
 
+    /// How long after posting Hacker News lets a comment's author delete it.
+    private static let commentDeleteWindow: TimeInterval = 2 * 60 * 60
+
+    /// Whether a comment posted at `timestamp` is still young enough to delete.
+    /// Used to offer Delete only while it can work; HN has the final say (it
+    /// also refuses once a comment has replies).
+    static func isWithinDeleteWindow(_ timestamp: Date) -> Bool {
+        timestamp.timeIntervalSinceNow > -commentDeleteWindow
+    }
+
+    /// Deletes one of the logged-in user's comments.
+    ///
+    /// Throws `APIError.deleteUnavailable` when HN no longer offers deletion —
+    /// past the edit window, or once it has replies.
+    static func deleteComment(id: Int, storyId: Int) async throws {
+        guard hasAuthCookie else { throw APIError.notLoggedIn }
+        guard let form = await NewsYCService.deleteForm(commentId: id, storyId: storyId) else {
+            throw APIError.deleteUnavailable
+        }
+        try await NewsYCService.deleteComment(fields: form)
+
+        // As after posting: both caches now describe a thread that no longer
+        // exists, and `descendants` is what decides whether Algolia is fresh.
+        await CommentCache.shared.invalidate(storyId)
+        await StoryCache.shared.invalidate(storyId)
+    }
+
     /// How long to wait before each attempt at recovering a posted comment's id.
     ///
     /// The first attempt is immediate. Callers ask for an id only when they need

@@ -93,7 +93,9 @@ struct TabableContentView: View {
             case .comments:
                 if let commentsFeed {
                     PaginatedList(feed: commentsFeed, emptyState: commentsEmptyState) { comment in
-                        UserCommentRow(comment: comment, path: $path)
+                        UserCommentRow(comment: comment, path: $path) {
+                            commentsFeed.removeAll { $0.id == comment.id }
+                        }
                     }
                 } else {
                     commentsEmptyState

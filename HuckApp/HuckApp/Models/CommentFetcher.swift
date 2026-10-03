@@ -124,6 +124,25 @@ class CommentFetcher {
         return resolved
     }
 
+    /// Takes a comment the reader has deleted out of the thread, along with any
+    /// replies beneath it — the run of deeper-nested comments that follows it.
+    /// Like `insertPostedComment`, this edits the list in place rather than
+    /// re-reading the thread, which would empty and refill the screen.
+    func removeDeletedComment(_ comment: Comment) {
+        guard let index = comments.firstIndex(where: { $0.id == comment.id }) else { return }
+        var end = index + 1
+        while end < comments.count, comments[end].nestingLevel > comment.nestingLevel {
+            end += 1
+        }
+        withAnimation(.easeInOut) {
+            for removed in comments[index..<end] {
+                collapsedIds.remove(removed.id)
+                unresolvedPosts[removed.id] = nil
+            }
+            comments.removeSubrange(index..<end)
+        }
+    }
+
     /// The comments currently on screen: the flat, pre-order list with the reply
     /// subtree of every collapsed comment removed. Because the list is
     /// depth-first and each comment carries its `nestingLevel`, a collapsed

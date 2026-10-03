@@ -20,6 +20,25 @@ import UIKit
 struct UserCommentRow: View {
     let comment: UserComment
     @Binding var path: NavigationPath
+    /// Called once the comment has been deleted, so the list can drop the row.
+    /// Lists that can't remove rows leave it `nil`, which withholds Delete.
+    var onDeleted: (() -> Void)?
+
+    /// Identifies the reader, to offer Delete on their own comments.
+    @Environment(UserSession.self) private var session
+
+    /// Set while the reader is confirming deletion of this comment.
+    @State private var deleteTarget: UserComment?
+
+    /// Whether to offer Delete: the list can remove the row, the reader wrote
+    /// it, and Hacker News still allows it. The story id is needed for the
+    /// request and for clearing the thread from the cache.
+    private var isDeletable: Bool {
+        onDeleted != nil
+            && comment.storyId != nil
+            && comment.author == session.username
+            && HackerNewsAPI.isWithinDeleteWindow(comment.timestamp)
+    }
 
     /// How much of a long comment to show before clamping. Generous enough to
     /// read the point being made, short enough that one comment can't take over
@@ -56,6 +75,11 @@ struct UserCommentRow: View {
                 openInContext(storyId: storyId)
             }
         }
+        .confirmsCommentDeletion(of: $deleteTarget) { comment in
+            guard let storyId = comment.storyId else { throw APIError.deleteFailed }
+            try await HackerNewsAPI.deleteComment(id: comment.id, storyId: storyId)
+            onDeleted?()
+        }
     }
 
     /// The comment's options, in the same ellipsis a thread comment uses. The
@@ -77,6 +101,14 @@ struct UserCommentRow: View {
                     openInContext(storyId: storyId)
                 } label: {
                     Label("Open in Thread", systemImage: "arrow.turn.up.left")
+                }
+            }
+            if isDeletable {
+                Divider()
+                Button(role: .destructive) {
+                    deleteTarget = comment
+                } label: {
+                    Label("Delete", systemImage: "trash")
                 }
             }
         }
@@ -139,4 +171,6 @@ struct UserCommentRow: View {
             Divider()
         }
     }
+    .environment(UserSession())
+    .environment(InteractionStore(session: UserSession()))
 }

@@ -174,6 +174,58 @@ struct NewsYCService {
         }
     }
 
+    // MARK: - Deleting
+
+    /// The hidden fields of Hacker News' delete confirmation form for one of
+    /// the reader's comments, or `nil` if HN didn't offer one.
+    ///
+    /// The same two-step exchange as posting: `/delete-confirm` carries a
+    /// per-user, per-item `hmac` that `/xdelete` checks. HN serves the form only
+    /// while the comment can still be deleted — to its author, within the edit
+    /// window — so a missing form is the answer "not any more", not a glitch.
+    static func deleteForm(commentId: Int, storyId: Int) async -> [(name: String, value: String)]? {
+        var components = URLComponents(string: "\(baseUri)/delete-confirm")
+        components?.queryItems = [
+            URLQueryItem(name: "id", value: String(commentId)),
+            URLQueryItem(name: "goto", value: "item?id=\(storyId)"),
+        ]
+        guard let url = components?.url,
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+        // HN has written the action both with and without a leading slash.
+        let fields = ["/xdelete", "xdelete"]
+            .lazy
+            .map { hiddenFields(inFormWithAction: $0, of: html) }
+            .first { !$0.isEmpty } ?? []
+        // As with replies, confirm the form names the comment we mean, so a
+        // stray form can never delete the wrong one.
+        guard fields.contains(where: { $0.name == "id" && $0.value == String(commentId) }) else {
+            return nil
+        }
+        return fields
+    }
+
+    /// Deletes a comment by sending the scraped confirmation form back with its
+    /// "Yes" button. Throws `APIError.deleteFailed` if HN doesn't accept it.
+    static func deleteComment(fields: [(name: String, value: String)]) async throws {
+        guard let url = URL(string: "\(baseUri)/xdelete") else { throw APIError.deleteFailed }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        // `d` is the submit button the reader would have pressed; it isn't a
+        // hidden field, so it's added here.
+        request.httpBody = FormBody.encoded(fields + [(name: "d", value: "Yes")])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+
+        let (_, response) = try await postingSession.countedData(for: request)
+        // Like the comment form, an accepted POST is answered with a redirect.
+        guard let http = response as? HTTPURLResponse, http.statusCode == 302 else {
+            throw APIError.deleteFailed
+        }
+    }
+
     /// The reply form's URL. `goto` is where HN sends the browser after a
     /// successful post; we never follow it, but it's part of the form HN expects
     /// back, so it's set to the thread the comment belongs to.

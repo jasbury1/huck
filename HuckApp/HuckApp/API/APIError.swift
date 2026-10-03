@@ -25,6 +25,11 @@ public enum APIError: Error, LocalizedError {
     /// Hacker News id still can't be confirmed, so there's nothing to hang the
     /// reply off yet. Retrying usually resolves it.
     case unknownReplyTarget
+    /// Hacker News no longer offers to delete the comment — the edit window
+    /// has passed, or it has replies.
+    case deleteUnavailable
+    /// Hacker News offered to delete the comment but didn't accept the request.
+    case deleteFailed
     case unknown
 
     public var errorDescription: String? {
@@ -40,6 +45,9 @@ public enum APIError: Error, LocalizedError {
             return "Hacker News wouldn't accept your comment. You may be posting too quickly — wait a moment and try again."
         case .unknownReplyTarget:
             return "Hacker News hasn't finished publishing the comment you're replying to. Wait a moment and try again — your reply is saved."
+        case .deleteUnavailable:
+            return "Hacker News no longer allows this comment to be deleted. Comments can only be deleted shortly after posting, before anyone replies."
+        case .deleteFailed: return "Hacker News didn't delete the comment. Try again in a moment."
         case .unknown: return "Unknown Error."
         }
     }

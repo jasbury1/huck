@@ -599,7 +599,9 @@ struct UserView: View {
                     description: "Comments \(username) posts will show up here."
                 )
             ) { comment in
-                UserCommentRow(comment: comment, path: $path)
+                UserCommentRow(comment: comment, path: $path) {
+                    comments.removeAll { $0.id == comment.id }
+                }
             }
         }
     }
