@@ -526,13 +526,22 @@ struct StoryTextView: View {
         }
     }
 
-    /// The large in-content title. Its measured height drives the fade-in of the
-    /// small nav-bar title as it scrolls off.
+    /// The large in-content title, with the link's domain beneath it in small
+    /// secondary text, matching the feed's "(domain)" styling. The title's
+    /// measured height drives the fade-in of the small nav-bar title as it
+    /// scrolls off.
     private var titleView: some View {
-        Text(storyData.title)
-            .font(.title2)
-            .fontWeight(.heavy)
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { titleHeight = $0 }
+        VStack(alignment: .leading, spacing: 4) {
+            Text(storyData.title)
+                .font(.title2)
+                .fontWeight(.heavy)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { titleHeight = $0 }
+            if let domain = storyData.displayDomain {
+                Text("(\(domain))")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     /// Section header shown between the post details and the comments. As a
