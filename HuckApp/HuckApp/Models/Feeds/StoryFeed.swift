@@ -32,6 +32,25 @@ final class StoryFeed {
     /// Zero-based index of the next page to request.
     private var nextPage = 0
 
+    /// The filters `visibleStories` applies, and the snapshot they judge
+    /// against. Set together by `applyFilters(_:context:)`.
+    private(set) var filters = FeedFilters()
+    private var filterContext = FeedFilterContext()
+
+    /// The stories to show: `stories`, less any the filters leave out.
+    ///
+    /// Filtering is a view over what's loaded rather than a change to it, so
+    /// switching a filter off brings stories back without refetching them.
+    var visibleStories: [StoryModel] {
+        stories.filter { filters.includes($0, in: filterContext) }
+    }
+
+    /// Whether stories were loaded but the filters left none to show — the
+    /// difference between an empty feed and one the reader has emptied.
+    var isFilteredEmpty: Bool {
+        !stories.isEmpty && visibleStories.isEmpty
+    }
+
     /// Retained models keyed by id. Because a story reused across cell recycling
     /// — or one that survives a `reload()` — is read from here, it renders from
     /// its already-populated instance instead of flashing a placeholder.
@@ -61,7 +80,7 @@ final class StoryFeed {
 
     /// Rebuilds the feed from its first page, reusing existing model instances by
     /// id so stories still on screen don't flash placeholders. For pull-to-refresh
-    /// and switching a one-page source's parameters (e.g. the main feed's filter).
+    /// and switching a one-page source's parameters (e.g. the main feed's kind).
     func reload() async {
         guard !isLoading else { return }
         isLoading = true
@@ -73,10 +92,27 @@ final class StoryFeed {
         nextPage = 1
     }
 
+    /// Sets the filters `visibleStories` applies, with a fresh snapshot of what
+    /// they judge against. Call when they change, and after a load or refresh
+    /// — not as the reader browses, or a story would vanish as it's read.
+    func applyFilters(_ filters: FeedFilters, context: FeedFilterContext) {
+        self.filters = filters
+        filterContext = context
+    }
+
+    /// Updates which stories are hidden, and nothing else in the snapshot, so
+    /// a story hidden (or brought back) changes the list at once without the
+    /// stories read since the last refresh dropping out with it.
+    func updateHiddenIDs(_ ids: Set<Int>) {
+        filterContext.hiddenIDs = ids
+    }
+
     /// Warms details and thumbnails for the window of stories following `id`.
     /// Called as each row appears; already-cached or in-flight work is skipped,
-    /// so the overlapping windows from adjacent rows stay cheap.
+    /// so the overlapping windows from adjacent rows stay cheap. Follows the
+    /// visible stories, so the window is the rows actually about to scroll in.
     func prefetchAhead(after id: Int) async {
+        let stories = visibleStories
         guard let index = stories.firstIndex(where: { $0.id == id }) else { return }
         let start = index + 1
         guard start < stories.count else { return }
@@ -101,12 +137,12 @@ final class StoryFeed {
 // MARK: - Sources
 
 extension StoryFeed {
-    /// The main feed for a filter (Top/Best/New/…). Firebase returns the whole
+    /// The main feed of a kind (Top/Best/New/…). Firebase returns the whole
     /// ranked list at once, so this is a single page with no more to follow.
-    static func topStories(filter: StoryFilter) -> StoryFeed {
+    static func topStories(kind: FeedKind) -> StoryFeed {
         StoryFeed { page in
             guard page == 0 else { return ([], false) }
-            return (await HackerNewsAPI.getStoryIds(filter: filter), false)
+            return (await HackerNewsAPI.getStoryIds(kind: kind), false)
         }
     }
 

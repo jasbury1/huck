@@ -11,6 +11,8 @@ import SwiftUI
 /// toggle and the views that read a preference stay in sync on one identifier.
 enum FeedSettings {
     static let displayStoryDomainKey = "feed.displayStoryDomain"
+    /// The `FeedFilters` turned on from a feed's options menu.
+    static let filtersKey = "feed.filters"
 }
 
 /// Shared `@AppStorage` keys for how comments and posts are read.

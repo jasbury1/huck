@@ -10,7 +10,7 @@ import LinkPresentation
 import UniformTypeIdentifiers
 
 struct StoryFeedView: View {
-    @State var storyFilter: StoryFilter
+    @State var feedKind: FeedKind
     @State private var feed: StoryFeed
 
     /// Whether the first page has been loaded. Guards the load `.task`, which
@@ -25,6 +25,10 @@ struct StoryFeedView: View {
     /// Upvote and favorite actions (each handles the login gate and the toggle).
     @Environment(\.upvote) private var upvote
     @Environment(\.favorite) private var favorite
+    @Environment(\.composeNewPost) private var composeNewPost
+
+    /// The filters turned on from the options menu, shared by every feed.
+    @AppStorage(FeedSettings.filtersKey) private var filters = FeedFilters()
 
     /// Per-user recently-viewed record. "Mark Read" records a story here so its
     /// title greys in the feed, the same treatment an opened story gets.
@@ -33,17 +37,27 @@ struct StoryFeedView: View {
     /// Reconciles upvote/favorite state on pull-to-refresh.
     @Environment(InteractionSync.self) private var interactionSync
 
+    /// Keeps the reader's hidden stories, which the feed's filters leave out.
+    @Environment(InteractionStore.self) private var interactionStore
+    /// Hiding is kept per account, so it's behind the same login sheet as
+    /// upvoting.
+    @Environment(\.requireLogin) private var requireLogin
+
+    /// The story just hidden, offered back for a few seconds — hiding is a
+    /// swipe away, and there's nowhere else to undo it.
+    @State private var lastHidden: StoryModel?
+
     @Binding var path: NavigationPath
 
-    init(storyFilter: StoryFilter, path: Binding<NavigationPath>) {
-        self._storyFilter = State(initialValue: storyFilter)
+    init(feedKind: FeedKind, path: Binding<NavigationPath>) {
+        self._feedKind = State(initialValue: feedKind)
         self._path = path
-        self._feed = State(initialValue: .topStories(filter: storyFilter))
+        self._feed = State(initialValue: .topStories(kind: feedKind))
     }
 
     var body: some View {
         List {
-            ForEach(feed.stories) { story in
+            ForEach(feed.visibleStories) { story in
                 StoryCellView(model: story, path: $path)
                     // As each row appears, warm the details and thumbnails of the
                     // rows just below it so they are ready before they scroll in.
@@ -52,10 +66,10 @@ struct StoryFeedView: View {
                     }
                     // Trailing swipe hides or marks the story read; a full swipe
                     // hides it. Hide is listed first so it's the full-swipe
-                    // action. Behavior is stubbed for now.
+                    // action.
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button {
-                            // TODO: Hide this story
+                            requireLogin { hide(story) }
                         } label: {
                             Label("Hide", systemImage: "eye.slash")
                         }
@@ -104,15 +118,53 @@ struct StoryFeedView: View {
             }
         }
         .listStyle(.plain)
+        // The reader's filters have hidden everything loaded. Said plainly, with
+        // the way back, rather than left as a blank screen.
+        .overlay {
+            if feed.isFilteredEmpty {
+                VStack(spacing: 16) {
+                    EmptyFeedView(
+                        title: "All Caught Up",
+                        systemImage: "checkmark.circle",
+                        description: "Your filters are hiding every story here."
+                    )
+                    Button("Show All Stories") {
+                        filters = FeedFilters()
+                    }
+                    .tint(.orange)
+                }
+                .frame(maxHeight: .infinity, alignment: .top)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let lastHidden {
+                HiddenStoryBanner {
+                    undoHide(lastHidden)
+                }
+                .padding(.bottom, 12)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                // Restarted by each hide, so the banner stays up for the
+                // latest one.
+                .task(id: lastHidden.id) {
+                    try? await Task.sleep(for: .seconds(4))
+                    withAnimation { self.lastHidden = nil }
+                }
+            }
+        }
+        // The one route by which hiding reaches the list — a swipe, an undo, or
+        // switching accounts — so they can't disagree.
+        .onChange(of: interactionStore.hiddenIDs) { _, hiddenIDs in
+            withAnimation { feed.updateHiddenIDs(hiddenIDs) }
+        }
         // A small pull-down reveals the search field (it stays hidden while
         // scrolled, per the drawer's automatic display mode); pulling further
         // triggers the refresh below.
         .searchable(
             text: $searchText,
             placement: .navigationBarDrawer(displayMode: .automatic),
-            prompt: "Search \(storyFilter.searchName)"
+            prompt: "Search \(feedKind.searchName)"
         )
-        // Pull-to-refresh re-fetches the current filter's story ids, and takes the
+        // Pull-to-refresh re-fetches the current feed kind's story ids, and takes the
         // opportunity to reconcile upvote/favorite state so the arrows and hearts
         // on the refreshed rows reflect anything done outside the app.
         .refreshable {
@@ -126,45 +178,66 @@ struct StoryFeedView: View {
             // feed and its scroll position survive the round trip.
             guard !hasLoaded else { return }
             hasLoaded = true
+            applyFilters()
             await feed.loadMore()
         }
-        .onChange(of: storyFilter) {
-            // A real filter change swaps in a fresh feed (a different id source)
+        .onChange(of: feedKind) {
+            // A real kind change swaps in a fresh feed (a different id source)
             // and pages it in. Unlike `.task`, `.onChange` never fires on reappear.
-            feed = .topStories(filter: storyFilter)
+            feed = .topStories(kind: feedKind)
+            applyFilters()
             Task { await feed.loadMore() }
+        }
+        .onChange(of: filters) {
+            withAnimation { applyFilters() }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    // No action for now
+                Menu {
+                    Group {
+                        Button("New Post", systemImage: "square.and.pencil") {
+                            composeNewPost()
+                        }
+                        Section {
+                            ForEach(FeedFilter.toggleable) { filter in
+                                Toggle(isOn: isOn(filter)) {
+                                    Label(filter.title, systemImage: filter.systemImage)
+                                }
+                            }
+                        }
+                    }
+                    // Icons match their text, not the app's orange tint.
+                    .tint(.primary)
                 } label: {
-                    Image(systemName: "ellipsis")
+                    Label("Feed Options", systemImage: "ellipsis")
                 }
             }
         }
-        .navigationTitle(storyFilter.displayName())
+        .navigationTitle(feedKind.displayName())
+        // Says when filters are narrowing the feed, so missing stories are
+        // never a mystery.
+        .navigationSubtitle(filters.activeDescription.map { Text($0) } ?? Text(verbatim: ""))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarTitleMenu {
             Group {
                 Button("Top", systemImage: "arrow.up") {
-                    storyFilter = .topStories
+                    feedKind = .topStories
                 }
                 Button("Best", systemImage: "trophy") {
-                    storyFilter = .bestStories
+                    feedKind = .bestStories
                 }
                 Button("New", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90") {
-                    storyFilter = .newStories
+                    feedKind = .newStories
                 }
                 Divider()
                 Button("Ask Hacker News", systemImage: "questionmark.bubble") {
-                    storyFilter = .askStories
+                    feedKind = .askStories
                 }
                 Button("Show Hacker News", systemImage: "eye") {
-                    storyFilter = .showStories
+                    feedKind = .showStories
                 }
                 Button("Job Listings", systemImage: "briefcase") {
-                    storyFilter = .jobStories
+                    feedKind = .jobStories
                 }
             }
             // Icons match their text, not the app's orange tint.
@@ -176,7 +249,57 @@ struct StoryFeedView: View {
     /// so opening it is instant; a pull is an explicit ask for the current
     /// ranking, so it fetches a fresh list first, which the reload then reads.
     private func refreshFeed() async {
-        _ = await HackerNewsAPI.refreshStoryIds(filter: storyFilter)
+        _ = await HackerNewsAPI.refreshStoryIds(kind: feedKind)
         await feed.reload()
+        // A refresh is when stories read since the last one drop out.
+        withAnimation { applyFilters() }
+    }
+
+    /// Hands the feed the reader's filters, with a fresh snapshot of which
+    /// stories they've read and hidden.
+    private func applyFilters() {
+        feed.applyFilters(
+            filters,
+            context: FeedFilterContext(recentlyViewed: recentlyViewedStore, interactions: interactionStore)
+        )
+    }
+
+    /// Hides a story from the reader's feeds, offering it back for a moment.
+    private func hide(_ story: StoryModel) {
+        interactionStore.setHidden(true, for: story.id)
+        withAnimation { lastHidden = story }
+    }
+
+    private func undoHide(_ story: StoryModel) {
+        interactionStore.setHidden(false, for: story.id)
+        withAnimation { lastHidden = nil }
+    }
+
+    /// A menu toggle's binding for one filter.
+    private func isOn(_ filter: FeedFilter) -> Binding<Bool> {
+        Binding {
+            filters.contains(filter)
+        } set: { isOn in
+            filters.set(filter, isOn: isOn)
+        }
+    }
+}
+
+/// Confirms a story was hidden and offers it back: a small glass capsule over
+/// the bottom of the feed, as Mail and Photos confirm a removal.
+private struct HiddenStoryBanner: View {
+    let undo: () -> Void
+
+    var body: some View {
+        HStack(spacing: 16) {
+            Label("Story Hidden", systemImage: "eye.slash")
+                .font(.subheadline.weight(.medium))
+            Button("Undo", action: undo)
+                .font(.subheadline.weight(.semibold))
+                .tint(.orange)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 12)
+        .glassEffect(.regular.interactive(), in: .capsule)
     }
 }

@@ -56,18 +56,18 @@ class HackerNewsAPI {
     // MARK: - Stories
 
     /// A feed's ranked story ids, served from `StoryListCache` while fresh.
-    static func getStoryIds(filter: StoryFilter) async -> [Int] {
-        await StoryListCache.shared.ids(for: filter)
+    static func getStoryIds(kind: FeedKind) async -> [Int] {
+        await StoryListCache.shared.ids(for: kind)
     }
 
-    /// Like `getStoryIds(filter:)`, but always fetches the current ranking —
+    /// Like `getStoryIds(kind:)`, but always fetches the current ranking —
     /// for pull-to-refresh, where a cached list would defeat the point.
-    static func refreshStoryIds(filter: StoryFilter) async -> [Int] {
-        await StoryListCache.shared.refresh(filter)
+    static func refreshStoryIds(kind: FeedKind) async -> [Int] {
+        await StoryListCache.shared.refresh(kind)
     }
 
     /// The feeds warmed at launch, most likely to be opened first.
-    private static let launchFeeds: [StoryFilter] = [.topStories, .bestStories, .newStories, .showStories]
+    private static let launchFeeds: [FeedKind] = [.topStories, .bestStories, .newStories, .showStories]
 
     /// How many stories the launch warm-up may cache in all, short of the
     /// cache's capacity so browsing afterwards has room before anything warmed
@@ -94,8 +94,8 @@ class HackerNewsAPI {
     static func warmLaunchFeeds() async {
         // The lists themselves: four requests, all at once.
         let lists = await withTaskGroup(of: (Int, [Int]).self) { group in
-            for (index, filter) in launchFeeds.enumerated() {
-                group.addTask { (index, await getStoryIds(filter: filter)) }
+            for (index, kind) in launchFeeds.enumerated() {
+                group.addTask { (index, await getStoryIds(kind: kind)) }
             }
             var lists = Array(repeating: [Int](), count: launchFeeds.count)
             for await (index, ids) in group { lists[index] = ids }

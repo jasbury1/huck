@@ -191,6 +191,27 @@ class InteractionStore {
         return result
     }
 
+    // MARK: - Hidden stories
+
+    /// Stories the reader has hidden from their feeds.
+    var hiddenIDs: Set<Int> {
+        interactions.hidden
+    }
+
+    /// Hides a story from the reader's feeds, or brings it back. Kept on this
+    /// device for now, per account like the rest of the store; Hacker News has
+    /// its own hide, which this doesn't yet send to. No-op when logged out
+    /// (callers route to login first).
+    func setHidden(_ isHidden: Bool, for id: Int) {
+        guard session.isSignedIn else { return }
+        if isHidden {
+            interactions.hidden.insert(id)
+        } else {
+            interactions.hidden.remove(id)
+        }
+        persist()
+    }
+
     /// Toggles the favorite on a story: flips local state optimistically, calls the
     /// API, and rolls back if it fails. No-op when logged out (callers route to
     /// login first). Unlike voting, favoriting doesn't affect the score.

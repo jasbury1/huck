@@ -54,7 +54,7 @@ The types the app actually works with, decoupled from any single API:
 - `Comment` (`@Observable`) — a comment in a thread, with `nestingLevel`
 - `User` (`@Observable`) — a user profile
 - `UserComment` — a comment shown on a user's profile
-- `StoryModel` (`@Observable`) — a story, plus `StoryFilter` and `StoryType`
+- `StoryModel` (`@Observable`) — a story, plus `FeedKind` and `StoryType`
 
 ### Support
 - `WebService` — low-level generic `downloadData<T: Codable>(fromURL:)`.

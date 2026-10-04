@@ -9,7 +9,6 @@ import SwiftUI
 
 struct FeedView: View {
     @State private var path = NavigationPath()
-    @State private var isComposingPost = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -19,7 +18,7 @@ struct FeedView: View {
                         HStack {
                             Image(systemName: "book.pages.fill")
                                 .foregroundColor(.white)
-                            NavigationLink("Top Stories", value: StoryFilter.topStories)
+                            NavigationLink("Top Stories", value: FeedKind.topStories)
                                 .foregroundColor(.white)
                                 .font(.headline)
                         }
@@ -32,12 +31,12 @@ struct FeedView: View {
                         HStack {
                             Image(systemName: "trophy.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Best", value: StoryFilter.bestStories)
+                            NavigationLink("Best", value: FeedKind.bestStories)
                         }
                         HStack {
                             Image(systemName: "clock.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("New", value: StoryFilter.newStories)
+                            NavigationLink("New", value: FeedKind.newStories)
                         }
                     }
                     .listSectionSpacing(.custom(14))
@@ -45,17 +44,17 @@ struct FeedView: View {
                         HStack {
                             Image(systemName: "questionmark.message.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Ask", value: StoryFilter.askStories)
+                            NavigationLink("Ask", value: FeedKind.askStories)
                         }
                         HStack {
                             Image(systemName: "eye.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Show", value: StoryFilter.showStories)
+                            NavigationLink("Show", value: FeedKind.showStories)
                         }
                         HStack {
                             Image(systemName: "briefcase.fill")
                                 .foregroundColor(.orange)
-                            NavigationLink("Jobs", value: StoryFilter.jobStories)
+                            NavigationLink("Jobs", value: FeedKind.jobStories)
                         }
                     }
                     .listSectionSpacing(.custom(14))
@@ -66,14 +65,11 @@ struct FeedView: View {
             .navigationTitle("Hacker News")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NewPostButton { isComposingPost = true }
+                    NewPostButton()
                 }
             }
-            .fullScreenCover(isPresented: $isComposingPost) {
-                SubmissionView()
-            }
-            .navigationDestination(for: StoryFilter.self) { input in
-                StoryFeedView(storyFilter: input, path: $path)
+            .navigationDestination(for: FeedKind.self) { input in
+                StoryFeedView(feedKind: input, path: $path)
             }
             .navigationDestination(for: ItemNavigation.self) { navigation in
                 StoryDetailsView(from: navigation, path: $path)
@@ -84,17 +80,15 @@ struct FeedView: View {
     }
 }
 
-/// Opens the new-post form, signing in first if need be. Its own view so it
-/// can read the login gate, which `storyActionsEnabled()` supplies only to
+/// Opens the new-post page, signing in first if need be. Its own view so it
+/// can read `composeNewPost`, which `storyActionsEnabled()` supplies only to
 /// the views inside the navigation stack.
 private struct NewPostButton: View {
-    let action: () -> Void
-
-    @Environment(\.requireLogin) private var requireLogin
+    @Environment(\.composeNewPost) private var composeNewPost
 
     var body: some View {
         Button {
-            requireLogin(action)
+            composeNewPost()
         } label: {
             Label("New Post", systemImage: "square.and.pencil")
         }

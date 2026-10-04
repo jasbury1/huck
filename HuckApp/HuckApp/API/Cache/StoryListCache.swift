@@ -27,39 +27,39 @@ actor StoryListCache {
         let ids: [Int]
         let fetchedAt: Date
     }
-    private var entries: [StoryFilter: Entry] = [:]
+    private var entries: [FeedKind: Entry] = [:]
     /// Fetches in progress, so a feed opened mid-warm-up shares its request.
-    private var inFlight: [StoryFilter: Task<[Int], Never>] = [:]
+    private var inFlight: [FeedKind: Task<[Int], Never>] = [:]
 
     private init() {}
 
     /// The feed's ids, from memory when fresh, otherwise fetched.
-    func ids(for filter: StoryFilter) async -> [Int] {
-        if let entry = entries[filter],
+    func ids(for kind: FeedKind) async -> [Int] {
+        if let entry = entries[kind],
            Date.now.timeIntervalSince(entry.fetchedAt) < timeToLive {
             return entry.ids
         }
-        return await fetch(filter)
+        return await fetch(kind)
     }
 
     /// Fetches the feed's current ranking regardless of age. If the fetch
     /// fails, the list already held is returned, so a failed pull-to-refresh
     /// leaves the feed as it was rather than blank.
-    func refresh(_ filter: StoryFilter) async -> [Int] {
-        await fetch(filter)
+    func refresh(_ kind: FeedKind) async -> [Int] {
+        await fetch(kind)
     }
 
-    private func fetch(_ filter: StoryFilter) async -> [Int] {
-        if let existing = inFlight[filter] { return await existing.value }
+    private func fetch(_ kind: FeedKind) async -> [Int] {
+        if let existing = inFlight[kind] { return await existing.value }
 
-        let task = Task { await FirebaseAPIService.getStoryIdsAsync(filter: filter) }
-        inFlight[filter] = task
+        let task = Task { await FirebaseAPIService.getStoryIdsAsync(kind: kind) }
+        inFlight[kind] = task
         let ids = await task.value
-        inFlight[filter] = nil
+        inFlight[kind] = nil
         // An empty list is a failed fetch (every feed has stories); keep
         // whatever was held before rather than caching the failure.
-        guard !ids.isEmpty else { return entries[filter]?.ids ?? [] }
-        entries[filter] = Entry(ids: ids, fetchedAt: .now)
+        guard !ids.isEmpty else { return entries[kind]?.ids ?? [] }
+        entries[kind] = Entry(ids: ids, fetchedAt: .now)
         return ids
     }
 }

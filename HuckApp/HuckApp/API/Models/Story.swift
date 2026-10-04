@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-nonisolated enum StoryFilter {
+nonisolated enum FeedKind {
     case topStories
     case bestStories
     case newStories

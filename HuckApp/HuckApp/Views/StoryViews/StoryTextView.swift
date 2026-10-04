@@ -632,8 +632,8 @@ struct StoryTextView: View {
 class CommentSectionData {
     var storyIds: [Int] = []
     
-    func fetchStoryIds(filter: StoryFilter) async {
-        let ids = await HackerNewsAPI.getStoryIds(filter: filter)
+    func fetchStoryIds(kind: FeedKind) async {
+        let ids = await HackerNewsAPI.getStoryIds(kind: kind)
         self.storyIds = ids
     }
 }

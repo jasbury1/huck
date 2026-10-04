@@ -80,8 +80,8 @@ nonisolated struct FirebaseUserData: Codable, Sendable {
 struct FirebaseAPIService {
     static let baseUri = "https://hacker-news.firebaseio.com"
 
-    static func getStoryIdsAsync(filter: StoryFilter) async -> [Int] {
-        let url = switch filter {
+    static func getStoryIdsAsync(kind: FeedKind) async -> [Int] {
+        let url = switch kind {
         case .topStories:
             "\(baseUri)/v0/topstories.json?print=pretty"
         case .bestStories:
