@@ -56,6 +56,29 @@ struct NewsYCService {
         return (auth, alreadyUpvoted)
     }
 
+    /// The vote token and current vote for each of a poll's options, read from
+    /// the poll's page in one request rather than one per option.
+    ///
+    /// Each option carries the same vote anchors a story does, so they're
+    /// matched exactly as `voteAuth(forItem:)` matches a story's. An option
+    /// missing from the result has no vote link at all — Hacker News removes
+    /// them once a poll is archived. `nil` means the page couldn't be fetched.
+    static func pollVotes(pollID: Int, optionIDs: [Int]) async -> [Int: (auth: String, alreadyUpvoted: Bool)]? {
+        guard let url = URL(string: "\(baseUri)/item?id=\(pollID)"),
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+        var votes: [Int: (auth: String, alreadyUpvoted: Bool)] = [:]
+        for id in optionIDs {
+            guard let auth = firstMatch(
+                in: html,
+                pattern: "id=['\"](?:up|un)_\(id)['\"][^>]*?auth=([0-9a-fA-F]+)"
+            ) else { continue }
+            votes[id] = (auth, contains(in: html, pattern: "id=['\"]un_\(id)['\"]"))
+        }
+        return votes
+    }
+
     /// Casts (or undoes) a vote on an item. Throws `APIError.voteFailed` on a
     /// non-success response.
     static func castVote(id: Int, how: VoteAction, auth: String) async throws {

@@ -23,6 +23,18 @@ nonisolated struct FirebaseStoryData: Codable, Sendable {
     /// indexed comment tree is still complete. Optional because non-story items
     /// omit it.
     let descendants: Int?
+    /// A poll's options, as `pollopt` item ids in display order. Absent on
+    /// anything that isn't a poll.
+    let parts: [Int]?
+}
+
+/// One of a poll's options as returned by the Firebase `item` endpoint. Its
+/// `score` is the option's vote count. Algolia carries these items too, but
+/// without their text, so Firebase is the only source for what an option says.
+nonisolated struct FirebasePollOptionData: Codable, Sendable {
+    let id: Int
+    let text: String?
+    let score: Int?
 }
 
 /// A comment item as returned by the official Firebase HN `item` endpoint.
@@ -48,6 +60,8 @@ nonisolated struct FirebaseItemHeader: Codable, Sendable {
     /// `story`, `comment`, `job`, `poll`, or `pollopt`.
     let type: String?
     let parent: Int?
+    /// For a `pollopt`, the poll it belongs to. (Options have no `parent`.)
+    let poll: Int?
 }
 
 /// A user as returned by the official Firebase HN `user` endpoint.
@@ -106,6 +120,11 @@ struct FirebaseAPIService {
 
     /// Just enough of any item to say what it is and what it hangs from.
     static func getItemHeaderAsync(id: Int) async -> FirebaseItemHeader? {
+        let url = "\(baseUri)/v0/item/\(id).json"
+        return await WebService().downloadData(fromURL: url)
+    }
+
+    static func getPollOptionAsync(id: Int) async -> FirebasePollOptionData? {
         let url = "\(baseUri)/v0/item/\(id).json"
         return await WebService().downloadData(fromURL: url)
     }

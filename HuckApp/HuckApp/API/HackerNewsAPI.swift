@@ -322,6 +322,10 @@ class HackerNewsAPI {
     /// do we climb its parents one Firebase request at a time.
     static func threadLocation(ofItem id: Int) async -> ThreadLocation? {
         guard let item = await FirebaseAPIService.getItemHeaderAsync(id: id) else { return nil }
+        // An option is read as part of its poll.
+        if item.type == "pollopt", let poll = item.poll {
+            return ThreadLocation(storyID: poll, commentID: nil)
+        }
         guard item.type == "comment" else {
             return ThreadLocation(storyID: id, commentID: nil)
         }
@@ -479,6 +483,49 @@ class HackerNewsAPI {
     static func getLikedComments(username: String, page: Int = 0) async -> (comments: [UserComment], hasMore: Bool)? {
         // NewsYCService pages the /upvoted list 1-based.
         await NewsYCService.upvotedComments(username: username, page: page + 1)
+    }
+
+    // MARK: - Polls
+
+    /// A poll's options, in the poll's order, fetched together. An option that
+    /// fails to load is left out rather than failing the poll.
+    static func getPollOptions(ids: [Int]) async -> [PollOption] {
+        let loaded = await withTaskGroup(of: FirebasePollOptionData?.self) { group in
+            for id in ids {
+                group.addTask { await FirebaseAPIService.getPollOptionAsync(id: id) }
+            }
+            var loaded: [Int: FirebasePollOptionData] = [:]
+            for await option in group {
+                if let option { loaded[option.id] = option }
+            }
+            return loaded
+        }
+        return ids.compactMap { id in
+            loaded[id].map {
+                PollOption(id: id, text: $0.text?.normalizeHtmlText() ?? "", votes: $0.score ?? 0)
+            }
+        }
+    }
+
+    /// The signed-in reader's votes in a poll, and the tokens to change them.
+    /// `nil` when logged out or if the poll's page couldn't be read.
+    static func pollBallot(pollID: Int, optionIDs: [Int]) async -> PollBallot? {
+        guard hasAuthCookie,
+              let votes = await NewsYCService.pollVotes(pollID: pollID, optionIDs: optionIDs) else {
+            return nil
+        }
+        return PollBallot(
+            voted: Set(votes.filter(\.value.alreadyUpvoted).keys),
+            tokens: votes.mapValues(\.auth)
+        )
+    }
+
+    /// Votes for, or withdraws a vote from, one of a poll's options. The token
+    /// comes from the reader's `PollBallot`, so this costs a single request.
+    static func setPollVote(optionID: Int, voted: Bool, ballot: PollBallot) async throws {
+        guard hasAuthCookie else { throw APIError.notLoggedIn }
+        guard let auth = ballot.tokens[optionID] else { throw APIError.missingAuthToken }
+        try await NewsYCService.castVote(id: optionID, how: voted ? .up : .unvote, auth: auth)
     }
 
     // MARK: - Favorites

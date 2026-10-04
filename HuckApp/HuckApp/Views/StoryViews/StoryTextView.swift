@@ -497,6 +497,9 @@ struct StoryTextView: View {
                     // Links take the tint, which is primary outside content.
                     .tint(.orange)
             }
+            if storyData.isPoll {
+                PollView(pollID: storyId, optionIDs: storyData.pollOptionIDs)
+            }
             // Only the username is tappable, navigating to the author's profile;
             // a plain Button keeps the tap target limited to the name itself.
             HStack(spacing: 4) {

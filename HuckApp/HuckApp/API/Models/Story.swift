@@ -89,6 +89,11 @@ class StoryModel : Equatable, Identifiable {
     private(set) var commentCount: Int
     private(set) var thumbnailStatus: ThumbnailType
     private(set) var text: String?
+    /// A poll's option ids, in order; empty for anything else. A poll is
+    /// otherwise a text post — its question is the title and its body the text.
+    private(set) var pollOptionIDs: [Int] = []
+
+    var isPoll: Bool { !pollOptionIDs.isEmpty }
 
     /// Whether `fetchData()` has fully populated this model (story + thumbnail).
     /// A `StoryModel` instance is retained by its `StoryFeed` across cell
@@ -128,6 +133,7 @@ class StoryModel : Equatable, Identifiable {
         self.by = story.by
         self.timestamp = Date(timeIntervalSince1970: TimeInterval(story.time))
         self.score = story.score
+        self.pollOptionIDs = story.parts ?? []
         // `descendants` is the whole-thread comment total; `kids` is only the
         // top-level replies. Fall back to the top-level count if it's absent.
         self.commentCount = story.descendants ?? story.kids?.count ?? 0
