@@ -272,22 +272,9 @@ struct CommentComposer: View {
                 )
                 .focused($isFocused)
                 .lineLimit(state.lineLimit)
-                // The formatting controls ride in the keyboard's floating bar,
-                // as in Notes. Only the expanded editor, where longer and
-                // formatted comments get written, offers them.
-                .toolbar {
-                    if state == .expanded {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            // Neutral icons, as in Notes, rather than the
-                            // app's orange tint.
-                            Group {
-                                formatButton("Code", systemImage: "chevron.left.forwardslash.chevron.right", format: .code)
-                                formatButton("Italic", systemImage: "italic", format: .italic)
-                            }
-                            .tint(.primary)
-                        }
-                    }
-                }
+                // Only the expanded editor, where longer and formatted
+                // comments get written, offers the formatting controls.
+                .formattingKeyboardToolbar(text: $draft, selection: $selection, isEnabled: state == .expanded)
                 Button {
                     submit()
                 } label: {
@@ -316,47 +303,6 @@ struct CommentComposer: View {
         .frame(maxWidth: .infinity)
         .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
         .glassEffectID("composer", in: namespace)
-    }
-
-    /// The draft's selection or cursor. Before the field reports one, the
-    /// cursor is taken to be at the end of the draft.
-    ///
-    /// The field's selection can lag the text it indexes — an empty draft has
-    /// been seen reporting a range past its end — and slicing with those
-    /// indices traps, so anything out of bounds falls back to the end.
-    private var selectedRange: Range<String.Index> {
-        let end = draft.endIndex..<draft.endIndex
-        guard case .selection(let range) = selection?.indices,
-              range.lowerBound >= draft.startIndex,
-              range.upperBound <= draft.endIndex
-        else { return end }
-        return range
-    }
-
-    /// One formatting button in the keyboard bar. Formats (or unformats) the
-    /// highlighted text, or with just a cursor, inserts the markup to type into.
-    private func formatButton(
-        _ title: LocalizedStringKey,
-        systemImage: String,
-        format: CommentFormat
-    ) -> some View {
-        Button {
-            let result = format.apply(to: draft, range: selectedRange)
-            draft = result.text
-            // Select the formatted passage, so the change is visible and can be
-            // toggled straight back — or place the cursor inside new markup.
-            selection = result.range.isEmpty
-                ? TextSelection(insertionPoint: result.range.lowerBound)
-                : TextSelection(range: result.range)
-        } label: {
-            // Spelled out beside the symbol, since the markup these insert
-            // isn't self-explanatory. A plain HStack rather than a `Label`:
-            // toolbars reduce a `Label` to its icon, ignoring `labelStyle`.
-            HStack(spacing: 4) {
-                Image(systemName: systemImage)
-                Text(title)
-            }
-        }
     }
 
     /// Names where the draft will land — the comment being answered, or the

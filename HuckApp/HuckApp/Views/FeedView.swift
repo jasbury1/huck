@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FeedView: View {
     @State private var path = NavigationPath()
+    @State private var isComposingPost = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -63,8 +64,13 @@ struct FeedView: View {
                 }
             }
             .navigationTitle("Hacker News")
-            .toolbar() {
-                Image(systemName: "square.and.pencil")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NewPostButton { isComposingPost = true }
+                }
+            }
+            .fullScreenCover(isPresented: $isComposingPost) {
+                SubmissionView()
             }
             .navigationDestination(for: StoryFilter.self) { input in
                 StoryFeedView(storyFilter: input, path: $path)
@@ -75,6 +81,23 @@ struct FeedView: View {
         }
         .inAppBrowser(path: $path)
         .storyActionsEnabled()
+    }
+}
+
+/// Opens the new-post form, signing in first if need be. Its own view so it
+/// can read the login gate, which `storyActionsEnabled()` supplies only to
+/// the views inside the navigation stack.
+private struct NewPostButton: View {
+    let action: () -> Void
+
+    @Environment(\.requireLogin) private var requireLogin
+
+    var body: some View {
+        Button {
+            requireLogin(action)
+        } label: {
+            Label("New Post", systemImage: "square.and.pencil")
+        }
     }
 }
 
