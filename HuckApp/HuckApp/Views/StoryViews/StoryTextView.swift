@@ -493,7 +493,7 @@ struct StoryTextView: View {
         VStack(alignment: .leading, spacing: 20) {
             storyHeader
             if let text = storyData.text {
-                Text(try! AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+                FormattedTextView(text: text)
                     // Links take the tint, which is primary outside content.
                     .tint(.orange)
             }

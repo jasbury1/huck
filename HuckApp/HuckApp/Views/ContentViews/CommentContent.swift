@@ -95,9 +95,8 @@ struct CommentContent<Accessory: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             header
             if let text {
-                Text(Self.formatted(text))
+                FormattedTextView(text: text, lineLimit: lineLimit)
                     .font(.callout)
-                    .lineLimit(lineLimit)
                     // Links take the tint, which is primary outside content.
                     .tint(.orange)
             }
@@ -141,16 +140,6 @@ struct CommentContent<Accessory: View>: View {
         } else {
             row
         }
-    }
-
-    /// Renders the comment's inline markdown — Hacker News allows italics,
-    /// links, and code — falling back to the raw text rather than trapping on
-    /// anything the parser rejects.
-    private static func formatted(_ text: String) -> AttributedString {
-        (try? AttributedString(
-            markdown: text,
-            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
-        )) ?? AttributedString(text)
     }
 }
 

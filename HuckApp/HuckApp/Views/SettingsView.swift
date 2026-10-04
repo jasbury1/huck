@@ -13,6 +13,13 @@ enum FeedSettings {
     static let displayStoryDomainKey = "feed.displayStoryDomain"
 }
 
+/// Shared `@AppStorage` keys for how comments and posts are read.
+enum ReadingSettings {
+    /// Whether code is drawn as code — monospaced, in a block of its own — or
+    /// as ordinary text. Defaults on.
+    static let formatsCodeKey = "reading.formatsCode"
+}
+
 /// The app's preferences, presented as a sheet from the Account tab's toolbar.
 /// It brings its own `NavigationStack` for the title bar, rather than joining
 /// the account tab's — that stack is for story navigation.
@@ -22,6 +29,8 @@ struct SettingsView: View {
 
     /// Whether story cells show the link's domain after the title. Defaults on.
     @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
+
+    @AppStorage(ReadingSettings.formatsCodeKey) private var formatsCode = true
 
     /// Light/dark override. Applied at the app's root, not here — this is only
     /// where it's chosen.
@@ -71,6 +80,20 @@ struct SettingsView: View {
                             SettingsIcon(systemImage: "globe", color: .blue)
                         }
                     }
+                }
+
+                Section {
+                    Toggle(isOn: $formatsCode) {
+                        Label {
+                            Text("Format Code")
+                        } icon: {
+                            SettingsIcon(systemImage: "chevron.left.forwardslash.chevron.right", color: .teal)
+                        }
+                    }
+                } header: {
+                    Text("Comments")
+                } footer: {
+                    Text("Shows code in a monospaced font, set apart from the text around it.")
                 }
 
                 if DebugMode.isAvailable(for: session.username) {

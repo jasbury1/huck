@@ -132,12 +132,10 @@ private struct PollOptionLabel: View {
         .contentShape(Self.shape)
     }
 
-    /// Option text is inline markdown, as a comment's is.
+    /// Option text is formatted as a comment's is, kept to one `Text` to sit
+    /// beside the count.
     static func formatted(_ text: String) -> AttributedString {
-        (try? AttributedString(
-            markdown: text,
-            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
-        )) ?? AttributedString(text)
+        FormattedText.cached(text).attributedString(formatsCode: true)
     }
 }
 
