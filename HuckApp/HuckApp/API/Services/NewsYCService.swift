@@ -197,6 +197,85 @@ struct NewsYCService {
         }
     }
 
+    // MARK: - Submitting
+
+    /// What Hacker News did with a submission it accepted.
+    enum SubmitResponse {
+        /// A new post was created; HN doesn't say under which id.
+        case posted
+        /// The link was already on HN, which upvoted that story instead.
+        case repost(storyID: Int)
+    }
+
+    /// The hidden fields of Hacker News' submit form, or `nil` if it couldn't be
+    /// found — most likely because the session has lapsed and HN served its
+    /// login wall, whose forms carry no `action` and so never match.
+    ///
+    /// The same two-step exchange as commenting: the form carries a one-time
+    /// `fnid` that `/r` checks, and it exists only in the page's HTML. Every
+    /// hidden input is forwarded rather than naming them, so a field added or
+    /// renamed upstream keeps working.
+    static func submitForm() async -> [(name: String, value: String)]? {
+        guard let url = URL(string: "\(baseUri)/submit"),
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+        // HN has written form actions both with and without a leading slash.
+        let fields = ["r", "/r"]
+            .lazy
+            .map { hiddenFields(inFormWithAction: $0, of: html) }
+            .first { !$0.isEmpty }
+        return fields
+    }
+
+    /// Submits a post, sending the scraped form fields back alongside its
+    /// content. `url` and `text` may each be empty; HN decides the kind of post
+    /// from which are filled in, as its own form does.
+    ///
+    /// Throws `APIError.notLoggedIn` if HN bounced the request to its login
+    /// page, and `APIError.submitFailed` if it refused the post.
+    static func submitStory(
+        fields: [(name: String, value: String)],
+        title: String,
+        url: String,
+        text: String
+    ) async throws -> SubmitResponse {
+        guard let endpoint = URL(string: "\(baseUri)/r") else { throw APIError.submitFailed }
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.httpBody = FormBody.encoded(fields + [
+            (name: "title", value: title),
+            (name: "url", value: url),
+            (name: "text", value: text),
+        ])
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+
+        let (_, response) = try await postingSession.countedData(for: request)
+        // As with comments, an accepted POST is answered with a redirect and a
+        // refused one — a title too long, posting too fast — re-renders the form
+        // with a 200. Where the redirect points tells the accepted cases apart:
+        // `newest` for a new post, the existing story's page for a repost.
+        guard let http = response as? HTTPURLResponse, http.statusCode == 302,
+              let location = http.value(forHTTPHeaderField: "Location") else {
+            throw APIError.submitFailed
+        }
+        if location.hasSuffix("newest") {
+            return .posted
+        }
+        if let id = firstMatch(in: location, pattern: "item\\?id=(\\d+)").flatMap(Int.init) {
+            return .repost(storyID: id)
+        }
+        if location.contains("login") {
+            throw APIError.notLoggedIn
+        }
+        // Anywhere else is unexplained. Reporting it as a failure keeps the
+        // draft, and a retry of a post that did go through is caught by HN's own
+        // duplicate check for links.
+        throw APIError.submitFailed
+    }
+
     // MARK: - Comment scores
 
     /// The points on one of the reader's own comments, or `nil` if the page
@@ -268,6 +347,31 @@ struct NewsYCService {
             .flatMap { firstMatch(in: $0, pattern: "next=(\\d+)") }
             .flatMap(Int.init)
         return (scores, oldestID, nextCursor)
+    }
+
+    // MARK: - New users
+
+    /// The usernames Hacker News marks as new accounts on a thread's page, or
+    /// `nil` if the page couldn't be fetched.
+    ///
+    /// Neither JSON API says how old a commenter's account is, and asking each
+    /// author's profile would cost a request per name. HN already decides this
+    /// itself — it wraps a new account's name in a green `<font>` inside the
+    /// `hnuser` link — so one read of the thread answers for every comment on
+    /// it, using HN's own rule rather than a guess at its cutoff. The colour
+    /// isn't matched: the `<font>` wrapper is the marker, so a change of shade
+    /// upstream doesn't break this.
+    static func newUsers(onItem id: Int) async -> Set<String>? {
+        guard let url = URL(string: "\(baseUri)/item?id=\(id)"),
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+        // `<a href="user?id=<name>" class="hnuser"><font color="#3c963c"><name></font></a>`
+        let names = allMatches(
+            in: html,
+            pattern: "class=['\"]hnuser['\"][^>]*>\\s*<font[^>]*>([^<]+)</font>"
+        )
+        return Set(names)
     }
 
     // MARK: - Deleting

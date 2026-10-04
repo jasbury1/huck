@@ -7,24 +7,25 @@
 
 import SwiftUI
 
-/// The body of a comment or post: its prose, and any code in blocks of their
-/// own, so it's plain where the code starts and stops.
+/// The body of a comment or post: its prose, and any code or quotes in blocks
+/// of their own, so it's plain where they start and stop.
 ///
 /// Takes its font from the environment, and the code takes the monospaced
 /// version of it. A `lineLimit` clamps the whole body, blocks and all, to
-/// about that many lines of its font. With code formatting turned off in
-/// Settings it's a single `Text`, code and all.
+/// about that many lines of its font. Code and quotes are each set apart only
+/// while their setting is on; with nothing to set apart it's a single `Text`.
 struct FormattedTextView: View {
     let text: String
     var lineLimit: Int? = nil
 
     @AppStorage(ReadingSettings.formatsCodeKey) private var formatsCode = true
+    @AppStorage(ReadingSettings.formatsQuotesKey) private var formatsQuotes = true
 
     private static let blockSpacing: CGFloat = 10
 
     var body: some View {
         let formatted = FormattedText.cached(text)
-        if formatsCode, formatted.containsCode {
+        if (formatsCode && formatted.containsCode) || (formatsQuotes && formatted.containsQuote) {
             if let lineLimit {
                 LineClampedStack(lineLimit: lineLimit, spacing: Self.blockSpacing) {
                     // Measures a line of the font, for the stack's limit.
@@ -44,15 +45,69 @@ struct FormattedTextView: View {
         }
     }
 
+    /// Each block drawn on its own. Whichever of code and quotes has its
+    /// setting off reads as ordinary text, as in the single-`Text` form.
     private func blocks(of formatted: FormattedText) -> some View {
         ForEach(formatted.blocks) { block in
             switch block.content {
             case let .prose(prose):
                 Text(prose)
             case let .code(code):
-                CodeBlock(code: code)
+                if formatsCode {
+                    CodeBlock(code: code)
+                } else {
+                    Text(code)
+                }
+            case let .quote(paragraphs):
+                if formatsQuotes {
+                    QuoteBlock(paragraphs: paragraphs)
+                } else {
+                    Text(FormattedText.markedQuote(paragraphs))
+                }
             }
         }
+    }
+}
+
+/// Quoted text inside a rounded outline, its `>` markers dropped since the
+/// outline now says what they did.
+///
+/// The outline says it's a quote, and an outline rather than a fill keeps it
+/// from being mistaken for a code block. The text is only a shade lighter than the reply around it — enough
+/// to read as someone else's words, where `.secondary` was too faint to read
+/// comfortably. It isn't italicized, which would swallow any italics the
+/// quote carries, and Hacker News uses those for emphasis.
+private struct QuoteBlock: View {
+    let paragraphs: [AttributedString]
+
+    var body: some View {
+        // One `Text` rather than one per paragraph, so a clamped body
+        // truncates the quote with an ellipsis like any other text.
+        Text(paragraphs.joined(separator: "\n\n"))
+            .foregroundStyle(.primary.opacity(0.7))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay {
+                // `systemGray3` stays visible against the background in both
+                // appearances, where `.separator` all but vanished.
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(Color(.systemGray3), lineWidth: 1.5)
+            }
+            // The outline is drawn, so VoiceOver is told what it means.
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text("Quote: ") + Text(paragraphs.joined(separator: "\n\n")))
+    }
+}
+
+private extension [AttributedString] {
+    func joined(separator: String) -> AttributedString {
+        var result = AttributedString()
+        for (index, element) in enumerated() {
+            if index > 0 { result += AttributedString(separator) }
+            result += element
+        }
+        return result
     }
 }
 
@@ -149,6 +204,10 @@ private struct LineClampedStack: Layout {
 }
 
 private let sample = """
+    &gt; Does D have lambdas?
+
+    &gt; Or anything *like* them?
+
     Lambdas in D are just *nested* functions:
     ```
     int foo(int i) {

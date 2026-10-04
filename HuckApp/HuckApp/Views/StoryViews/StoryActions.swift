@@ -44,9 +44,12 @@ struct AddToCollectionAction {
 /// it's offered from menus, which are gone by the time a presentation attached
 /// to them would appear — and it keeps the home screen's compose button and the
 /// feeds' menus opening the one page.
+///
+/// `openPost` is handed the id of the post once it's published, so the caller
+/// can open it in its own navigation stack.
 struct ComposeNewPostAction {
-    let handler: () -> Void
-    func callAsFunction() { handler() }
+    let handler: (_ openPost: @escaping (Int) -> Void) -> Void
+    func callAsFunction(openPost: @escaping (Int) -> Void) { handler(openPost) }
 }
 
 /// Runs a closure only when signed in, otherwise presenting the login screen —
@@ -63,7 +66,7 @@ extension EnvironmentValues {
     @Entry var upvoteComment = UpvoteCommentAction { _ in }
     @Entry var favorite = FavoriteAction { _ in }
     @Entry var addToCollection = AddToCollectionAction { _ in }
-    @Entry var composeNewPost = ComposeNewPostAction {}
+    @Entry var composeNewPost = ComposeNewPostAction { _ in }
     @Entry var requireLogin = RequireLoginAction { $0() }
 }
 
@@ -78,6 +81,9 @@ private struct StoryActionsModifier: ViewModifier {
     /// The story whose collection picker is showing, if any.
     @State private var collectionStory: StoryModel?
     @State private var isComposingPost = false
+    /// Where the post being composed opens once published, from whoever asked
+    /// for it.
+    @State private var openPost: (Int) -> Void = { _ in }
 
     func body(content: Content) -> some View {
         content
@@ -93,8 +99,11 @@ private struct StoryActionsModifier: ViewModifier {
             .environment(\.addToCollection, AddToCollectionAction { story in
                 requireLogin { collectionStory = story }
             })
-            .environment(\.composeNewPost, ComposeNewPostAction {
-                requireLogin { isComposingPost = true }
+            .environment(\.composeNewPost, ComposeNewPostAction { open in
+                requireLogin {
+                    openPost = open
+                    isComposingPost = true
+                }
             })
             .environment(\.requireLogin, RequireLoginAction(handler: requireLogin))
             .sheet(isPresented: $isPresentingLogin) {
@@ -104,7 +113,7 @@ private struct StoryActionsModifier: ViewModifier {
                 AddToCollectionView(story: story)
             }
             .fullScreenCover(isPresented: $isComposingPost) {
-                SubmissionView()
+                SubmissionView(onPosted: openPost)
             }
             // Signing in is what the sheet was for, so dismiss it once it has.
             // The per-user reload is not this modifier's job — it happens once,

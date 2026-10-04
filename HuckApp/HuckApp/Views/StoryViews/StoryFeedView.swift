@@ -205,7 +205,7 @@ struct StoryFeedView: View {
                 Menu {
                     Group {
                         Button("New Post", systemImage: "square.and.pencil") {
-                            composeNewPost()
+                            composeNewPost { path.append(ItemNavigation.textStory(id: $0)) }
                         }
                         Section {
                             ForEach(FeedFilter.toggleable) { filter in

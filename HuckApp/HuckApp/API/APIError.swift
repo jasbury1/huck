@@ -30,6 +30,9 @@ public enum APIError: Error, LocalizedError {
     case deleteUnavailable
     /// Hacker News offered to delete the comment but didn't accept the request.
     case deleteFailed
+    /// Hacker News refused the submission. As with comments, it doesn't say
+    /// why in a form we can read.
+    case submitFailed
     case unknown
 
     public var errorDescription: String? {
@@ -48,6 +51,8 @@ public enum APIError: Error, LocalizedError {
         case .deleteUnavailable:
             return "Hacker News no longer allows this comment to be deleted. Comments can only be deleted shortly after posting, before anyone replies."
         case .deleteFailed: return "Hacker News didn't delete the comment. Try again in a moment."
+        case .submitFailed:
+            return "Hacker News wouldn't accept your post. You may be posting too quickly, or the title or link may not be allowed — check them and try again."
         case .unknown: return "Unknown Error."
         }
     }

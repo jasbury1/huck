@@ -65,7 +65,7 @@ struct FeedView: View {
             .navigationTitle("Hacker News")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NewPostButton()
+                    NewPostButton(path: $path)
                 }
             }
             .navigationDestination(for: FeedKind.self) { input in
@@ -84,11 +84,12 @@ struct FeedView: View {
 /// can read `composeNewPost`, which `storyActionsEnabled()` supplies only to
 /// the views inside the navigation stack.
 private struct NewPostButton: View {
+    @Binding var path: NavigationPath
     @Environment(\.composeNewPost) private var composeNewPost
 
     var body: some View {
         Button {
-            composeNewPost()
+            composeNewPost { path.append(ItemNavigation.textStory(id: $0)) }
         } label: {
             Label("New Post", systemImage: "square.and.pencil")
         }

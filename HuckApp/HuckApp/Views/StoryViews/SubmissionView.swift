@@ -46,7 +46,8 @@ enum SubmissionKind: CaseIterable, Identifiable {
 /// Mirrors HN's submit form — a title, then a URL or text — laid out as the
 /// post will read: the title large, as it is atop a thread, and a preview of
 /// the post's row in the feed beneath. Text is formatted as a comment is,
-/// with the same keyboard controls. Not yet connected to the API.
+/// with the same keyboard controls. Once published, the post is handed to
+/// `onPosted` to be opened.
 struct SubmissionView: View {
     @Environment(\.dismiss) private var dismiss
     /// Names the author in the preview.
@@ -61,6 +62,16 @@ struct SubmissionView: View {
     /// The linked page's thumbnail, for the preview.
     @State private var thumbnail = ThumbnailType.loading
     @State private var isConfirmingDiscard = false
+    /// True while the post is in flight; holds the Post button closed so one
+    /// tap can't become two posts.
+    @State private var isPosting = false
+    /// Set when a post fails, presenting the error over the still-intact draft.
+    @State private var postError: (any Error)?
+    /// Set to the existing story when the link was already on Hacker News, so
+    /// HN upvoted it rather than posting it again.
+    @State private var repostID: Int?
+    /// Played once the post is published.
+    @State private var postedCount = 0
     @FocusState private var focusedField: Field?
 
     private enum Field {
@@ -72,9 +83,19 @@ struct SubmissionView: View {
 
     private static let fieldShape = RoundedRectangle(cornerRadius: 16, style: .continuous)
 
+    /// Opens a published post — the new one, or the existing story a repost
+    /// landed on.
+    private let onPosted: (Int) -> Void
+
     /// Starts a post, optionally already filled in — a link shared into the
     /// app, say.
-    init(kind: SubmissionKind = .link, title: String = "", url: String = "") {
+    init(
+        kind: SubmissionKind = .link,
+        title: String = "",
+        url: String = "",
+        onPosted: @escaping (Int) -> Void = { _ in }
+    ) {
+        self.onPosted = onPosted
         self.kind = kind
         self.title = title
         self.url = url
@@ -97,6 +118,7 @@ struct SubmissionView: View {
                     }
                 }
                 .padding(20)
+                .disabled(isPosting)
                 .animation(.snappy, value: kind)
                 .animation(.snappy, value: trimmedTitle.isEmpty)
             }
@@ -107,13 +129,21 @@ struct SubmissionView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .close, action: cancel)
+                        .disabled(isPosting)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Post", action: submit)
-                        .buttonStyle(.glassProminent)
-                        // The page's one call to action, in the app's orange.
-                        .tint(.orange)
-                        .disabled(!canSubmit)
+                    Button(action: submit) {
+                        if isPosting {
+                            ProgressView()
+                        } else {
+                            Text("Post")
+                        }
+                    }
+                    .buttonStyle(.glassProminent)
+                    // The page's one call to action, in the app's orange.
+                    .tint(.orange)
+                    .disabled(!canSubmit || isPosting)
+                    .accessibilityLabel(isPosting ? "Posting" : "Post")
                 }
             }
             .alert("Discard this post?", isPresented: $isConfirmingDiscard) {
@@ -122,12 +152,31 @@ struct SubmissionView: View {
             } message: {
                 Text("Your post will be lost.")
             }
+            // On its own view so it never competes with the discard
+            // confirmation above for the same presentation slot.
+            .background {
+                Color.clear
+                    .alert("Already on Hacker News", isPresented: isShowingRepost) {
+                        Button("View Post") {
+                            if let repostID { finish(opening: repostID) }
+                        }
+                    } message: {
+                        Text("This link has already been posted, so Hacker News counted your submission as an upvote instead.")
+                    }
+            }
+            .sensoryFeedback(.success, trigger: postedCount)
             .onAppear { focusedField = .title }
             // Waits for typing to settle, so the thumbnail is fetched for the
             // finished address rather than for every keystroke along the way.
             .task(id: validURL) {
                 await loadThumbnail()
             }
+        }
+        // Outside the stack, clear of the page's other alerts.
+        .alert("Couldn't Post", item: $postError) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { error in
+            Text(error.localizedDescription)
         }
     }
 
@@ -358,8 +407,46 @@ struct SubmissionView: View {
         }
     }
 
+    /// Posts the draft, closing the page only once Hacker News has accepted it.
+    /// A failed post keeps everything as it was, so it can simply be sent again.
     private func submit() {
-        // TODO: Post through `HackerNewsAPI` once submitting is supported.
+        guard canSubmit, !isPosting, let username = session.username else { return }
+        let title = trimmedTitle
+        let url = kind == .link ? validURL?.absoluteString ?? "" : ""
+        let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        focusedField = nil
+        isPosting = true
+        Task {
+            defer { isPosting = false }
+            do {
+                switch try await HackerNewsAPI.submitStory(
+                    title: title, url: url, text: text, username: username
+                ) {
+                case .posted(let id):
+                    postedCount += 1
+                    if let id {
+                        finish(opening: id)
+                    } else {
+                        dismiss()
+                    }
+                case .alreadySubmitted(let id):
+                    repostID = id
+                }
+            } catch {
+                postError = error
+            }
+        }
+    }
+
+    /// Closes the page and opens the post beneath it, so the thread is
+    /// waiting as the page slides away.
+    private func finish(opening id: Int) {
+        dismiss()
+        onPosted(id)
+    }
+
+    private var isShowingRepost: Binding<Bool> {
+        Binding(get: { repostID != nil }, set: { if !$0 { repostID = nil } })
     }
 }
 

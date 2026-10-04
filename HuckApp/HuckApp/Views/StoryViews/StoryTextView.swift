@@ -15,6 +15,8 @@ struct CommentCellView: View {
     let isCollapsed: Bool
     /// The story's submitter, so their own comments can be marked as such.
     let storyAuthor: String
+    /// Whether Hacker News marks the author as a new account.
+    let isNewUser: Bool
     @Binding var path: NavigationPath
 
     /// Folds away just this comment's replies.
@@ -34,6 +36,7 @@ struct CommentCellView: View {
         commentData: Comment,
         isCollapsed: Bool,
         storyAuthor: String,
+        isNewUser: Bool,
         path: Binding<NavigationPath>,
         onCollapse: @escaping () -> Void,
         onCollapseThread: @escaping () -> Void,
@@ -42,6 +45,7 @@ struct CommentCellView: View {
         self.commentData = commentData
         self.isCollapsed = isCollapsed
         self.storyAuthor = storyAuthor
+        self.isNewUser = isNewUser
         self._path = path
         self.onCollapse = onCollapse
         self.onCollapseThread = onCollapseThread
@@ -77,7 +81,8 @@ struct CommentCellView: View {
                 authorColor: .commentAuthor(
                     commentData.author,
                     reader: session.username,
-                    storyAuthor: storyAuthor
+                    storyAuthor: storyAuthor,
+                    isNewUser: isNewUser
                 ),
                 // A collapsed row shrinks to its header alone.
                 text: isCollapsed ? nil : commentData.text,
@@ -191,6 +196,9 @@ struct StoryTextView: View {
     /// single choke point for every route into a story's comments/text.
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
 
+    /// Whether new accounts' names are tinted. Off, their page isn't read.
+    @AppStorage(ReadingSettings.highlightsNewUsersKey) private var highlightsNewUsers = true
+
     private var isUpvoted: Bool { interactionStore.interaction(for: storyId).isUpvoted }
     private var isFavorited: Bool { interactionStore.interaction(for: storyId).isFavorited }
 
@@ -257,6 +265,7 @@ struct StoryTextView: View {
                             commentData: comment,
                             isCollapsed: collapsed,
                             storyAuthor: storyData.by,
+                            isNewUser: highlightsNewUsers && commentFetcher.isNewUser(comment.author),
                             path: $path,
                             onCollapse: {
                                 withAnimation(.easeInOut) {
@@ -420,6 +429,14 @@ struct StoryTextView: View {
             recentlyViewedStore.recordView(storyId)
             await storyData.fetchData()
             await commentFetcher.fetchComments()
+        }
+        // Runs alongside the thread rather than after it, so the names tint in
+        // as soon as the page is read without ever delaying the comments.
+        // Re-runs when the setting or the account changes — HN only marks new
+        // users for a signed-in reader, so signing in mid-thread fetches then.
+        .task(id: highlightsNewUsers ? session.username : nil) {
+            guard highlightsNewUsers else { return }
+            await commentFetcher.fetchNewUsers()
         }
         // The thread streams in, so a comment we were asked to scroll to may
         // only just have arrived. Retry on every snapshot until it has.
@@ -662,6 +679,7 @@ private struct CommentCellGallery: View {
             (comment("The story's submitter, so this name shows in orange.", by: "op_user", level: 0), false),
             (comment("Someone else, one level in — the name stays in the primary colour.", by: "commenter", level: 1), false),
             (comment("Deeper still. Only a reply offers Collapse Thread in its menu.", by: "third_party", level: 2), false),
+            (comment("A brand-new account, so the name takes a faint green.", by: "new_user", level: 1), false),
             (comment("A collapsed row: just the name and a chevron, no menu.", by: "commenter", level: 1), true),
             (comment("Posted seconds ago, so it has no permalink to copy yet.", by: "op_user", level: 0, published: false), false),
         ]
@@ -673,6 +691,7 @@ private struct CommentCellGallery: View {
                         commentData: cell.comment,
                         isCollapsed: cell.isCollapsed,
                         storyAuthor: "op_user",
+                        isNewUser: cell.comment.author == "new_user",
                         path: .constant(NavigationPath()),
                         onCollapse: {},
                         onCollapseThread: {},

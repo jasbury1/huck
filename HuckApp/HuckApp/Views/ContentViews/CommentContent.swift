@@ -22,6 +22,19 @@ private extension Color {
             ? .systemOrange
             : UIColor(red: 0.72, green: 0.36, blue: 0, alpha: 1)
     })
+
+    /// Marks a new account, as Hacker News does with its green names.
+    ///
+    /// Deliberately faint. HN's own green is a bright `#3c963c`, which here
+    /// would shout louder than the reader and submitter markers that matter
+    /// more. Instead this sits just off `.primary` — a near-black green in
+    /// light mode, a near-white green in dark — so it's noticeable when
+    /// looked for without pulling the eye down the thread.
+    static let newUser = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0.74, green: 0.90, blue: 0.74, alpha: 1)
+            : UIColor(red: 0.07, green: 0.30, blue: 0.10, alpha: 1)
+    })
 }
 
 extension Color {
@@ -29,7 +42,9 @@ extension Color {
     /// comments, orange for the story's submitter (the convention other clients
     /// use for OP). When the reader *is* the submitter, red wins — "this is
     /// you" is the more useful of the two, since they already know they posted
-    /// the story.
+    /// the story. Anyone else on a new account gets a faint green, after
+    /// Hacker News' own marking — the least important of the three, so it
+    /// yields to both.
     ///
     /// Only a thread calls this. A name is coloured to place it *among others* —
     /// which is you, which is the person everyone is replying to. Read on a
@@ -38,12 +53,15 @@ extension Color {
     static func commentAuthor(
         _ author: String,
         reader: String?,
-        storyAuthor: String
+        storyAuthor: String,
+        isNewUser: Bool = false
     ) -> Color {
         if let reader, author == reader {
             .red
         } else if author == storyAuthor {
             .storySubmitter
+        } else if isNewUser {
+            .newUser
         } else {
             .primary
         }

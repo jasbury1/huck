@@ -20,6 +20,12 @@ enum ReadingSettings {
     /// Whether code is drawn as code — monospaced, in a block of its own — or
     /// as ordinary text. Defaults on.
     static let formatsCodeKey = "reading.formatsCode"
+    /// Whether paragraphs quoted with `>` are set apart in an outlined box,
+    /// or left as written. Defaults on.
+    static let formatsQuotesKey = "reading.formatsQuotes"
+    /// Whether new accounts' names are tinted green in threads, as on Hacker
+    /// News. Defaults on. Off also skips the page read that finds them.
+    static let highlightsNewUsersKey = "reading.highlightsNewUsers"
 }
 
 /// The app's preferences, presented as a sheet from the Account tab's toolbar.
@@ -36,6 +42,8 @@ struct SettingsView: View {
     @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
 
     @AppStorage(ReadingSettings.formatsCodeKey) private var formatsCode = true
+    @AppStorage(ReadingSettings.formatsQuotesKey) private var formatsQuotes = true
+    @AppStorage(ReadingSettings.highlightsNewUsersKey) private var highlightsNewUsers = true
 
     /// Light/dark override. Applied at the app's root, not here — this is only
     /// where it's chosen.
@@ -107,10 +115,24 @@ struct SettingsView: View {
                             SettingsIcon(systemImage: "chevron.left.forwardslash.chevron.right", color: .teal)
                         }
                     }
+                    Toggle(isOn: $formatsQuotes) {
+                        Label {
+                            Text("Format Quotes")
+                        } icon: {
+                            SettingsIcon(systemImage: "quote.opening", color: .purple)
+                        }
+                    }
+                    Toggle(isOn: $highlightsNewUsers) {
+                        Label {
+                            Text("Highlight New Users")
+                        } icon: {
+                            SettingsIcon(systemImage: "person.badge.clock", color: .green)
+                        }
+                    }
                 } header: {
                     Text("Comments")
                 } footer: {
-                    Text("Shows code in a monospaced font, set apart from the text around it.")
+                    Text("Format Code shows code in a monospaced font, set apart from the text around it. Format Quotes outlines paragraphs quoted with “>”. Highlight New Users tints the names of recently created accounts green, as Hacker News does while you're signed in.")
                 }
 
                 if DebugMode.isAvailable(for: session.username) {
@@ -204,8 +226,14 @@ private struct SettingsIcon: View {
     let color: Color
 
     var body: some View {
+        // Fitted into a fixed inner box rather than sized by font, so a wide
+        // symbol (the code brackets, the eye) keeps the same margin to the
+        // badge's edge as a narrow one, as in the Settings app.
         Image(systemName: systemImage)
-            .font(.system(size: 15, weight: .semibold))
+            .resizable()
+            .scaledToFit()
+            .fontWeight(.semibold)
+            .frame(width: 18, height: 18)
             .foregroundStyle(.white)
             .frame(width: 28, height: 28)
             .background(color, in: RoundedRectangle(cornerRadius: 6))

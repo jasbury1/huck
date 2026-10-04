@@ -21,6 +21,10 @@ class CommentFetcher {
     /// Ids of comments whose reply subtrees are collapsed (hidden).
     var collapsedIds: Set<Int> = []
 
+    /// Commenters Hacker News marks as new accounts. Empty until
+    /// `fetchNewUsers()` has run, so names simply start out plain.
+    private(set) var newUsers: Set<String> = []
+
     /// What's needed to recover the Hacker News id of a comment posted from this
     /// thread, keyed by that comment's `id`, for as long as it's still unknown.
     ///
@@ -44,6 +48,17 @@ class CommentFetcher {
             }
         }
         isLoading = false
+    }
+
+    /// Loads which commenters are new accounts. Separate from `fetchComments()`
+    /// so it never holds up the thread — and so it isn't made at all when the
+    /// reader has turned the highlight off.
+    func fetchNewUsers() async {
+        newUsers = await HackerNewsAPI.newUsers(inThread: id)
+    }
+
+    func isNewUser(_ author: String) -> Bool {
+        newUsers.contains(author)
     }
 
     /// Places a comment the reader has just posted into the thread, where the

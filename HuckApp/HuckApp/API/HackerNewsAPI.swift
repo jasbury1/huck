@@ -38,6 +38,16 @@ struct ThreadLocation: Hashable, Sendable {
     let commentID: Int?
 }
 
+/// What Hacker News did with a submission it accepted.
+enum SubmissionOutcome: Sendable {
+    /// A new post was created. Its id is `nil` if it couldn't be confirmed in
+    /// time — the post exists, but there's nowhere certain to open.
+    case posted(storyID: Int?)
+    /// The link had already been posted, so HN counted the submission as an
+    /// upvote on the existing story instead of creating a new one.
+    case alreadySubmitted(storyID: Int)
+}
+
 /// The single entry point the rest of the app uses to talk to Hacker News.
 ///
 /// `HackerNewsAPI` is an abstraction layer over the underlying API services
@@ -354,6 +364,19 @@ class HackerNewsAPI {
         }
     }
 
+    /// The commenters on a story whose accounts Hacker News marks as new, so
+    /// their names can be shown the way HN shows them. One read of the story's
+    /// page covers the whole thread, and it's cached briefly — see
+    /// `NewUserCache`. Empty if the page couldn't be read.
+    ///
+    /// Empty, with no request made, when logged out: HN marks new accounts
+    /// only on pages served to a signed-in reader, so a logged-out read would
+    /// cost a whole thread's page and find nothing.
+    static func newUsers(inThread id: Int) async -> Set<String> {
+        guard hasAuthCookie else { return [] }
+        return await NewUserCache.shared.usernames(inThread: id)
+    }
+
     // MARK: - Search
 
     /// Searches for stories, polls, or Show/Ask HN posts, returning their ids.
@@ -588,6 +611,75 @@ class HackerNewsAPI {
         // leaving it in place would have us confidently serve a stale tree.
         await CommentCache.shared.invalidate(storyId)
         await StoryCache.shared.invalidate(storyId)
+    }
+
+    // MARK: - Submitting
+
+    /// Submits a new post as the logged-in user. Pass an empty `url` for a
+    /// text post; `text` may be empty for either kind.
+    ///
+    /// A link that's already on Hacker News isn't posted again — HN upvotes the
+    /// existing story instead, reported as `.alreadySubmitted`.
+    ///
+    /// `username` is the poster, whose submissions are where the new post's id
+    /// is recovered from.
+    static func submitStory(
+        title: String,
+        url: String,
+        text: String,
+        username: String
+    ) async throws -> SubmissionOutcome {
+        guard hasAuthCookie else { throw APIError.notLoggedIn }
+        guard let form = await NewsYCService.submitForm() else {
+            throw APIError.missingAuthToken
+        }
+        let submittedAt = Date.now
+        switch try await NewsYCService.submitStory(fields: form, title: title, url: url, text: text) {
+        case .posted:
+            return .posted(storyID: await findSubmittedStoryId(username: username, after: submittedAt))
+        case .repost(let id):
+            return .alreadySubmitted(storyID: id)
+        }
+    }
+
+    /// How long to wait before each attempt at recovering a new post's id.
+    /// Firebase usually has it straight away; the retries cover the moments
+    /// when it lags.
+    private static let submittedStoryIdDelays: [Duration] = [
+        .zero, .seconds(1), .seconds(2),
+    ]
+
+    /// The id of the story the user just submitted, or `nil` if it couldn't be
+    /// confirmed.
+    ///
+    /// As with comments, HN's redirect doesn't report the new id, so it's read
+    /// from the front of the author's Firebase submissions. Confirming it is a
+    /// story — a comment won't decode as one — posted no earlier than this
+    /// submission keeps a lagging mirror from handing back the author's
+    /// previous post. The title isn't compared because HN sometimes edits it.
+    private static func findSubmittedStoryId(username: String, after date: Date) async -> Int? {
+        // A minute's grace for any difference between our clock and HN's.
+        let earliest = Int(date.timeIntervalSince1970) - 60
+        var ruledOut: Int?
+
+        for delay in submittedStoryIdDelays {
+            do {
+                try await Task.sleep(for: delay)
+            } catch {
+                return nil
+            }
+            guard let newest = await FirebaseAPIService.getUserAsync(username: username)?.submitted?.first,
+                  newest != ruledOut else {
+                continue
+            }
+            guard let story = await FirebaseAPIService.getStoryAsync(id: newest),
+                  story.by == username, story.time >= earliest else {
+                ruledOut = newest
+                continue
+            }
+            return newest
+        }
+        return nil
     }
 
     /// How long after posting Hacker News lets a comment's author delete it.
