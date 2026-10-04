@@ -199,6 +199,15 @@ extension StoryFeed {
         }
     }
 
+    /// The stories the reader has hidden, newest first: hiding keeps no order
+    /// of its own, and a story's id rises with its age. Like `collection`,
+    /// keep a single instance and reload it as stories are unhidden.
+    static func hidden(in store: InteractionStore) -> StoryFeed {
+        StoryFeed { page in
+            page == 0 ? (store.hiddenIDs.sorted(by: >), false) : ([], false)
+        }
+    }
+
     /// Search results for a story-shaped category — stories, polls, Show HN,
     /// Ask HN — paged via Algolia.
     ///

@@ -23,10 +23,13 @@ enum ReadingSettings {
 }
 
 /// The app's preferences, presented as a sheet from the Account tab's toolbar.
-/// It brings its own `NavigationStack` for the title bar, rather than joining
-/// the account tab's — that stack is for story navigation.
+/// It brings its own `NavigationStack` rather than joining the account tab's,
+/// which sits behind the sheet; stories opened from Hidden Stories are pushed
+/// onto this one.
 struct SettingsView: View {
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
+    /// Counts the hidden stories for their row.
+    @Environment(InteractionStore.self) private var interactionStore
     @Environment(\.dismiss) private var dismiss
 
     /// Whether story cells show the link's domain after the title. Defaults on.
@@ -44,10 +47,22 @@ struct SettingsView: View {
 
     @State private var isConfirmingClearHistory = false
 
+    /// Settings' own stack. Hidden Stories lists real story cells, so it's a
+    /// story stack too: tapping one opens it here, in the sheet.
+    @State private var path = NavigationPath()
+
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 Section("Activity") {
+                    NavigationLink(value: SettingsPage.hiddenStories) {
+                        Label {
+                            Text("Hidden Stories")
+                        } icon: {
+                            SettingsIcon(systemImage: "eye.slash", color: .gray)
+                        }
+                    }
+                    .badge(interactionStore.hiddenIDs.count)
                     SettingsRow(
                         title: "Clear Viewing History",
                         systemImage: "clock.arrow.circlepath",
@@ -137,8 +152,28 @@ struct SettingsView: View {
             } message: {
                 Text("This will remove your list of recently viewed stories. This can't be undone.")
             }
+            .navigationDestination(for: SettingsPage.self) { page in
+                switch page {
+                case .hiddenStories:
+                    HiddenStoriesView(path: $path)
+                }
+            }
+            .navigationDestination(for: ItemNavigation.self) { navigation in
+                StoryDetailsView(from: navigation, path: $path)
+            }
         }
+        // The same story handling as the app's own stacks, for the story cells
+        // Hidden Stories shows. Applied here rather than inherited from the
+        // account tab: its browser would try to present from behind this
+        // sheet, and its links would land on the account tab's stack.
+        .inAppBrowser(path: $path)
+        .storyActionsEnabled()
     }
+}
+
+/// The pages Settings pushes onto its own stack.
+private enum SettingsPage: Hashable {
+    case hiddenStories
 }
 
 /// A single tappable settings row styled like the iOS Settings app: a colored
@@ -180,5 +215,6 @@ private struct SettingsIcon: View {
 #Preview {
     SettingsView()
         .environment(RecentlyViewedStore(session: UserSession()))
+        .environment(InteractionStore(session: UserSession()))
         .environment(UserSession())
 }

@@ -212,6 +212,13 @@ class InteractionStore {
         persist()
     }
 
+    /// Brings every hidden story back into the reader's feeds.
+    func unhideAll() {
+        guard session.isSignedIn else { return }
+        interactions.hidden.removeAll()
+        persist()
+    }
+
     /// Toggles the favorite on a story: flips local state optimistically, calls the
     /// API, and rolls back if it fails. No-op when logged out (callers route to
     /// login first). Unlike voting, favoriting doesn't affect the score.

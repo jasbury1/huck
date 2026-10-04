@@ -109,11 +109,20 @@ struct StoryFeedView: View {
                         .tint(.red)
                     }
                     // Long-press shows the same options as the story's toolbar
-                    // ellipsis.
+                    // ellipsis, plus Hide — the swipe's action, for anyone who
+                    // reaches for the menu instead. Hide is the feed's own, so
+                    // it's added here rather than to the shared options.
                     .contextMenu {
-                        StoryOptions(story: story)
-                            // Icons match their text, not the app's orange tint.
-                            .tint(.primary)
+                        Group {
+                            StoryOptions(story: story)
+                            Section {
+                                Button("Hide", systemImage: "eye.slash") {
+                                    requireLogin { hide(story) }
+                                }
+                            }
+                        }
+                        // Icons match their text, not the app's orange tint.
+                        .tint(.primary)
                     }
             }
         }

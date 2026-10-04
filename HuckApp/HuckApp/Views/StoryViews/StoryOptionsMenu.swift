@@ -28,12 +28,12 @@ struct StoryOptions: View {
                 Button {
                     UIPasteboard.general.url = contentURL
                 } label: {
-                    Label("Copy Content Link", systemImage: "link")
+                    Label("Copy Page Link", systemImage: "link")
                 }
                 Button {
                     UIPasteboard.general.url = story.hackerNewsURL
                 } label: {
-                    Label("Copy Hacker News Link", systemImage: "text.bubble")
+                    Label("Copy HN Link", systemImage: "text.bubble")
                 }
             } else {
                 Button {
@@ -55,7 +55,7 @@ struct StoryOptions: View {
             Button {
                 addToCollection(story)
             } label: {
-                Label("Add to Collection...", systemImage: "plus.rectangle.on.rectangle")
+                Label("Add to...", systemImage: "plus.rectangle.on.rectangle")
             }
         }
     }
