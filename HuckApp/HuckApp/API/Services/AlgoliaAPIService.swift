@@ -21,6 +21,8 @@ nonisolated struct AlgoliaItemData: Codable, Sendable {
     let text: String?
     let points: Int?
     let parentId: Int?
+    /// The story whose thread the item belongs to, however deeply nested.
+    let storyId: Int?
     let children: [AlgoliaItemData]?
 
     enum CodingKeys: String, CodingKey {
@@ -33,6 +35,7 @@ nonisolated struct AlgoliaItemData: Codable, Sendable {
         case text
         case points
         case parentId = "parent_id"
+        case storyId = "story_id"
         case children
     }
 }

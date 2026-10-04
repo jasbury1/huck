@@ -31,6 +31,13 @@ class RedirectBlocker: NSObject, URLSessionTaskDelegate, URLSessionDataDelegate 
     }
 }
 
+/// Where an item is read in the app: a story's thread, scrolled to one of its
+/// comments when the item is a comment.
+struct ThreadLocation: Hashable, Sendable {
+    let storyID: Int
+    let commentID: Int?
+}
+
 /// The single entry point the rest of the app uses to talk to Hacker News.
 ///
 /// `HackerNewsAPI` is an abstraction layer over the underlying API services
@@ -302,6 +309,34 @@ class HackerNewsAPI {
         }
         commentLog.info("Comments[\(id, privacy: .public)]: Firebase walk complete — \(finalThread.count, privacy: .public) comments")
         return finalThread
+    }
+
+    /// Where an item is read: the thread it belongs to, and the comment within
+    /// it if it's a comment. `nil` if the item doesn't exist or couldn't be
+    /// fetched.
+    ///
+    /// For when all that's known is an id, as with a link to Hacker News. The
+    /// Firebase lookup comes first because it's the lightest read and settles a
+    /// story at once. A comment's story then comes from Algolia, which records
+    /// it however deep the comment sits; only if Algolia hasn't indexed it yet
+    /// do we climb its parents one Firebase request at a time.
+    static func threadLocation(ofItem id: Int) async -> ThreadLocation? {
+        guard let item = await FirebaseAPIService.getItemHeaderAsync(id: id) else { return nil }
+        guard item.type == "comment" else {
+            return ThreadLocation(storyID: id, commentID: nil)
+        }
+        if let storyID = await AlgoliaAPIService.getItemById(id: id)?.storyId {
+            return ThreadLocation(storyID: storyID, commentID: id)
+        }
+        var parent = item.parent
+        while let ancestorID = parent, !Task.isCancelled {
+            guard let ancestor = await FirebaseAPIService.getItemHeaderAsync(id: ancestorID) else { return nil }
+            if ancestor.type != "comment" {
+                return ThreadLocation(storyID: ancestorID, commentID: id)
+            }
+            parent = ancestor.parent
+        }
+        return nil
     }
 
     private static func getChildComments(nestLevel: Int, itemData: AlgoliaItemData, comments: inout [Comment]) {

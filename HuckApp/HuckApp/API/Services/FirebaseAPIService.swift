@@ -41,6 +41,15 @@ nonisolated struct FirebaseCommentData: Codable, Sendable {
     let dead: Bool?
 }
 
+/// The kind of any item and its parent, read from the Firebase `item` endpoint
+/// when all that's known is an id — a link to it, say — and not yet whether
+/// it's a story or a comment.
+nonisolated struct FirebaseItemHeader: Codable, Sendable {
+    /// `story`, `comment`, `job`, `poll`, or `pollopt`.
+    let type: String?
+    let parent: Int?
+}
+
 /// A user as returned by the official Firebase HN `user` endpoint.
 ///
 /// `submitted` lists the ids of everything the user has posted, **newest
@@ -93,6 +102,12 @@ struct FirebaseAPIService {
             return nil
         }
         return user
+    }
+
+    /// Just enough of any item to say what it is and what it hangs from.
+    static func getItemHeaderAsync(id: Int) async -> FirebaseItemHeader? {
+        let url = "\(baseUri)/v0/item/\(id).json"
+        return await WebService().downloadData(fromURL: url)
     }
 
     static func getCommentAsync(id: Int) async -> FirebaseCommentData? {

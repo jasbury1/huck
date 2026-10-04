@@ -72,23 +72,45 @@ private struct BrowserLink: Identifiable {
 }
 
 private struct InAppBrowserModifier: ViewModifier {
+    @Binding var path: NavigationPath
     @State private var link: BrowserLink?
 
     func body(content: Content) -> some View {
         content
-            .environment(\.openInAppBrowser, OpenInAppBrowserAction { link = BrowserLink(url: $0) })
+            .environment(\.openInAppBrowser, OpenInAppBrowserAction { url in
+                if !navigate(to: url) {
+                    link = BrowserLink(url: url)
+                }
+            })
+            // Links inside comment and post text go through `openURL`. Only
+            // Hacker News's own are taken over; the rest carry on to the
+            // system as before.
+            .environment(\.openURL, OpenURLAction { url in
+                navigate(to: url) ? .handled : .systemAction
+            })
             .fullScreenCover(item: $link) { link in
                 SafariView(url: link.url) { self.link = nil }
                     .ignoresSafeArea()
             }
     }
+
+    /// Pushes the in-app screen for a link to Hacker News, returning whether
+    /// `url` was one.
+    private func navigate(to url: URL) -> Bool {
+        guard let destination = ItemNavigation(hackerNewsURL: url) else { return false }
+        path.append(destination)
+        return true
+    }
 }
 
 extension View {
     /// Enables `openInAppBrowser` for this view's subtree, presenting tapped
-    /// links in an `SFSafariViewController` full-screen cover. Apply it once per
-    /// navigation stack, above the content that opens links.
-    func inAppBrowser() -> some View {
-        modifier(InAppBrowserModifier())
+    /// links in an `SFSafariViewController` full-screen cover. Links to Hacker
+    /// News itself — stories, comments, and profiles, whether a story's link or
+    /// one inside a comment — are pushed onto `path` instead, to open in the
+    /// app. Apply it once per navigation stack, above the content that opens
+    /// links.
+    func inAppBrowser(path: Binding<NavigationPath>) -> some View {
+        modifier(InAppBrowserModifier(path: path))
     }
 }

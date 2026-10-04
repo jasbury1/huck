@@ -64,7 +64,7 @@ struct FeedView: View {
             }
             .navigationTitle("Hacker News")
             .toolbar() {
-                Image(systemName: "plus")
+                Image(systemName: "square.and.pencil")
             }
             .navigationDestination(for: StoryFilter.self) { input in
                 StoryFeedView(storyFilter: input, path: $path)
@@ -73,7 +73,7 @@ struct FeedView: View {
                 StoryDetailsView(from: navigation, path: $path)
             }
         }
-        .inAppBrowser()
+        .inAppBrowser(path: $path)
         .storyActionsEnabled()
     }
 }

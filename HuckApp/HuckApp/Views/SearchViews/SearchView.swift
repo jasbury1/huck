@@ -76,7 +76,7 @@ struct SearchView: View {
         }
         // Results are story cells and profiles, so this stack needs the same
         // link handling and upvote/favorite gating as the feed's.
-        .inAppBrowser()
+        .inAppBrowser(path: $path)
         .storyActionsEnabled()
     }
 

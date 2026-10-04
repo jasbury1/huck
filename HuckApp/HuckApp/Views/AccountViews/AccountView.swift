@@ -65,7 +65,7 @@ struct AccountView: View {
         .onChange(of: session.isSignedIn) { _, signedIn in
             if signedIn { showingLogin = false }
         }
-        .inAppBrowser()
+        .inAppBrowser(path: $path)
         .storyActionsEnabled()
     }
 
