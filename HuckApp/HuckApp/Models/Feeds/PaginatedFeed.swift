@@ -53,6 +53,24 @@ final class PaginatedFeed<Element> {
         nextPage += 1
     }
 
+    /// Rebuilds the list from its first page, for pull-to-refresh. Later pages
+    /// are dropped and page back in as the list is scrolled.
+    ///
+    /// The API layer reports a failed fetch as an empty page, so an empty
+    /// first page over a populated list leaves the list as it was — a dropped
+    /// connection shouldn't wipe what's already on screen.
+    func refresh() async {
+        guard !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
+
+        let result = await loadPage(0)
+        guard !result.elements.isEmpty || items.isEmpty else { return }
+        items = result.elements
+        hasMore = result.hasMore
+        nextPage = 1
+    }
+
     /// Drops loaded items, for when the reader has removed one at the source —
     /// deleting their own comment, say — and the list shouldn't wait for a
     /// reload to reflect it.

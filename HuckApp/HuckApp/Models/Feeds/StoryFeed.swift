@@ -92,6 +92,23 @@ final class StoryFeed {
         nextPage = 1
     }
 
+    /// Pull-to-refresh for a remote source: `reload()`, except that an empty
+    /// first page over a populated feed leaves it as it was. The API layer
+    /// reports a failed fetch as an empty page, and a dropped connection
+    /// shouldn't wipe what's already on screen. Local sources (collections,
+    /// hidden stories) can legitimately empty out, so they keep `reload()`.
+    func refresh() async {
+        guard !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
+
+        let result = await loadPage(0)
+        guard !result.ids.isEmpty || stories.isEmpty else { return }
+        stories = models(for: result.ids)
+        hasMore = result.hasMore
+        nextPage = 1
+    }
+
     /// Sets the filters `visibleStories` applies, with a fresh snapshot of what
     /// they judge against. Call when they change, and after a load or refresh
     /// — not as the reader browses, or a story would vanish as it's read.

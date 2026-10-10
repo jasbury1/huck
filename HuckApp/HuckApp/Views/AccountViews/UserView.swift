@@ -70,22 +70,12 @@ struct UserView: View {
         self._currentTab = State(initialValue: username == nil ? .recentlyViewed : .posts)
     }
 
-    // Collapsing-header state. `collapse` is the single source of truth for how
-    // far the header is translated up; only the visible tab drives it. Because it
-    // persists across tab switches, the header (and its pinned tab bar) never
-    // jumps — the incoming tab is instead scrolled to meet it. The measured
-    // heights define how far the header travels and each scroll's top spacer.
-    @State private var collapse: CGFloat = 0
-    @State private var scrollOffsets: [ContentTab: CGFloat] = [:]
-    @State private var scrollPositions: [ContentTab: ScrollPosition] = [:]
-    @State private var collapsibleHeight: CGFloat = 0
-    @State private var tabBarHeight: CGFloat = 0
-    /// Height of a tab's scroll viewport, used to give short/empty tabs enough
-    /// scroll range to still drive the header's full collapse.
+    /// Heights of the scroll viewport and the pinned tab bar. A short or empty
+    /// tab is padded to fill the space below the bar, so the page can always
+    /// scroll far enough to collapse the large title and pin the bar, and the
+    /// white list runs to the bottom of the screen.
     @State private var viewportHeight: CGFloat = 0
-    /// True while an incoming tab is being scrolled to meet the header. Its
-    /// interim offsets are ignored so they can't drag `collapse` back to the top.
-    @State private var isSyncing = false
+    @State private var tabBarHeight: CGFloat = 0
 
     /// The view's background (white in light mode).
     private let cardBackgroundColor = Color(UIColor.systemBackground)
@@ -119,30 +109,45 @@ struct UserView: View {
         return tabs
     }
 
-    // MARK: - Collapse math
-
-    /// 0 when the header is fully expanded, 1 when fully collapsed.
-    private var collapseProgress: CGFloat {
-        collapsibleHeight > 0 ? collapse / collapsibleHeight : 0
-    }
-    /// Total header height, used as the top spacer inside each tab's scroll.
-    private var headerHeight: CGFloat { collapsibleHeight + tabBarHeight }
-
+    /// One vertical scroll for the whole page — the profile summary, then the
+    /// selected tab's list under a pinned tab bar. Being the page's only
+    /// scroll view, it's the one the navigation bar tracks, so the username is
+    /// a standard large title that collapses into the bar like any other page.
     var body: some View {
-        ZStack(alignment: .top) {
-            tabPager
-            collapsingHeader
-        }
-        .background(cardBackgroundColor)
-        .navigationTitle(displayName)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                // The small nav-bar username fades in as the large one collapses.
-                Text(displayName)
-                    .font(.headline)
-                    .opacity(collapseProgress)
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
+                profileHeader
+                Section {
+                    content(for: currentTab)
+                        .frame(minHeight: max(0, viewportHeight - tabBarHeight), alignment: .top)
+                        .background(cardBackgroundColor)
+                } header: {
+                    pinnedTabBar
+                }
             }
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
+        .refreshable { await refresh(currentTab) }
+        // Grey above, white below: the large title and an overscroll at the top
+        // (behind the pull-to-refresh spinner) sit on the header's grey
+        // backdrop, while a bounce at the bottom continues the white list.
+        .background {
+            VStack(spacing: 0) {
+                Color(.secondarySystemBackground)
+                cardBackgroundColor
+            }
+            .ignoresSafeArea()
+        }
+        .navigationTitle(displayName)
+        .navigationBarTitleDisplayMode(.large)
+        .onChange(of: currentTab) { _, newTab in
+            // Refresh the snapshot each time the tab is opened so it picks up any
+            // stories viewed since it was last shown.
+            if newTab == .recentlyViewed {
+                Task { await refreshRecentlyViewed() }
+            }
+        }
+        .toolbar {
             // Signed out there's no profile to act on.
             if showsOptionsMenu, let username {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -161,6 +166,9 @@ struct UserView: View {
         // Keyed on `username` so signing in or out reloads in place rather than
         // through a fresh view — which would tear down the login sheet mid-flight.
         .task(id: username) { await loadProfile() }
+        .sheet(isPresented: $showingFullBio) {
+            BioSheet(username: username ?? "", about: user?.about ?? "")
+        }
     }
 
     /// Loads everything this page shows for the current `username`, and rebuilds
@@ -201,6 +209,24 @@ struct UserView: View {
         if isCurrentUser { await refreshRecentlyViewed() }
     }
 
+    /// Pull-to-refresh: re-fetches the profile (karma and bio) alongside the
+    /// tab being pulled. The other tabs keep their pages — they weren't asked
+    /// for, and re-fetching them would spend requests on lists not on screen.
+    private func refresh(_ tab: ContentTab) async {
+        async let fetchedUser: User? = if let username {
+            await HackerNewsAPI.getUser(for: username)
+        } else {
+            nil
+        }
+        switch tab {
+        case .posts: await posts?.refresh()
+        case .comments: await comments?.refresh()
+        case .recentlyViewed: await refreshRecentlyViewed()
+        }
+        // A failed fetch keeps the profile already on screen.
+        if let fetched = await fetchedUser { user = fetched }
+    }
+
     /// Refreshes the recently-viewed feed so it reflects stories opened since the
     /// profile last appeared. Also folds in any signed-out browsing, covering the
     /// case where login happened via this tab.
@@ -218,41 +244,33 @@ struct UserView: View {
 
     // MARK: - Header
 
-    /// The header overlaid on top of the paged tabs. Its collapsible portion
-    /// (large username + karma/about) translates up and fades as the active tab
-    /// scrolls, until only the tab bar remains pinned at the top.
-    var collapsingHeader: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(displayName)
-                    .font(.largeTitle)
-                    .bold()
-                userSummary
-                profileActionButtons
-            }
-            .padding(.horizontal, 14)
-            .padding(.bottom, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .opacity(1 - collapseProgress)
-            // A subtle grey backdrop behind the profile info that sets the white
-            // bio/action cards apart — running to the top and stopping before the
-            // pinned Activity section below.
-            .background(Color(.secondarySystemBackground))
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { collapsibleHeight = $0 }
-
-            // Pinned region: the "Activity" title anchors to the top with the
-            // tab pills directly beneath it, both staying put as content scrolls.
-            VStack(alignment: .leading, spacing: 0) {
-                //SortableHeader(title: "Activity")
-                tabBarButtons
-                    .padding(.top, 8)
-                Divider()
-            }
-            // White behind the tab bar, matching the content below it.
-            .background(cardBackgroundColor)
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tabBarHeight = $0 }
+    /// The top of the page, under the large title: karma, bio, and actions.
+    /// It scrolls away beneath the navigation bar, leaving the pinned tab bar.
+    var profileHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            userSummary
+            profileActionButtons
         }
-        .offset(y: -collapse)
+        // Standard margins, so the summary lines up with the large title.
+        .padding(.horizontal)
+        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // A subtle grey backdrop behind the profile info that sets the white
+        // bio/action cards apart — stopping before the pinned tab bar below.
+        .background(Color(.secondarySystemBackground))
+    }
+
+    /// The tab pills, pinned beneath the navigation bar once the profile
+    /// header has scrolled away.
+    var pinnedTabBar: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            tabBarButtons
+                .padding(.top, 8)
+            Divider()
+        }
+        // White behind the tab bar, matching the content below it.
+        .background(cardBackgroundColor)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tabBarHeight = $0 }
     }
 
     /// Length of the fade ramp (opaque → clear) at the bottom of a clipped bio.
@@ -312,8 +330,6 @@ struct UserView: View {
                 }
             }
             .foregroundStyle(.secondary)
-            // Tuck the karma closer to the username above it.
-            .padding(.top, -6)
             .padding(.bottom, 10)
             if let about = user?.about, !about.isEmpty {
                 // The "About" header and the bio grouped together in a card.
@@ -389,9 +405,6 @@ struct UserView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .sheet(isPresented: $showingFullBio) {
-            BioSheet(username: username ?? "", about: user?.about ?? "")
-        }
     }
 
     /// Prominent actions below the bio. The current user sees Likes + Favorites
@@ -445,101 +458,9 @@ struct UserView: View {
 
     // MARK: - Tabs
 
-    /// Horizontally-paged tab content. Each page is its own vertical lazy scroll,
-    /// so only the rows currently on screen are realised — and only those cells
-    /// fetch their story data and thumbnail. Both swiping between pages and
-    /// tapping a tab drive `currentTab`.
-    var tabPager: some View {
-        TabView(selection: $currentTab) {
-            ForEach(availableTabs, id: \.self) { tab in
-                tabScroll(for: tab) { content(for: tab) }
-            }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .onChange(of: currentTab) { _, newTab in
-            syncCollapse(to: newTab)
-            // Refresh the snapshot each time the tab is opened so it picks up any
-            // stories viewed since it was last shown.
-            if newTab == .recentlyViewed {
-                Task { await refreshRecentlyViewed() }
-            }
-        }
-    }
-
-    /// Keeps the header (and its pinned tab bar) still when switching tabs. The
-    /// header never moves on a switch; instead the incoming tab is scrolled —
-    /// up or down, without animation — to meet the current `collapse`. The one
-    /// exception is when the header is already fully collapsed and the incoming
-    /// tab is also scrolled past full collapse: the header looks identical either
-    /// way, so we leave that tab's deeper scroll position untouched. Every tab's
-    /// `headerHeight` top spacer guarantees the room needed to reach `collapse`.
-    private func syncCollapse(to newTab: ContentTab) {
-        let incoming = scrollOffsets[newTab] ?? 0
-        if collapse >= collapsibleHeight && incoming >= collapsibleHeight {
-            isSyncing = false
-            return
-        }
-        guard abs(incoming - collapse) > 0.5 else {
-            isSyncing = false
-            return
-        }
-        isSyncing = true
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
-            var position = scrollPositions[newTab] ?? ScrollPosition()
-            position.scrollTo(y: collapse)
-            scrollPositions[newTab] = position
-        }
-    }
-
-    /// Wraps a tab's content in a scroll view that clears space for the header
-    /// and, while it's the visible tab, drives the header's collapse.
-    @ViewBuilder
-    func tabScroll<Content: View>(for tab: ContentTab, @ViewBuilder content: () -> Content) -> some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                Color.clear.frame(height: headerHeight)
-                // Fill at least the space below the pinned tab bar so even an
-                // empty tab has enough scroll range to drive the header's full
-                // collapse — otherwise a short tab can't be scrolled back up to
-                // re-expand a collapsed header, stranding the header's controls.
-                content()
-                    .frame(minHeight: max(0, viewportHeight - tabBarHeight), alignment: .top)
-            }
-        }
-        // Measures the scroll viewport (the ScrollView's own frame).
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
-        .scrollPosition(scrollPositionBinding(for: tab))
-        .onScrollGeometryChange(for: CGFloat.self) { geometry in
-            geometry.contentOffset.y + geometry.contentInsets.top
-        } action: { _, offset in
-            scrollOffsets[tab] = offset
-            guard tab == currentTab else { return }
-            if isSyncing {
-                // Ignore the interim offsets from a programmatic sync; only
-                // release once the incoming tab has reached the header.
-                if abs(offset - collapse) < 0.5 { isSyncing = false }
-                return
-            }
-            collapse = min(max(offset, 0), collapsibleHeight)
-        }
-        .tag(tab)
-    }
-
-    /// A binding into a tab's scroll position, used to drive it programmatically
-    /// when bringing it to meet the header on a tab switch.
-    private func scrollPositionBinding(for tab: ContentTab) -> Binding<ScrollPosition> {
-        Binding(
-            get: { scrollPositions[tab] ?? ScrollPosition() },
-            set: { scrollPositions[tab] = $0 }
-        )
-    }
-
     /// Mail-style category tabs: each tab is a symbol in a colored capsule that
-    /// expands to reveal its title when selected. Both tapping a pill and
-    /// swiping the pager below drive `currentTab`, and the shared animation
-    /// keeps the expand/collapse smooth either way.
+    /// expands to reveal its title when selected. Tapping a pill switches the
+    /// list below it.
     var tabBarButtons: some View {
         PillTabBar(tabs: availableTabs, selection: $currentTab)
             .background(cardBackgroundColor)
