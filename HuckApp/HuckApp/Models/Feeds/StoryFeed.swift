@@ -37,18 +37,41 @@ final class StoryFeed {
     private(set) var filters = FeedFilters()
     private var filterContext = FeedFilterContext()
 
-    /// The stories to show: `stories`, less any the filters leave out.
+    /// The title search narrowing the feed, already trimmed; empty when not
+    /// searching. Set by `search(_:)`.
+    private(set) var searchText = ""
+    /// True while titles the search needs are still being fetched.
+    var isLoadingTitles: Bool { titleLoadsInFlight > 0 }
+    /// Counted rather than flagged: each keystroke starts its own load, and
+    /// the first to finish mustn't report the search done while another runs.
+    private var titleLoadsInFlight = 0
+    /// Titles of the loaded stories, gathered on the first search and kept so
+    /// each further keystroke matches instantly.
+    private var titlesByID: [Int: String] = [:]
+
+    var isSearching: Bool { !searchText.isEmpty }
+
+    /// The stories to show: `stories`, less any the filters leave out, and —
+    /// while searching — only those whose titles match.
     ///
     /// Filtering is a view over what's loaded rather than a change to it, so
     /// switching a filter off brings stories back without refetching them.
     var visibleStories: [StoryModel] {
-        stories.filter { filters.includes($0, in: filterContext) }
+        stories.filter { story in
+            filters.includes(story, in: filterContext) && matchesSearch(story)
+        }
     }
 
     /// Whether stories were loaded but the filters left none to show — the
-    /// difference between an empty feed and one the reader has emptied.
+    /// difference between an empty feed and one the reader has emptied. A
+    /// search with no matches is reported separately, by `isSearchEmpty`.
     var isFilteredEmpty: Bool {
-        !stories.isEmpty && visibleStories.isEmpty
+        !isSearching && !stories.isEmpty && visibleStories.isEmpty
+    }
+
+    /// Whether a search has finished looking and found nothing.
+    var isSearchEmpty: Bool {
+        isSearching && !isLoadingTitles && visibleStories.isEmpty
     }
 
     /// Retained models keyed by id. Because a story reused across cell recycling
@@ -76,6 +99,7 @@ final class StoryFeed {
         stories.append(contentsOf: models(for: result.ids))
         hasMore = result.hasMore
         nextPage += 1
+        await loadMissingTitles()
     }
 
     /// Rebuilds the feed from its first page, reusing existing model instances by
@@ -90,6 +114,7 @@ final class StoryFeed {
         stories = models(for: result.ids)
         hasMore = result.hasMore
         nextPage = 1
+        await loadMissingTitles()
     }
 
     /// Pull-to-refresh for a remote source: `reload()`, except that an empty
@@ -107,6 +132,32 @@ final class StoryFeed {
         stories = models(for: result.ids)
         hasMore = result.hasMore
         nextPage = 1
+        await loadMissingTitles()
+    }
+
+    /// Narrows the feed to stories whose titles contain `text`, ignoring case
+    /// and diacritics; empty text shows everything again. The search runs
+    /// over the stories already loaded, not the whole of Hacker News — the
+    /// Search tab is for that.
+    func search(_ text: String) async {
+        searchText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        await loadMissingTitles()
+    }
+
+    private func matchesSearch(_ story: StoryModel) -> Bool {
+        guard isSearching else { return true }
+        return titlesByID[story.id]?.localizedStandardContains(searchText) ?? false
+    }
+
+    /// Fetches the titles a search needs that haven't been gathered yet. Only
+    /// while searching, so a feed that's never searched costs nothing extra.
+    private func loadMissingTitles() async {
+        guard isSearching else { return }
+        let missing = stories.map(\.id).filter { titlesByID[$0] == nil }
+        guard !missing.isEmpty else { return }
+        titleLoadsInFlight += 1
+        defer { titleLoadsInFlight -= 1 }
+        titlesByID.merge(await HackerNewsAPI.storyTitles(ids: missing)) { _, new in new }
     }
 
     /// Sets the filters `visibleStories` applies, with a fresh snapshot of what

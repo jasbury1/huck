@@ -160,6 +160,20 @@ class HackerNewsAPI {
         await StoryCache.shared.prefetch(ids: ids)
     }
 
+    /// The titles of the given stories, keyed by id. Missing stories are
+    /// fetched first through the cache's bounded prefetch, so a feed the
+    /// launch warm-up has already covered costs no requests at all.
+    static func storyTitles(ids: [Int]) async -> [Int: String] {
+        await StoryCache.shared.prefetch(ids: ids)
+        var titles: [Int: String] = [:]
+        for id in ids {
+            if let story = await StoryCache.shared.story(id: id) {
+                titles[id] = story.title
+            }
+        }
+        return titles
+    }
+
     /// Warms thumbnails for the given story ids ahead of display. Resolves each
     /// story's page URL from the cache (a fast hit once `prefetchStories` has
     /// run) and hands the link URLs to the thumbnail cache. Text posts, which

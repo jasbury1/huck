@@ -143,6 +143,11 @@ struct StoryFeedView: View {
                     .tint(.orange)
                 }
                 .frame(maxHeight: .infinity, alignment: .top)
+            } else if feed.isSearchEmpty {
+                ContentUnavailableView.search(text: feed.searchText)
+            } else if feed.isSearching && feed.visibleStories.isEmpty {
+                // First search of this feed, while its titles are gathered.
+                ProgressView()
             }
         }
         .overlay(alignment: .bottom) {
@@ -173,6 +178,12 @@ struct StoryFeedView: View {
             placement: .navigationBarDrawer(displayMode: .automatic),
             prompt: "Search \(feedKind.searchName)"
         )
+        // Matches titles among the feed's own stories — a quick filter, not
+        // the Search tab's query of all of Hacker News. Re-run per keystroke;
+        // after the first, matching is local and instant.
+        .task(id: searchText) {
+            await feed.search(searchText)
+        }
         // Pull-to-refresh re-fetches the current feed kind's story ids, and takes the
         // opportunity to reconcile upvote/favorite state so the arrows and hearts
         // on the refreshed rows reflect anything done outside the app.
@@ -195,7 +206,11 @@ struct StoryFeedView: View {
             // and pages it in. Unlike `.task`, `.onChange` never fires on reappear.
             feed = .topStories(kind: feedKind)
             applyFilters()
-            Task { await feed.loadMore() }
+            // Carries an in-progress search over to the new kind's stories.
+            Task {
+                await feed.search(searchText)
+                await feed.loadMore()
+            }
         }
         .onChange(of: filters) {
             withAnimation { applyFilters() }
