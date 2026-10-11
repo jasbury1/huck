@@ -27,6 +27,9 @@ struct UserCommentRow: View {
     /// Identifies the reader, to offer Delete on their own comments.
     @Environment(UserSession.self) private var session
 
+    /// Opens the comment's thread; beside the list, in a split view.
+    @Environment(\.openThread) private var openThread
+
     /// Set while the reader is confirming deletion of this comment.
     @State private var deleteTarget: UserComment?
 
@@ -150,7 +153,7 @@ struct UserCommentRow: View {
     /// Opens the story's thread scrolled to this comment, so it's read in the
     /// conversation it belongs to rather than on its own.
     private func openInContext(storyId: Int) {
-        path.append(ItemNavigation.textStory(id: storyId, scrollTo: comment.id))
+        openThread(.textStory(id: storyId, scrollTo: comment.id), from: $path)
     }
 }
 

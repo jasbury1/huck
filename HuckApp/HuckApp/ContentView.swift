@@ -92,6 +92,9 @@ struct ContentView: View {
                     .tint(.primary)
             }
         }
+        // A bottom tab bar on iPhone; at regular widths (iPad, an unfolded
+        // iPhone Duo) a top tab bar that can expand into a sidebar.
+        .tabViewStyle(.sidebarAdaptable)
         .tabViewSearchActivation(.searchTabSelection)
         // Orange is the tab bar's selection color. Each tab's content is tinted
         // primary instead, because that's what its navigation chrome follows:

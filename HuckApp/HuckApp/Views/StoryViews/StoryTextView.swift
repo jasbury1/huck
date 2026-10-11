@@ -350,6 +350,9 @@ struct StoryTextView: View {
                     //SortableHeader(title: "Comments")
                 }
             }
+            // The scroll view stays full width, so it scrolls from anywhere;
+            // only the thread inside it is held to a readable column.
+            .readableContentWidth()
         }
         // Enables the row `swipeActions` above outside of a List (iOS 27+).
         .swipeActionsContainer()

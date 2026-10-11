@@ -17,6 +17,7 @@ struct StoryCellView: View {
 
     /// Opens link posts in the standardized in-app Safari browser.
     @Environment(\.openInAppBrowser) private var openInAppBrowser
+    @Environment(\.openThread) private var openThread
 
     /// Shared interaction state (drives the upvote arrow's color) and the upvote
     /// action (handles the login gate and the vote toggle).
@@ -91,7 +92,7 @@ struct StoryCellView: View {
                         
                         // Button to view the comments
                         Button(action: {
-                            path.append(ItemNavigation.textStory(id: storyId))
+                            openThread(.textStory(id: storyId), from: $path)
                         }) {
                             HStack {
                                 Image(systemName: "bubble")
@@ -181,7 +182,7 @@ struct StoryCellView: View {
             }
         case .text:
             recentlyViewedStore.recordView(storyId)
-            path.append(ItemNavigation.textStory(id: storyId))
+            openThread(.textStory(id: storyId), from: $path)
         case .unknown:
             break
         }

@@ -26,6 +26,7 @@ struct StoryFeedView: View {
     @Environment(\.upvote) private var upvote
     @Environment(\.favorite) private var favorite
     @Environment(\.composeNewPost) private var composeNewPost
+    @Environment(\.openThread) private var openThread
 
     /// The filters turned on from the options menu, shared by every feed.
     @AppStorage(FeedSettings.filtersKey) private var filters = FeedFilters()
@@ -220,7 +221,7 @@ struct StoryFeedView: View {
                 Menu {
                     Group {
                         Button("New Post", systemImage: "square.and.pencil") {
-                            composeNewPost { path.append(ItemNavigation.textStory(id: $0)) }
+                            composeNewPost { openThread(.textStory(id: $0), from: $path) }
                         }
                         Section {
                             ForEach(FeedFilter.toggleable) { filter in
