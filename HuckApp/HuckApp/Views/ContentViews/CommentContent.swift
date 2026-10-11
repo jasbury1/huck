@@ -25,15 +25,17 @@ private extension Color {
 
     /// Marks a new account, as Hacker News does with its green names.
     ///
-    /// Deliberately faint. HN's own green is a bright `#3c963c`, which here
+    /// Deliberately muted. HN's own green is a bright `#3c963c`, which here
     /// would shout louder than the reader and submitter markers that matter
-    /// more. Instead this sits just off `.primary` — a near-black green in
-    /// light mode, a near-white green in dark — so it's noticeable when
-    /// looked for without pulling the eye down the thread.
+    /// more. Instead this sits nearer `.primary` — a deep green in light
+    /// mode, a near-white green in dark — so it's noticeable when looked for
+    /// without pulling the eye down the thread. The light shade is about 6:1
+    /// against white: clear of WCAG AA, yet far enough from black's 21:1 to
+    /// read as green rather than as plain text.
     static let newUser = Color(UIColor { traits in
         traits.userInterfaceStyle == .dark
             ? UIColor(red: 0.74, green: 0.90, blue: 0.74, alpha: 1)
-            : UIColor(red: 0.07, green: 0.30, blue: 0.10, alpha: 1)
+            : UIColor(red: 0.10, green: 0.45, blue: 0.16, alpha: 1)
     })
 }
 
