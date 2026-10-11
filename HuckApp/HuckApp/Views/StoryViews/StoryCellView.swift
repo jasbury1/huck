@@ -19,6 +19,9 @@ struct StoryCellView: View {
     @Environment(\.openInAppBrowser) private var openInAppBrowser
     @Environment(\.openThread) private var openThread
 
+    /// Which side the thumbnail sits on; chosen for the window's shape.
+    @Environment(\.storyRowLayout) private var layout
+
     /// Shared interaction state (drives the upvote arrow's color) and the upvote
     /// action (handles the login gate and the vote toggle).
     @Environment(InteractionStore.self) private var interactionStore
@@ -51,6 +54,12 @@ struct StoryCellView: View {
 
     var body: some View {
         HStack {
+            if layout == .wide {
+                thumbnailButton
+                    // More room than the stack's spacing alone, so the image
+                    // doesn't crowd the title beside it.
+                    .padding(.trailing, 8)
+            }
             VStack(alignment: .leading) {
                 switch storyData.storyType {
                 case .unknown:
@@ -131,15 +140,8 @@ struct StoryCellView: View {
                 }
             }
             Spacer()
-            // The thumbnail navigates to the story just like the title does.
-            switch storyData.storyType {
-            case .unknown:
-                thumbnail
-            case .link, .text:
-                Button(action: openStory) {
-                    thumbnail
-                }
-                .buttonStyle(.plain)
+            if layout == .standard {
+                thumbnailButton
             }
         }
         .task {
@@ -162,6 +164,20 @@ struct StoryCellView: View {
             .font(.footnote)
             .foregroundStyle(Color.secondary)
         return Text("\(title)  \(domainText)")
+    }
+
+    /// The thumbnail, navigating to the story just like the title does.
+    @ViewBuilder
+    private var thumbnailButton: some View {
+        switch storyData.storyType {
+        case .unknown:
+            thumbnail
+        case .link, .text:
+            Button(action: openStory) {
+                thumbnail
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     /// The image thumbnail (or its placeholder while loading / for text posts).
@@ -187,4 +203,31 @@ struct StoryCellView: View {
             break
         }
     }
+}
+
+/// How a story row arranges its parts. `standard` is the iPhone row, with the
+/// thumbnail trailing. `wide` moves the thumbnail to the leading edge, for a
+/// window shaped wider than an iPhone's — an iPhone Duo, open or closed. Either
+/// way the author and actions sit under the title.
+enum StoryRowLayout {
+    case standard
+    case wide
+
+    /// The window's short side over its long side, above which it's wider than
+    /// any iPhone's. Face ID iPhones are about 0.46 and the SE 0.56 (375 × 667);
+    /// the closed iPhone Duo is 0.59 (382 × 644), and it and iPads only get
+    /// squarer from there. A ratio holds in either orientation, so a sideways
+    /// iPhone stays standard.
+    private static let minimumAspectRatio: CGFloat = 0.58
+
+    init(windowSize: CGSize) {
+        let shortSide = min(windowSize.width, windowSize.height)
+        let longSide = max(windowSize.width, windowSize.height)
+        let isWide = longSide > 0 && shortSide / longSide > Self.minimumAspectRatio
+        self = isWide ? .wide : .standard
+    }
+}
+
+extension EnvironmentValues {
+    @Entry var storyRowLayout = StoryRowLayout.standard
 }

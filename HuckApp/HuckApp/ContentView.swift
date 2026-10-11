@@ -39,6 +39,10 @@ struct ContentView: View {
 
     @Environment(\.scenePhase) private var scenePhase
 
+    /// The window's size, measured here above the tab view and its columns, to
+    /// choose the story row layout once for the whole app.
+    @State private var windowSize = CGSize.zero
+
     /// The light/dark override, chosen in Settings. Applied here at the root of
     /// the window's content so it reaches every tab, and every sheet and popover
     /// presented from them — those follow the window's scheme, not the view they
@@ -105,6 +109,16 @@ struct ContentView: View {
         // orange (links, toggles) is tinted where it's drawn.
         .tint(.orange)
         .preferredColorScheme(appearance.colorScheme)
+        // Measured on a background that ignores the safe area, so it's the
+        // whole window and the keyboard rising can't change the answer.
+        .background {
+            Color.clear
+                .ignoresSafeArea()
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { windowSize = $0 }
+        }
+        // Chosen at the root, as split view columns take their environment from
+        // above the split view rather than from their stacks.
+        .environment(\.storyRowLayout, StoryRowLayout(windowSize: windowSize))
         .environment(session)
         .environment(interactionStore)
         .environment(interactionSync)
