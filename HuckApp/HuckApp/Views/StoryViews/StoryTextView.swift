@@ -425,6 +425,15 @@ struct StoryTextView: View {
             }
         }
         .confirmsCommentDeletion(of: $deleteTarget, delete: delete)
+        // Pull-to-refresh re-reads the thread and the story itself (its score
+        // and comment count) past the caches, which would otherwise serve
+        // back what's already on screen.
+        .refreshable {
+            await HackerNewsAPI.invalidateThread(for: storyId)
+            async let story: Void = storyData.reloadData()
+            async let thread: Void = commentFetcher.refreshComments()
+            _ = await (story, thread)
+        }
         .task {
             recentlyViewedStore.recordView(storyId)
             await storyData.fetchData()

@@ -142,6 +142,19 @@ class StoryModel : Equatable, Identifiable {
         isLoaded = true
     }
 
+    /// Re-reads the story for pull-to-refresh, picking up a new score and
+    /// comment count. Call after `HackerNewsAPI.invalidateThread(for:)`, or the
+    /// cache just serves it back. The current values stay on screen until the
+    /// new ones arrive, and stay put if the fetch fails.
+    func reloadData() async {
+        let wasLoaded = isLoaded
+        isLoaded = false
+        await fetchData()
+        // A failed fetch returns before marking the story loaded, but the
+        // values from before are still there and still good.
+        if wasLoaded { isLoaded = true }
+    }
+
     /// Resolves the cell's thumbnail from the shared cache. Text posts and
     /// missing-URL posts get their placeholder state directly.
     private func fetchThumbnail() async {

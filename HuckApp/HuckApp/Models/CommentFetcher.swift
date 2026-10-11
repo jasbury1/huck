@@ -50,6 +50,31 @@ class CommentFetcher {
         isLoading = false
     }
 
+    /// Re-reads the thread for pull-to-refresh. Call after
+    /// `HackerNewsAPI.invalidateThread(for:)`, or the cache just serves it back.
+    ///
+    /// Unlike `fetchComments()`, the snapshots aren't shown as they arrive: a
+    /// streamed thread restarts from a handful of comments, so assigning those
+    /// over a full list would empty the screen and refill it in front of the
+    /// reader. Instead the thread is swapped in once, complete. An empty result
+    /// — which is also how a failed load arrives — leaves the thread as it was.
+    func refreshComments() async {
+        // The first load is still streaming in; let it finish rather than race it.
+        guard !isLoading else { return }
+        var latest: [Comment] = []
+        for await snapshot in HackerNewsAPI.streamComments(for: id) {
+            latest = snapshot
+        }
+        guard !latest.isEmpty, !Task.isCancelled else { return }
+        // Comments posted from here, still awaiting an id lookup, are replaced
+        // by the server's copies, which carry their real ids.
+        let ids = Set(latest.map(\.id))
+        unresolvedPosts = unresolvedPosts.filter { ids.contains($0.key) }
+        withAnimation(.easeInOut) {
+            comments = latest
+        }
+    }
+
     /// Loads which commenters are new accounts. Separate from `fetchComments()`
     /// so it never holds up the thread — and so it isn't made at all when the
     /// reader has turned the highlight off.

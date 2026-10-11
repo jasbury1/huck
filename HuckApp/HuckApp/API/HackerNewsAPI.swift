@@ -250,6 +250,18 @@ class HackerNewsAPI {
     ///
     /// Completed threads are cached briefly (see `CommentCache`), so re-opening a post
     /// serves the thread in one snapshot instead of hitting the APIs again.
+    /// Drops the cached thread and story for `id`, so the next reads fetch them
+    /// fresh. Both go together: the cached story's `descendants` is what
+    /// `planCommentFetch` checks Algolia's tree against, so a stale story left
+    /// in place would have a fresh fetch confidently serve a stale tree.
+    ///
+    /// For when the thread is known to have changed — the reader commented, or
+    /// deleted a comment — or the reader has asked for it, by pulling to refresh.
+    static func invalidateThread(for id: Int) async {
+        await CommentCache.shared.invalidate(id)
+        await StoryCache.shared.invalidate(id)
+    }
+
     static func streamComments(for id: Int) -> AsyncStream<[Comment]> {
         AsyncStream { continuation in
             let task = Task {
@@ -604,13 +616,8 @@ class HackerNewsAPI {
         }
         try await NewsYCService.postComment(fields: form, text: text)
 
-        // The thread now has a comment neither cache knows about. Both have to
-        // go: the cached thread would be served without it, and the cached story
-        // would still report the old `descendants`, which is the very number
-        // `planCommentFetch` uses to decide whether Algolia's copy is complete —
-        // leaving it in place would have us confidently serve a stale tree.
-        await CommentCache.shared.invalidate(storyId)
-        await StoryCache.shared.invalidate(storyId)
+        // The thread now has a comment neither cache knows about.
+        await invalidateThread(for: storyId)
     }
 
     // MARK: - Submitting
@@ -704,9 +711,8 @@ class HackerNewsAPI {
         try await NewsYCService.deleteComment(fields: form)
 
         // As after posting: both caches now describe a thread that no longer
-        // exists, and `descendants` is what decides whether Algolia is fresh.
-        await CommentCache.shared.invalidate(storyId)
-        await StoryCache.shared.invalidate(storyId)
+        // exists.
+        await invalidateThread(for: storyId)
     }
 
     /// How long to wait before each attempt at recovering a posted comment's id.
