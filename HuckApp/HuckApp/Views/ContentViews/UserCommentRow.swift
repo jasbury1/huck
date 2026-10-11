@@ -138,7 +138,10 @@ struct UserCommentRow: View {
                         .font(.footnote)
                         .lineLimit(1)
                 }
-                .foregroundStyle(.orange)
+                // Secondary, not the link orange: this is context for the
+                // comment rather than part of it, and the whole row opens the
+                // thread anyway. Orange stays for links inside the comment.
+                .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
         }
