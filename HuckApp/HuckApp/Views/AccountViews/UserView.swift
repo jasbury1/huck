@@ -70,12 +70,40 @@ struct UserView: View {
         self._currentTab = State(initialValue: username == nil ? .recentlyViewed : .posts)
     }
 
-    /// Heights of the scroll viewport and the pinned tab bar. A short or empty
+    /// Sizes of the scroll viewport and the pinned tab bar. A short or empty
     /// tab is padded to fill the space below the bar, so the page can always
     /// scroll far enough to collapse the large title and pin the bar, and the
     /// white list runs to the bottom of the screen.
-    @State private var viewportHeight: CGFloat = 0
+    @State private var viewportSize: CGSize = .zero
     @State private var tabBarHeight: CGFloat = 0
+
+    // Per-tab scroll position. The tabs share one scroll view (it's what lets
+    // the nav bar track it), so each tab's position is remembered as how far
+    // its list had scrolled past the pinned tab bar, and restored on return.
+    @State private var scrollPosition = ScrollPosition()
+    /// How far the page is scrolled from its top.
+    @State private var scrollOffset: CGFloat = 0
+    /// The tab bar's bottom and the list's top, in the page's coordinate
+    /// space. They coincide until the bar pins; after that the list runs on
+    /// beneath it, and the gap is how far the list has scrolled.
+    @State private var tabBarBottom: CGFloat = 0
+    @State private var listTop: CGFloat = 0
+    /// The page offset at which the tab bar pins, learned while it's pinned.
+    @State private var pinOffset: CGFloat?
+    /// Each tab's list scroll, saved as the tab is left while the bar is pinned.
+    @State private var listOffsets: [ContentTab: CGFloat] = [:]
+
+    /// The page's coordinate space: the scroll view's visible frame.
+    private static let pageSpace = "UserView.page"
+
+    /// How far the current list has scrolled under the pinned tab bar.
+    private var listScrolled: CGFloat {
+        let gap = tabBarBottom - listTop
+        return gap > 0.5 ? gap : 0
+    }
+
+    /// Whether the tab bar is pinned beneath the navigation bar.
+    private var isTabBarPinned: Bool { listScrolled > 0 }
 
     /// The view's background (white in light mode).
     private let cardBackgroundColor = Color(UIColor.systemBackground)
@@ -118,15 +146,20 @@ struct UserView: View {
             LazyVStack(spacing: 0, pinnedViews: .sectionHeaders) {
                 profileHeader
                 Section {
-                    content(for: currentTab)
-                        .frame(minHeight: max(0, viewportHeight - tabBarHeight), alignment: .top)
-                        .background(cardBackgroundColor)
+                    tabContent
                 } header: {
                     pinnedTabBar
                 }
             }
         }
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
+        .coordinateSpace(.named(Self.pageSpace))
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { viewportSize = $0 }
+        .scrollPosition($scrollPosition)
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.y + geometry.contentInsets.top
+        } action: { _, offset in
+            scrollOffset = offset
+        }
         .refreshable { await refresh(currentTab) }
         // Grey above, white below: the large title and an overscroll at the top
         // (behind the pull-to-refresh spinner) sit on the header's grey
@@ -140,6 +173,15 @@ struct UserView: View {
         }
         .navigationTitle(displayName)
         .navigationBarTitleDisplayMode(.large)
+        // Once the white tab bar pins, the nav bar turns solid white to join
+        // it, reading as one bar rather than an opaque strip beneath a
+        // translucent one. The edge effect goes with it, as there's no longer
+        // content showing through to blur, and its blur would otherwise reach
+        // down over the pills. Until then the bar is the system default, over
+        // the header's grey.
+        .toolbarBackground(cardBackgroundColor, for: .navigationBar)
+        .toolbarBackground(isTabBarPinned ? .visible : .automatic, for: .navigationBar)
+        .scrollEdgeEffectHidden(isTabBarPinned, for: .top)
         .onChange(of: currentTab) { _, newTab in
             // Refresh the snapshot each time the tab is opened so it picks up any
             // stories viewed since it was last shown.
@@ -271,6 +313,11 @@ struct UserView: View {
         // White behind the tab bar, matching the content below it.
         .background(cardBackgroundColor)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tabBarHeight = $0 }
+        .onGeometryChange(for: CGFloat.self) {
+            $0.frame(in: .named(Self.pageSpace)).maxY
+        } action: {
+            tabBarBottom = $0
+        }
     }
 
     /// Length of the fade ramp (opaque → clear) at the bottom of a clipped bio.
@@ -462,8 +509,63 @@ struct UserView: View {
     /// expands to reveal its title when selected. Tapping a pill switches the
     /// list below it.
     var tabBarButtons: some View {
-        PillTabBar(tabs: availableTabs, selection: $currentTab)
+        PillTabBar(tabs: availableTabs, selection: pillSelection)
             .background(cardBackgroundColor)
+    }
+
+    /// Routes a pill tap through `switchTab(to:)`, so the incoming tab gets its
+    /// own scroll position back.
+    private var pillSelection: Binding<ContentTab> {
+        Binding(
+            get: { currentTab },
+            set: { switchTab(to: $0) }
+        )
+    }
+
+    /// The selected tab's list, padded to fill the space below the tab bar.
+    private var tabContent: some View {
+        content(for: currentTab)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: max(0, viewportSize.height - tabBarHeight), alignment: .top)
+            .background(cardBackgroundColor)
+            .onGeometryChange(for: CGFloat.self) {
+                $0.frame(in: .named(Self.pageSpace)).minY
+            } action: {
+                listTop = $0
+            }
+    }
+
+    /// Switches to `tab`. The header is shared by every tab, so a switch never
+    /// moves it:
+    /// - with the bar pinned, the incoming tab stays pinned, its list back
+    ///   where it was left (or at its start, if never scrolled);
+    /// - with the header showing, nothing scrolls, and the incoming tab shows
+    ///   from the top of its list. Its saved spot is kept for the next switch
+    ///   made while pinned.
+    private func switchTab(to tab: ContentTab) {
+        guard tab != currentTab else { return }
+        let scrolled = listScrolled
+        if scrolled > 0 { pinOffset = scrollOffset - scrolled }
+        // Pinned with nothing yet under the bar — as a tab just switched to is
+        // — leaves no gap to measure, so the known pin point decides that case.
+        let isPinned = scrolled > 0 || pinOffset.map { scrollOffset >= $0 - 1 } == true
+        listOffsets[currentTab] = isPinned ? scrolled : nil
+
+        let target: CGFloat? = if isPinned, let pinOffset {
+            pinOffset + (listOffsets[tab] ?? 0)
+        } else {
+            nil
+        }
+        // Left to the caller's animation, so the pills still animate on a tap.
+        currentTab = tab
+        // The jump to the incoming tab's position, though, is instant.
+        if let target {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                scrollPosition.scrollTo(y: target)
+            }
+        }
     }
 
     // MARK: - Tab Content
