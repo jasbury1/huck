@@ -40,6 +40,7 @@ struct SettingsView: View {
 
     /// Whether story cells show the link's domain after the title. Defaults on.
     @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
+    @AppStorage(ThumbnailPosition.storageKey) private var thumbnailPosition: ThumbnailPosition = .automatic
 
     @AppStorage(ReadingSettings.formatsCodeKey) private var formatsCode = true
     @AppStorage(ReadingSettings.formatsQuotesKey) private var formatsQuotes = true
@@ -97,7 +98,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Feed Appearance") {
+                Section {
                     Toggle(isOn: $displayStoryDomain) {
                         Label {
                             Text("Display Story Domain")
@@ -105,6 +106,22 @@ struct SettingsView: View {
                             SettingsIcon(systemImage: "globe", color: .blue)
                         }
                     }
+                    Picker(selection: $thumbnailPosition) {
+                        ForEach(ThumbnailPosition.allCases) { option in
+                            Label(option.title, systemImage: option.systemImage)
+                                .tag(option)
+                        }
+                    } label: {
+                        Label {
+                            Text("Thumbnail Position")
+                        } icon: {
+                            SettingsIcon(systemImage: thumbnailPosition.systemImage, color: .green)
+                        }
+                    }
+                } header: {
+                    Text("Feed Appearance")
+                } footer: {
+                    Text("Automatic puts thumbnails on the left on wider screens, such as iPhone Duo, and on the right on other iPhones.")
                 }
 
                 Section {

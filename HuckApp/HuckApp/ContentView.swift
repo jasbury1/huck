@@ -49,6 +49,10 @@ struct ContentView: View {
     /// were presented from.
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
 
+    /// Which side story thumbnails sit on, chosen in Settings. Automatic
+    /// decides from `windowSize`.
+    @AppStorage(ThumbnailPosition.storageKey) private var thumbnailPosition: ThumbnailPosition = .automatic
+
     /// Debug mode, switched on in Settings. Re-checked against the session so
     /// the tab goes away if the developer account signs out of a release build.
     @AppStorage(DebugMode.enabledKey) private var isDebugModeEnabled = false
@@ -118,7 +122,7 @@ struct ContentView: View {
         }
         // Chosen at the root, as split view columns take their environment from
         // above the split view rather than from their stacks.
-        .environment(\.storyRowLayout, StoryRowLayout(windowSize: windowSize))
+        .environment(\.storyRowLayout, thumbnailPosition.storyRowLayout(windowSize: windowSize))
         .environment(session)
         .environment(interactionStore)
         .environment(interactionSync)

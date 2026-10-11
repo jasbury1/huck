@@ -19,7 +19,7 @@ struct StoryCellView: View {
     @Environment(\.openInAppBrowser) private var openInAppBrowser
     @Environment(\.openThread) private var openThread
 
-    /// Which side the thumbnail sits on; chosen for the window's shape.
+    /// Which side the thumbnail sits on; set from the Thumbnail Position setting.
     @Environment(\.storyRowLayout) private var layout
 
     /// Shared interaction state (drives the upvote arrow's color) and the upvote
@@ -206,9 +206,10 @@ struct StoryCellView: View {
 }
 
 /// How a story row arranges its parts. `standard` is the iPhone row, with the
-/// thumbnail trailing. `wide` moves the thumbnail to the leading edge, for a
-/// window shaped wider than an iPhone's — an iPhone Duo, open or closed. Either
-/// way the author and actions sit under the title.
+/// thumbnail trailing. `wide` moves the thumbnail to the leading edge — by
+/// choice in Settings, or automatically for a window shaped wider than an
+/// iPhone's, such as an iPhone Duo, open or closed. Either way the author and
+/// actions sit under the title.
 enum StoryRowLayout {
     case standard
     case wide
@@ -220,6 +221,7 @@ enum StoryRowLayout {
     /// iPhone stays standard.
     private static let minimumAspectRatio: CGFloat = 0.58
 
+    /// The automatic choice for a window of `windowSize`.
     init(windowSize: CGSize) {
         let shortSide = min(windowSize.width, windowSize.height)
         let longSide = max(windowSize.width, windowSize.height)
