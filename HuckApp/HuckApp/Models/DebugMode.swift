@@ -19,10 +19,6 @@ enum DebugMode {
     /// can be used signed out or on a test account; in release builds, only to
     /// the developer's account.
     static func isAvailable(for username: String?) -> Bool {
-        #if DEBUG
-        true
-        #else
-        username == developerUsername
-        #endif
+        BuildConfiguration.isDebugBuild || username == developerUsername
     }
 }

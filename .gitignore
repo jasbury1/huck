@@ -218,3 +218,7 @@ xcuserdata/
 ####
 # UNKNOWN: recommended by others, but I can't discover what these files are
 #
+
+####
+# Per-developer build overrides (see HuckApp/Config/Local.xcconfig.example)
+Local.xcconfig

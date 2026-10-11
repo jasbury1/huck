@@ -11,8 +11,8 @@ internal import Combine
 struct ContentView: View {
     @StateObject var appController: ApplicationController = ApplicationController()
 
-    /// Who is signed in — the root of the per-user object graph, since the three
-    /// stores below all key their state off it.
+    /// Who is signed in — the root of the per-user object graph, since the
+    /// interaction and recently-viewed stores below key their state off it.
     @State private var session: UserSession
 
     /// App-wide source of truth for per-story interaction state (upvotes, and
@@ -28,7 +28,8 @@ struct ContentView: View {
     /// views to grey seen titles and to build the account's "Recently viewed" list.
     @State private var recentlyViewedStore: RecentlyViewedStore
 
-    /// App-wide, per-user store of the "Your Collections" lists, observed by the
+    /// App-wide store of the "Your Collections" lists — kept per device and
+    /// synced through iCloud, independent of the HN account — observed by the
     /// home feed's collections section and the story options menu's picker.
     @State private var collectionsStore: CollectionsStore
 
@@ -60,7 +61,7 @@ struct ContentView: View {
         _interactionStore = State(initialValue: interactionStore)
         _interactionSync = State(initialValue: InteractionSync(store: interactionStore, session: session))
         _recentlyViewedStore = State(initialValue: RecentlyViewedStore(session: session))
-        _collectionsStore = State(initialValue: CollectionsStore(session: session))
+        _collectionsStore = State(initialValue: CollectionsStore())
     }
 
     var body: some View {
@@ -111,6 +112,10 @@ struct ContentView: View {
         .task {
             await interactionSync.refresh()
         }
+        // Collections changed on the user's other devices, for the app's lifetime.
+        .task {
+            await collectionsStore.observeCloudChanges()
+        }
         // Returning to the foreground, where the drift most likely happened —
         // the user may have been on the HN site in between. Re-derive the session
         // first, since the auth cookie may have expired or changed while away.
@@ -130,7 +135,6 @@ struct ContentView: View {
         .onChange(of: session.account) {
             interactionStore.loadForCurrentUser()
             recentlyViewedStore.adoptGuestHistory()
-            collectionsStore.loadForCurrentUser()
             Task { await interactionSync.refresh() }
         }
     }

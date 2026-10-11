@@ -119,24 +119,24 @@ private struct HuckCollectionsSection: View {
     }
 }
 
-/// The home screen's "Your Collections" section: the current user's collections
-/// as navigable rows, with a trailing "New Collection" button that's hidden once
-/// the five-collection cap is reached. Lives inside the feed's
-/// `storyActionsEnabled` subtree so creating can be gated behind login via
-/// `@Environment(\.requireLogin)`.
+/// The home screen's "Your Collections" section: the device's collections as
+/// navigable rows, with a trailing "New Collection" button that's hidden once
+/// the five-collection cap is reached. The header's info button explains how
+/// collections are stored, since they're the one list here that isn't tied to
+/// the Hacker News account.
 private struct CollectionsSection: View {
     @Binding var path: NavigationPath
 
     @Environment(CollectionsStore.self) private var collectionsStore
-    @Environment(\.requireLogin) private var requireLogin
 
+    @State private var isShowingInfo = false
     @State private var isNamingNewCollection = false
     @State private var newCollectionName = ""
     /// The collection awaiting confirmation of its deletion.
     @State private var collectionToDelete: StoryCollection?
 
     var body: some View {
-        Section(header: Text("Your Collections")) {
+        Section {
             ForEach(collectionsStore.collections) { collection in
                 NavigationLink(value: ItemNavigation.collection(id: collection.id)) {
                     Label {
@@ -163,8 +163,7 @@ private struct CollectionsSection: View {
 
             if collectionsStore.canCreateCollection {
                 Button {
-                    // Collections are per-user, so require sign-in before naming one.
-                    requireLogin { isNamingNewCollection = true }
+                    isNamingNewCollection = true
                 } label: {
                     Label {
                         Text("New Collection")
@@ -172,6 +171,21 @@ private struct CollectionsSection: View {
                         Image(systemName: "plus")
                             .foregroundStyle(.orange)
                     }
+                }
+            }
+        } header: {
+            HStack {
+                Text("Your Collections")
+                Spacer()
+                Button {
+                    isShowingInfo = true
+                } label: {
+                    Label("About Collections", systemImage: "info.circle")
+                        .labelStyle(.iconOnly)
+                }
+                .foregroundStyle(.orange)
+                .popover(isPresented: $isShowingInfo) {
+                    CollectionsInfoView()
                 }
             }
         }

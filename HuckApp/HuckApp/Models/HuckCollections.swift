@@ -31,7 +31,7 @@ enum CollectionSymbol: Hashable {
 
 /// A Huck-curated collection: an app-provided, read-only list of stories shown in
 /// the home feed's "Huck's Collections" section. Unlike a user's `StoryCollection`
-/// these aren't per-user or editable; the ids are curated (empty for now).
+/// these aren't editable or synced; the ids are curated (empty for now).
 struct HuckCollection: Identifiable, Hashable {
     /// A stable slug, used as the navigation value.
     let id: String

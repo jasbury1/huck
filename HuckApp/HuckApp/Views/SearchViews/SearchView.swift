@@ -252,5 +252,5 @@ struct SearchView: View {
         .environment(session)
         .environment(InteractionStore(session: session))
         .environment(RecentlyViewedStore(session: session))
-        .environment(CollectionsStore(session: session))
+        .environment(CollectionsStore())
 }

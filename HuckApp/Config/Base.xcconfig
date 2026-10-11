@@ -1,0 +1,42 @@
+//
+//  Base.xcconfig
+//  HuckApp
+//
+//  Settings shared by every build configuration. Debug.xcconfig and
+//  Release.xcconfig include this, then the optional, untracked Local.xcconfig.
+//
+//  Swift reads these switches through `BuildConfiguration.swift`, and only
+//  there. Custom switches are prefixed HUCK_ so they're easy to tell apart from
+//  Xcode's own settings. Settings typed into the target's Build Settings editor
+//  override this file, so make changes here instead.
+//
+//  Adding a switch:
+//  - On/off feature: declare HUCK_<NAME> = NO below, map YES to a Swift
+//    compilation condition the way HUCK_ICLOUD_SYNC does, and expose it as a
+//    property on `BuildConfiguration`.
+//  - Typed value (string, number, URL): declare it here, pass it through an
+//    Info.plist key as $(HUCK_<NAME>), and read it in `BuildConfiguration`
+//    with `Bundle.main.object(forInfoDictionaryKey:)`.
+//
+
+// The signing team. Free Personal Teams can't provision paid capabilities
+// such as iCloud; set a paid team in Local.xcconfig to use those.
+DEVELOPMENT_TEAM = E69X269LBT
+
+// MARK: - Feature switches
+
+// iCloud sync for collections. Needs the iCloud key-value entitlement, which
+// only a paid Apple Developer Program team can provision, so this one switch
+// adds both the entitlement and the ICLOUD_SYNC compilation condition. Turn it
+// on in Local.xcconfig rather than here.
+HUCK_ICLOUD_SYNC = NO
+
+HUCK_ICLOUD_SYNC_ENTITLEMENTS_YES = Config/HuckApp-iCloud.entitlements
+HUCK_ICLOUD_SYNC_ENTITLEMENTS_NO =
+HUCK_ICLOUD_SYNC_CONDITION_YES = ICLOUD_SYNC
+HUCK_ICLOUD_SYNC_CONDITION_NO =
+
+// MARK: - Derived settings
+
+CODE_SIGN_ENTITLEMENTS = $(HUCK_ICLOUD_SYNC_ENTITLEMENTS_$(HUCK_ICLOUD_SYNC))
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) $(HUCK_ICLOUD_SYNC_CONDITION_$(HUCK_ICLOUD_SYNC))

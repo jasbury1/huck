@@ -1,0 +1,15 @@
+//
+//  Local.xcconfig.example
+//  HuckApp
+//
+//  Per-developer overrides. Copy this file to Local.xcconfig, which git
+//  ignores, and uncomment what you need. It's included last, so anything here
+//  overrides Base, Debug, and Release.
+//
+
+// A paid Apple Developer Program team, needed for iCloud and other paid
+// capabilities.
+// DEVELOPMENT_TEAM = ABCDE12345
+
+// Sync collections through iCloud. Requires the paid team above.
+// HUCK_ICLOUD_SYNC = YES

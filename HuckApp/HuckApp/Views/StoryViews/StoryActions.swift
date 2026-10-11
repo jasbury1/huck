@@ -30,8 +30,9 @@ struct FavoriteAction {
     func callAsFunction(_ story: StoryModel) { handler(story) }
 }
 
-/// Presents the collection picker for a story, behind the login gate, since
-/// collections are per-user. The sheet is owned by `storyActionsEnabled()`
+/// Presents the collection picker for a story. Collections belong to the
+/// device, not an HN account, so there's no login gate. The sheet is owned by
+/// `storyActionsEnabled()`
 /// rather than the caller because the usual caller is a menu row, and a menu
 /// is gone by the time a sheet attached to it would present.
 struct AddToCollectionAction {
@@ -54,7 +55,7 @@ struct ComposeNewPostAction {
 
 /// Runs a closure only when signed in, otherwise presenting the login screen —
 /// the same gate as upvote/favorite, exposed for actions that aren't tied to a
-/// single story (e.g. creating a collection). The default runs the closure
+/// single story (e.g. voting in a poll). The default runs the closure
 /// immediately, so it degrades gracefully outside a `storyActionsEnabled` subtree.
 struct RequireLoginAction {
     let handler: (@escaping () -> Void) -> Void
@@ -97,7 +98,7 @@ private struct StoryActionsModifier: ViewModifier {
                 perform { await store.toggleFavorite(story) }
             })
             .environment(\.addToCollection, AddToCollectionAction { story in
-                requireLogin { collectionStory = story }
+                collectionStory = story
             })
             .environment(\.composeNewPost, ComposeNewPostAction { open in
                 requireLogin {

@@ -9,7 +9,7 @@ import SwiftUI
 
 /// Shows the stories in one of the user's collections, in the order they were
 /// added. Rows navigate like any story cell; a trailing swipe removes the story
-/// from the collection.
+/// from the collection. Edits synced from other devices appear live.
 struct CollectionView: View {
     let collectionID: StoryCollection.ID
     @Binding var path: NavigationPath
@@ -42,7 +42,6 @@ struct CollectionView: View {
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
                                     collectionsStore.removeStory(story.id, from: collectionID)
-                                    Task { await feed.reload() }
                                 } label: {
                                     Label("Remove", systemImage: "trash")
                                 }
@@ -96,6 +95,13 @@ struct CollectionView: View {
         // Leave before the collection goes, so this screen never shows a
         // collection that no longer exists.
         .confirmsCollectionDeletion(of: $collectionToDelete) { dismiss() }
+        // Reload whenever the stories change — removed here, or edited on
+        // another device and synced in through iCloud. If another device
+        // deleted the whole collection, leave rather than show an empty shell.
+        .onChange(of: collection?.storyIDs) {
+            guard collection != nil else { return dismiss() }
+            Task { await feed?.reload() }
+        }
         .task {
             let feed = feed ?? StoryFeed.collection(collectionID, in: collectionsStore)
             self.feed = feed
