@@ -47,6 +47,13 @@ struct ThreadSplitNavigation<Root: View>: View {
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
+    /// The leading column's width range, in points. The minimum is the
+    /// narrowest current iPhone, so its rows never get more cramped than on a
+    /// phone; the maximum keeps the detail column the larger of the two.
+    private static var minimumLeadingWidth: CGFloat { 362 }
+    private static var idealLeadingWidth: CGFloat { 400 }
+    private static var maximumLeadingWidth: CGFloat { 800 }
+
     /// The thread at the root of the detail column, if one's been opened.
     @State private var selectedThread: ItemNavigation?
     /// Pages pushed within the detail column, above `selectedThread`.
@@ -84,6 +91,14 @@ struct ThreadSplitNavigation<Root: View>: View {
                 root()
                     .environment(\.isSidebarColumnRoot, true)
             }
+            // Never narrower than an iPhone's screen, which story rows and the
+            // profile's header and tab pills are laid out for; the system may
+            // still narrow it where the window can't fit both columns.
+            .navigationSplitViewColumnWidth(
+                min: Self.minimumLeadingWidth,
+                ideal: Self.idealLeadingWidth,
+                max: Self.maximumLeadingWidth
+            )
         } detail: {
             NavigationStack(path: $detailPath) {
                 Group {
@@ -105,16 +120,6 @@ struct ThreadSplitNavigation<Root: View>: View {
                     StoryDetailsView(from: navigation, path: $detailPath)
                         .detailColumnActions(path: $detailPath)
                 }
-            }
-            // The system draws no divider between the columns here, and both
-            // are white once a story list is pushed in the leading one, so
-            // mark the edge the way a split view's hairline would.
-            .overlay(alignment: .leading) {
-                // In an `HStack`, so the divider runs vertically.
-                HStack {
-                    Divider()
-                }
-                .ignoresSafeArea()
             }
         }
         .inAppBrowser(path: $path)
@@ -159,5 +164,25 @@ private extension View {
             .environment(\.openThread, OpenThreadAction { thread, path in
                 path.wrappedValue.append(thread)
             })
+            .columnDivider()
+    }
+
+    /// The hairline between the columns, which the system doesn't draw here —
+    /// and both are white once a story list is pushed in the leading one.
+    ///
+    /// Drawn by each detail page, because those are the pages this view builds:
+    /// the leading column's are declared by its root, and a page pushed there
+    /// sits outside any overlay on the column's stack. The detail column runs
+    /// underneath the sidebar, with the sidebar's width as its leading safe
+    /// area, so the line keeps to that inset to land on the boundary. Vertically
+    /// it runs the full height.
+    func columnDivider() -> some View {
+        overlay(alignment: .leading) {
+            // In an `HStack`, so the divider runs vertically.
+            HStack {
+                Divider()
+            }
+            .ignoresSafeArea(edges: .vertical)
+        }
     }
 }

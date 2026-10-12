@@ -161,12 +161,30 @@ struct UserView: View {
             scrollOffset = offset
         }
         .refreshable { await refresh(currentTab) }
+        // In a split view's leading column the bar draws no background of its
+        // own, and the system renders the page's content beneath the bar above
+        // anything the page lays there — so once the tab bar pins, the header
+        // would go on scrolling visibly behind the title and buttons. Instead
+        // the scroll view stops drawing under the bar while pinned: its mask
+        // reaches up under the bar only until then. The bar is left
+        // showing the page's background, white while pinned (see below), which
+        // is why the mask comes before it.
+        // A mask, not a conditional clip, so the scroll view keeps its identity
+        // and its position as the bar pins and unpins.
+        .mask {
+            // Every other edge stays open, so the list still runs on beneath
+            // the home indicator and to the sides.
+            Rectangle()
+                .ignoresSafeArea(edges: isTabBarPinned ? [.horizontal, .bottom] : .all)
+        }
         // Grey above, white below: the large title and an overscroll at the top
         // (behind the pull-to-refresh spinner) sit on the header's grey
         // backdrop, while a bounce at the bottom continues the white list.
+        // White above too while the tab bar is pinned: that's what shows
+        // behind the navigation bar then (see the mask above).
         .background {
             VStack(spacing: 0) {
-                Color(.secondarySystemBackground)
+                isTabBarPinned ? cardBackgroundColor : Color(.secondarySystemBackground)
                 cardBackgroundColor
             }
             .ignoresSafeArea()

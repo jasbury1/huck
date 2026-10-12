@@ -60,6 +60,17 @@ struct ContentView: View {
         isDebugModeEnabled && DebugMode.isAvailable(for: session.username)
     }
 
+    /// Whether Settings gets a tab of its own, rather than living behind the
+    /// Account tab's gear. Only where the tab bar has room to spare: an iPhone
+    /// Duo, folded or not and however it's held, puts its tabs in a column down
+    /// the trailing edge, and an iPad lays them along the top. SwiftUI reports
+    /// the Duo's column as a bottom bar, so it's recognised by the window's
+    /// shape instead. Every iPhone is too narrow a shape to qualify, so its
+    /// bottom bar keeps three tabs.
+    private var showsSettingsTab: Bool {
+        windowSize.isSquarerThanPhone
+    }
+
     init() {
         // Built here as one graph rather than defaulting independently: each of
         // these depends on the session, and the sync also writes into the store.
@@ -78,11 +89,18 @@ struct ContentView: View {
                 FeedView()
                     .tint(.primary)
             }
-            // Settings isn't a destination of its own — it's reached from the
-            // gear in the Account tab's toolbar.
+            // Settings is usually reached from the gear in the Account tab's
+            // toolbar; it only becomes a tab where there's room for one.
             Tab("Account", systemImage: "person.circle") {
                 AccountView()
                     .tint(.primary)
+            }
+            if showsSettingsTab {
+                Tab("Settings", systemImage: "gearshape") {
+                    // Already a tab, so there's no sheet for Done to close.
+                    SettingsView(showsDoneButton: false)
+                        .tint(.primary)
+                }
             }
             if showsDebugTab {
                 Tab("Debug", systemImage: "ladybug") {
@@ -123,6 +141,7 @@ struct ContentView: View {
         // Chosen at the root, as split view columns take their environment from
         // above the split view rather than from their stacks.
         .environment(\.storyRowLayout, thumbnailPosition.storyRowLayout(windowSize: windowSize))
+        .environment(\.showsSettingsTab, showsSettingsTab)
         .environment(session)
         .environment(interactionStore)
         .environment(interactionSync)

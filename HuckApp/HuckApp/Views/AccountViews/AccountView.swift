@@ -10,6 +10,8 @@ import Foundation
 
 struct AccountView: View {
     @Environment(UserSession.self) private var session
+    /// Set where Settings is a tab of its own, making the gear redundant.
+    @Environment(\.showsSettingsTab) private var showsSettingsTab
     @State private var path = NavigationPath()
 
     /// Whether the Settings sheet is presented. Settings lives here rather than
@@ -26,7 +28,9 @@ struct AccountView: View {
         // state: it's observable, so signing in or out re-evaluates the view.
         // The profile is shown either way — signed out it drops to the tabs and
         // actions that work without an account, and offers its own login sheet.
-        NavigationStack(path: $path) {
+        // Side by side when there's room: the profile on the left, the thread of
+        // a post or comment opened from it on the right.
+        ThreadSplitNavigation(path: $path) {
             // The profile's own options live in `accountMenu` instead, so the
             // nav bar keeps a single ellipsis.
             UserView(
@@ -38,14 +42,17 @@ struct AccountView: View {
                 .navigationDestination(for: ItemNavigation.self) { navigation in
                     StoryDetailsView(from: navigation, path: $path)
                 }
-                // Both items are always present, signed in or out, so the pair
-                // never shifts position underneath a tap.
+                // Both items are present signed in or out, so the pair never
+                // shifts position underneath a tap. The gear goes only where
+                // Settings has its own tab.
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showingSettings = true
-                        } label: {
-                            Label("Settings", systemImage: "gearshape")
+                    if !showsSettingsTab {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button {
+                                showingSettings = true
+                            } label: {
+                                Label("Settings", systemImage: "gearshape")
+                            }
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
@@ -65,7 +72,6 @@ struct AccountView: View {
         .onChange(of: session.isSignedIn) { _, signedIn in
             if signedIn { showingLogin = false }
         }
-        .inAppBrowser(path: $path)
         .storyActionsEnabled()
     }
 

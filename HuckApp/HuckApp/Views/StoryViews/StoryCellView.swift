@@ -214,19 +214,11 @@ enum StoryRowLayout {
     case standard
     case wide
 
-    /// The window's short side over its long side, above which it's wider than
-    /// any iPhone's. Face ID iPhones are about 0.46 and the SE 0.56 (375 × 667);
-    /// the closed iPhone Duo is 0.59 (382 × 644), and it and iPads only get
-    /// squarer from there. A ratio holds in either orientation, so a sideways
+    /// The automatic choice for a window of `windowSize`: wide wherever the
+    /// window is squarer than an iPhone's, in either orientation, so a sideways
     /// iPhone stays standard.
-    private static let minimumAspectRatio: CGFloat = 0.58
-
-    /// The automatic choice for a window of `windowSize`.
     init(windowSize: CGSize) {
-        let shortSide = min(windowSize.width, windowSize.height)
-        let longSide = max(windowSize.width, windowSize.height)
-        let isWide = longSide > 0 && shortSide / longSide > Self.minimumAspectRatio
-        self = isWide ? .wide : .standard
+        self = windowSize.isSquarerThanPhone ? .wide : .standard
     }
 }
 

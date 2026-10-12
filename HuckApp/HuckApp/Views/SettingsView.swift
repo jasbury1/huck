@@ -15,6 +15,12 @@ enum FeedSettings {
     static let filtersKey = "feed.filters"
 }
 
+extension EnvironmentValues {
+    /// Whether Settings has a tab of its own right now, so the Account tab can
+    /// drop its gear rather than offer a second way to the same place.
+    @Entry var showsSettingsTab = false
+}
+
 /// Shared `@AppStorage` keys for how comments and posts are read.
 enum ReadingSettings {
     /// Whether code is drawn as code — monospaced, in a block of its own — or
@@ -37,6 +43,10 @@ struct SettingsView: View {
     /// Counts the hidden stories for their row.
     @Environment(InteractionStore.self) private var interactionStore
     @Environment(\.dismiss) private var dismiss
+
+    /// Whether to offer Done. On for the sheet the Account tab presents; off
+    /// when Settings is a tab of its own, with nothing to dismiss.
+    var showsDoneButton = true
 
     /// Whether story cells show the link's domain after the title. Defaults on.
     @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
@@ -179,8 +189,10 @@ struct SettingsView: View {
             // to do nothing until it was dismissed.
             .preferredColorScheme(appearance.colorScheme)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                if showsDoneButton {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
                 }
             }
             .alert("Clear Viewing History?", isPresented: $isConfirmingClearHistory) {
