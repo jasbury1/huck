@@ -112,6 +112,9 @@ struct ThreadSplitNavigation<Root: View>: View {
                 }
             }
         }
+        // Over both columns, so a thread's composer centers over the keyboard
+        // — which spans the window — rather than over the thread's column.
+        .hostsCommentComposer()
         .inAppBrowser(path: $path)
         // Outside `inAppBrowser`, so links to threads followed in the leading
         // column open beside it as well.

@@ -211,13 +211,9 @@ struct StoryTextView: View {
     @State private var titleHeight: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
 
-    /// The comment the composer is replying to, set by the Reply swipe action
-    /// and cleared when the draft is discarded.
-    @State private var replyTarget: Comment?
-
-    /// Whether the composer is open. Lets the toolbar's compose button open it
-    /// where the button doesn't float over the thread.
-    @State private var isComposing = false
+    /// The comment being written here. The Reply swipe action sets what it
+    /// answers, and the toolbar's compose button opens it.
+    @State private var draft = CommentDraft()
 
     /// The edge the system puts toolbar items on when it gathers them into a
     /// vertical bar — an iPhone Duo — or `nil` where it doesn't.
@@ -321,7 +317,7 @@ struct StoryTextView: View {
                                     // the compose button. Offered for every
                                     // comment, including one just posted — its
                                     // id is looked up on send, if it's needed.
-                                    requireLogin { replyTarget = comment }
+                                    requireLogin { draft.replyTarget = comment }
                                 } label: {
                                     Label("Reply", systemImage: "arrowshape.turn.up.left")
                                 }
@@ -400,7 +396,7 @@ struct StoryTextView: View {
             if !floatsComposeButton {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        requireLogin { isComposing = true }
+                        requireLogin { draft.isOpen = true }
                     } label: {
                         Label("Add a Comment", systemImage: "bubble.and.pencil")
                     }
@@ -416,50 +412,47 @@ struct StoryTextView: View {
                 // Icons match their text, not the app's orange tint.
                 .tint(.primary)
         }
-        // Liquid Glass compose control in the bottom-trailing corner: the
-        // floating compose button at rest, where it floats, and the text box
-        // once writing.
-        .overlay(alignment: .bottomTrailing) {
-            CommentComposer(
-                replyTarget: $replyTarget,
-                isOpen: $isComposing,
-                storyTitle: storyData.title,
-                floatsComposeButton: floatsComposeButton
-            ) { text in
-                // Read the target before posting: a successful post closes the
-                // composer, which clears it.
-                let parent = replyTarget
-                // Hacker News treats a top-level comment and a reply as the
-                // same thing posted against a different parent: the story
-                // itself, or the comment being answered.
-                // Replying to a comment the reader posted in this same sitting
-                // is the one thing that needs its Hacker News id, so this is
-                // where that lookup happens — and the only place it happens.
-                // Throwing keeps the draft, so "try again" is real advice.
-                let parentId: Int
-                if let parent {
-                    guard let resolved = await commentFetcher.resolveItemID(for: parent) else {
-                        throw APIError.unknownReplyTarget
-                    }
-                    parentId = resolved
-                } else {
-                    parentId = storyId
+        // Liquid Glass compose control: the floating compose button in the
+        // bottom-trailing corner at rest, where it floats, and the text box
+        // once writing — across the whole split view when there is one.
+        .commentComposer(
+            draft: draft,
+            storyTitle: storyData.title,
+            floatsComposeButton: floatsComposeButton
+        ) { text in
+            // Read the target before posting: a successful post closes the
+            // composer, which clears it.
+            let parent = draft.replyTarget
+            // Hacker News treats a top-level comment and a reply as the
+            // same thing posted against a different parent: the story
+            // itself, or the comment being answered.
+            // Replying to a comment the reader posted in this same sitting
+            // is the one thing that needs its Hacker News id, so this is
+            // where that lookup happens — and the only place it happens.
+            // Throwing keeps the draft, so "try again" is real advice.
+            let parentId: Int
+            if let parent {
+                guard let resolved = await commentFetcher.resolveItemID(for: parent) else {
+                    throw APIError.unknownReplyTarget
                 }
-                try await HackerNewsAPI.postComment(
-                    parentId: parentId,
-                    storyId: storyId,
-                    text: text
-                )
-                // Show it immediately rather than re-reading the whole thread,
-                // and scroll to it — a reply lands at the end of its parent's
-                // replies, which is often off screen.
-                let posted = commentFetcher.insertPostedComment(
-                    text: text,
-                    author: session.username ?? "",
-                    replyingTo: parent
-                )
-                scroll(to: posted.id, using: scrollProxy)
+                parentId = resolved
+            } else {
+                parentId = storyId
             }
+            try await HackerNewsAPI.postComment(
+                parentId: parentId,
+                storyId: storyId,
+                text: text
+            )
+            // Show it immediately rather than re-reading the whole thread,
+            // and scroll to it — a reply lands at the end of its parent's
+            // replies, which is often off screen.
+            let posted = commentFetcher.insertPostedComment(
+                text: text,
+                author: session.username ?? "",
+                replyingTo: parent
+            )
+            scroll(to: posted.id, using: scrollProxy)
         }
         .confirmsCommentDeletion(of: $deleteTarget, delete: delete)
         // Pull-to-refresh re-reads the thread and the story itself (its score

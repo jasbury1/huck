@@ -41,25 +41,41 @@ enum CommentComposerState: Int, CaseIterable, Comparable {
     }
 }
 
-/// A Liquid Glass comment composer that lives in the bottom-trailing corner of
-/// a story. It travels through `CommentComposerState`: at rest it's a compact
-/// compose button, and it grows into a text box that can be collapsed to a
-/// single line or expanded into a larger editor.
+/// A comment being written: its text, what it answers, and whether the
+/// composer is open.
 ///
-/// Dragging the grabber moves one state per swipe; the text box's glass shape
-/// morphs between sizes because every state shares one `glassEffectID`.
-struct CommentComposer: View {
+/// Owned by the thread rather than the composer, so the draft outlives the
+/// composer's own view — which `CommentComposerHost` may draw, and redraw,
+/// elsewhere — and so a Reply action anywhere in the thread can drive it. A
+/// class, so keystrokes update only the composer that reads the text, not the
+/// whole thread that owns it.
+@Observable
+final class CommentDraft {
+    /// The comment as written so far.
+    var text = ""
+
     /// The comment being replied to, or `nil` for a new top-level comment.
-    /// Setting it opens the composer; discarding the draft clears it. Owned by
-    /// the caller so a Reply action anywhere in the thread can drive the
-    /// composer, and so the caller knows where to post the draft.
-    @Binding var replyTarget: Comment?
+    /// Setting it opens the composer; discarding the draft clears it.
+    var replyTarget: Comment?
 
     /// Whether the composer is open, in any state but `cancelled`. Setting it
     /// opens the composer, so a compose button hosted elsewhere — the toolbar,
     /// where the button doesn't float — can drive it; the composer clears it
     /// once the draft is posted or discarded.
-    @Binding var isOpen: Bool
+    var isOpen = false
+}
+
+/// A Liquid Glass comment composer for a story. It travels through
+/// `CommentComposerState`: at rest it's a compact compose button in the
+/// bottom-trailing corner, and it grows into a text box, centered at a readable
+/// width, that can be collapsed to a single line or expanded into a larger
+/// editor.
+///
+/// Dragging the grabber moves one state per swipe; the text box's glass shape
+/// morphs between sizes because every state shares one `glassEffectID`.
+struct CommentComposer: View {
+    /// The comment being written, owned by the thread.
+    @Bindable var draft: CommentDraft
 
     /// The story being commented on, named in the header of a new top-level
     /// comment the way a reply names its author.
@@ -80,7 +96,6 @@ struct CommentComposer: View {
     @Environment(\.requireLogin) private var requireLogin
 
     @State private var state: CommentComposerState = .cancelled
-    @State private var draft = ""
     /// The field's selection, which the formatting buttons act on.
     @State private var selection: TextSelection?
     /// True while a post is in flight; holds the send button closed so one tap
@@ -102,6 +117,11 @@ struct CommentComposer: View {
     /// How far the whole control floats above the bottom edge.
     private static let bottomInset: CGFloat = 8
 
+    /// The widest the text box grows: the same readable width as the thread
+    /// (see `readableContentWidth()`), so on a wide window it's centered over
+    /// the keyboard rather than stretched edge to edge.
+    @ScaledMetric(relativeTo: .body) private var maxEditorWidth: CGFloat = 672
+
     /// How much room the composer takes up at rest.
     ///
     /// A scrolling view underneath should inset its content by this, or its
@@ -117,7 +137,7 @@ struct CommentComposer: View {
 
     /// The draft with surrounding whitespace removed — what actually gets sent.
     private var trimmedDraft: String {
-        draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        draft.text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var body: some View {
@@ -146,6 +166,11 @@ struct CommentComposer: View {
             }
         }
         .padding(.horizontal, 16)
+        // Writing, the box is held to a readable width and centered; at rest
+        // the button keeps to the trailing corner. Computed frames rather than
+        // a branch, which would rebuild the container — and the field in it.
+        .frame(maxWidth: state == .cancelled ? nil : maxEditorWidth)
+        .frame(maxWidth: .infinity, alignment: state == .cancelled ? .trailing : .center)
         .padding(.bottom, Self.bottomInset)
         .offset(y: dragOffset)
         // Kept off the background view below, so it never competes with the
@@ -157,15 +182,23 @@ struct CommentComposer: View {
         }
         // A Reply action elsewhere in the thread sets the target while the
         // composer is closed, so open it — and focus the field — in response.
-        .onChange(of: replyTarget?.id) { _, id in
+        .onChange(of: draft.replyTarget?.id) { _, id in
             if id != nil, state == .cancelled {
                 move(to: .normal)
             }
         }
         // The toolbar's compose button asks to open the composer this way.
-        .onChange(of: isOpen) { _, open in
+        .onChange(of: draft.isOpen) { _, open in
             if open, state == .cancelled {
                 move(to: .normal)
+            }
+        }
+        // A draft left open — by a thread that's been away and back, so this
+        // view is new — reopens collapsed, ready to pick up where it left off.
+        .onAppear {
+            if draft.isOpen || !trimmedDraft.isEmpty {
+                state = .collapsed
+                draft.isOpen = true
             }
         }
         // Keeps the state in step with focus changes the composer didn't drive:
@@ -208,13 +241,13 @@ struct CommentComposer: View {
             return
         }
         if newState == .cancelled {
-            draft = ""
+            draft.text = ""
             // A range into the old draft would be invalid in the next one.
             selection = nil
-            replyTarget = nil
+            draft.replyTarget = nil
         }
         withAnimation(transition) { state = newState }
-        isOpen = newState != .cancelled
+        draft.isOpen = newState != .cancelled
 
         if !newState.wantsKeyboard {
             isFocused = false
@@ -231,7 +264,7 @@ struct CommentComposer: View {
     /// Throws the draft away and returns to the compose button. Clearing the
     /// text first lets the transition past `move(to:)`'s confirmation guard.
     private func discard() {
-        draft = ""
+        draft.text = ""
         move(to: .cancelled)
     }
 
@@ -251,7 +284,7 @@ struct CommentComposer: View {
                 try await onSubmit(text)
                 // Clear before transitioning: an empty draft is what lets
                 // `move(to:)` past its "discard this comment?" guard.
-                draft = ""
+                draft.text = ""
                 move(to: .cancelled)
             } catch {
                 postError = error
@@ -284,8 +317,8 @@ struct CommentComposer: View {
             destinationHeader
             HStack(alignment: .bottom, spacing: 8) {
                 TextField(
-                    replyTarget == nil ? "Add a comment…" : "Add a reply…",
-                    text: $draft,
+                    draft.replyTarget == nil ? "Add a comment…" : "Add a reply…",
+                    text: $draft.text,
                     selection: $selection,
                     axis: .vertical
                 )
@@ -293,7 +326,7 @@ struct CommentComposer: View {
                 .lineLimit(state.lineLimit)
                 // Only the expanded editor, where longer and formatted
                 // comments get written, offers the formatting controls.
-                .formattingKeyboardToolbar(text: $draft, selection: $selection, isEnabled: state == .expanded)
+                .formattingKeyboardToolbar(text: $draft.text, selection: $selection, isEnabled: state == .expanded)
                 Button {
                     submit()
                 } label: {
@@ -332,7 +365,7 @@ struct CommentComposer: View {
         // A branch rather than a ternary inside `Text`, so both stay
         // `LocalizedStringKey`s.
         Group {
-            if let replyTarget {
+            if let replyTarget = draft.replyTarget {
                 Text("Replying to \(replyTarget.author)…")
             } else {
                 Text("Posting to \(storyTitle)…")
@@ -468,13 +501,11 @@ struct CommentComposer: View {
 }
 
 #Preview {
-    @Previewable @State var replyTarget: Comment?
-    @Previewable @State var isOpen = false
-    ZStack(alignment: .bottomTrailing) {
+    @Previewable @State var draft = CommentDraft()
+    ZStack(alignment: .bottom) {
         Color(.systemBackground)
         CommentComposer(
-            replyTarget: $replyTarget,
-            isOpen: $isOpen,
+            draft: draft,
             storyTitle: "Show HN: A Hacker News client",
             floatsComposeButton: true
         ) { _ in }

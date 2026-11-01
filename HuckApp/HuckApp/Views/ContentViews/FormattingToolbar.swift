@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension View {
-    /// Adds Hacker News's formatting controls — code and italics — to the
+    /// Adds Hacker News's formatting controls — code, italics, and quotes — to the
     /// keyboard's floating bar, as in Notes, acting on `text` at `selection`.
     ///
     /// Shared by everywhere HN-formatted text is written, so the controls look
@@ -27,6 +27,7 @@ extension View {
                     Group {
                         FormatButton(title: "Code", systemImage: "chevron.left.forwardslash.chevron.right", format: .code, text: text, selection: selection)
                         FormatButton(title: "Italic", systemImage: "italic", format: .italic, text: text, selection: selection)
+                        FormatButton(title: "Quote", systemImage: "text.quote", format: .quote, text: text, selection: selection)
                     }
                     .tint(.primary)
                 }
