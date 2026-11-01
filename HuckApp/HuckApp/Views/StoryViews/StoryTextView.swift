@@ -86,6 +86,7 @@ struct CommentCellView: View {
                 ),
                 // A collapsed row shrinks to its header alone.
                 text: isCollapsed ? nil : commentData.text,
+                isTextSelectable: true,
                 path: $path,
                 // Guarded rather than a toggle: a collapsed row is expanded by
                 // the tap handler on the whole cell, which stays live while
@@ -130,6 +131,7 @@ struct CommentCellView: View {
     /// to the set a lone comment offers (see `UserCommentRow`).
     private var optionsMenu: some View {
         CommentOptionsMenu {
+            CopyCommentTextButton(text: commentData.text)
             // A comment the reader posted seconds ago has no id yet, so there's
             // no permalink to copy until it has one.
             if let url = commentData.hackerNewsURL {

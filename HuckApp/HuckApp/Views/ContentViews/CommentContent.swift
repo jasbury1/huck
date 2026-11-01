@@ -102,6 +102,11 @@ struct CommentContent<Accessory: View>: View {
     /// the lists that already draw their own between rows.
     var showsDivider = true
 
+    /// Whether the text can be selected — touch and hold, then drag the
+    /// handles — to copy part of it. On in a thread, where a comment is read
+    /// in full; off in the lists, where the whole row is a tap target.
+    var isTextSelectable = false
+
     @Binding var path: NavigationPath
 
     /// Tapping the header's empty space — the gap after the name, and the
@@ -115,10 +120,7 @@ struct CommentContent<Accessory: View>: View {
         VStack(alignment: .leading, spacing: 6) {
             header
             if let text {
-                FormattedTextView(text: text, lineLimit: lineLimit)
-                    .font(.callout)
-                    // Links take the tint, which is primary outside content.
-                    .tint(.orange)
+                commentText(text)
             }
             if showsDivider {
                 Divider()
@@ -127,6 +129,19 @@ struct CommentContent<Accessory: View>: View {
         // Fill the trailing edge instead of a Spacer so an enclosing HStack's
         // spacing only sits between the rails and the text, not to the right.
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func commentText(_ text: String) -> some View {
+        let formatted = FormattedTextView(text: text, lineLimit: lineLimit)
+            .font(.callout)
+            // Links take the tint, which is primary outside content.
+            .tint(.orange)
+        if isTextSelectable {
+            formatted.textSelection(.enabled)
+        } else {
+            formatted
+        }
     }
 
     @ViewBuilder
@@ -284,6 +299,20 @@ struct CommentScoreLabel: View {
 /// Shared so the affordance is identical wherever a comment appears; only the
 /// contents differ, since a thread comment can be collapsed and a standalone
 /// one can't.
+/// Copies a comment's whole text, as it reads — see `FormattedText.plainText`.
+/// The first item in every comment's options menu.
+struct CopyCommentTextButton: View {
+    let text: String
+
+    var body: some View {
+        Button {
+            UIPasteboard.general.string = FormattedText.cached(text).plainText
+        } label: {
+            Label("Copy Text", systemImage: "doc.on.doc")
+        }
+    }
+}
+
 struct CommentOptionsMenu<Content: View>: View {
     @ViewBuilder let content: () -> Content
 

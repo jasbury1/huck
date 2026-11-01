@@ -96,6 +96,7 @@ struct UserCommentRow: View {
     /// permalink is a permalink wherever the comment is read.
     private var optionsMenu: some View {
         CommentOptionsMenu {
+            CopyCommentTextButton(text: comment.text)
             if let url = comment.hackerNewsURL {
                 Button {
                     UIPasteboard.general.url = url
