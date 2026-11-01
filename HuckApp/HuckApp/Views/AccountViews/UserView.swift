@@ -383,13 +383,15 @@ struct UserView: View {
                     // frame. That overflow stays hit-testable (clip/mask only affect
                     // rendering), so a long bio would overhang and steal the tab
                     // list's scroll gestures. Without it, the Text respects the cap.
-                    Text(about)
+                    FormattedTextView(text: about)
+                        // Links take the tint, which is primary outside content.
+                        .tint(.orange)
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                         // A hidden copy at the same width reports the full height
                         // (`fixedSize` keeps it from being clipped), so we can decide
                         // whether to show "Expand".
                         .background(alignment: .topLeading) {
-                            Text(about)
+                            FormattedTextView(text: about)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .frame(maxWidth: .infinity, alignment: .topLeading)
                                 .hidden()
@@ -653,7 +655,8 @@ struct BioSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                Text(about)
+                FormattedTextView(text: about)
+                    .tint(.orange)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
             }
