@@ -46,7 +46,9 @@ struct HuckCollectionView: View {
         .navigationTitle(collection.name)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            let feed = feed ?? StoryFeed.fixed(collection.storyIDs)
+            let feed = feed ?? StoryFeed { page in
+                page == 0 ? (await collection.storyIDs(), false) : ([], false)
+            }
             self.feed = feed
             await feed.reload()
         }

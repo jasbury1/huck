@@ -76,6 +76,13 @@ class HackerNewsAPI {
         await StoryListCache.shared.refresh(kind)
     }
 
+    /// The story ids of the GitHub repos Hacker News is talking about, best
+    /// first — see `TrendingRepos` for how they're ranked. Served from
+    /// `TrendingReposCache` while fresh.
+    static func getTrendingRepoStoryIds() async -> [Int] {
+        await TrendingReposCache.shared.storyIDs()
+    }
+
     /// The feeds warmed at launch, most likely to be opened first.
     private static let launchFeeds: [FeedKind] = [.topStories, .bestStories, .newStories, .showStories]
 

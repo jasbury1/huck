@@ -31,13 +31,27 @@ enum CollectionSymbol: Hashable {
 
 /// A Huck-curated collection: an app-provided, read-only list of stories shown in
 /// the home feed's "Huck's Collections" section. Unlike a user's `StoryCollection`
-/// these aren't editable or synced; the ids are curated (empty for now).
+/// these aren't editable or synced; the stories are computed on demand.
 struct HuckCollection: Identifiable, Hashable {
+    /// Where a collection's stories come from.
+    enum Source: Hashable {
+        /// GitHub repos Hacker News is talking about — see `TrendingRepos`.
+        case trendingRepos
+    }
+
     /// A stable slug, used as the navigation value.
     let id: String
     let name: String
     let symbol: CollectionSymbol
-    let storyIDs: [Int]
+    let source: Source
+
+    /// The collection's story ids, best first.
+    func storyIDs() async -> [Int] {
+        switch source {
+        case .trendingRepos:
+            await HackerNewsAPI.getTrendingRepoStoryIds()
+        }
+    }
 }
 
 /// The curated collections, in display order. A static catalog for now.
@@ -47,7 +61,7 @@ enum HuckCollections {
             id: "trending-repos",
             name: "Trending repos",
             symbol: .asset("GitHubMark"),
-            storyIDs: []
+            source: .trendingRepos
         )
     ]
 

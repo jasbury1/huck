@@ -58,6 +58,25 @@ private nonisolated struct AlgoliaHit: Codable, Sendable {
     let objectID: String
 }
 
+/// A story as returned by a search, with the fields needed to judge its link.
+nonisolated struct AlgoliaLinkStoryData: Codable, Sendable {
+    let objectID: String
+    let url: String?
+    let points: Int?
+    let createdAtI: Int
+
+    enum CodingKeys: String, CodingKey {
+        case objectID
+        case url
+        case points
+        case createdAtI = "created_at_i"
+    }
+}
+
+private nonisolated struct AlgoliaLinkSearchResponse: Codable, Sendable {
+    let hits: [AlgoliaLinkStoryData]
+}
+
 private nonisolated struct AlgoliaCommentSearchResponse: Codable, Sendable {
     let hits: [AlgoliaCommentHit]
     let nbPages: Int
@@ -148,6 +167,39 @@ struct AlgoliaAPIService {
         }
         let ids = response.hits.compactMap { Int($0.objectID) }
         return (ids, page + 1 < response.nbPages)
+    }
+
+    /// Stories submitted since `since` that link to `domain`, with at least
+    /// `minPoints`, in one request. The hits carry each story's URL, points and
+    /// age, so judging them costs no per-story lookups.
+    ///
+    /// The query is restricted to the `url` attribute, so a story that merely
+    /// mentions the domain in its title isn't matched. It's a text match, not
+    /// an exact one: callers still check the host themselves.
+    static func getRecentLinkStories(
+        domain: String,
+        since: Date,
+        minPoints: Int,
+        hitsPerPage: Int
+    ) async -> [AlgoliaLinkStoryData] {
+        guard var components = URLComponents(string: "\(baseUri)/search") else { return [] }
+        let numericFilters = [
+            "created_at_i>\(Int(since.timeIntervalSince1970))",
+            "points>=\(minPoints)",
+        ]
+        components.queryItems = [
+            URLQueryItem(name: "query", value: domain),
+            URLQueryItem(name: "restrictSearchableAttributes", value: "url"),
+            URLQueryItem(name: "tags", value: "story"),
+            URLQueryItem(name: "numericFilters", value: numericFilters.joined(separator: ",")),
+            URLQueryItem(name: "hitsPerPage", value: String(hitsPerPage)),
+        ]
+        guard let url = components.url?.absoluteString else { return [] }
+        searchLog.info(
+            "Link search request: domain=\(domain, privacy: .public) minPoints=\(minPoints, privacy: .public) hitsPerPage=\(hitsPerPage, privacy: .public)"
+        )
+        let response: AlgoliaLinkSearchResponse? = await WebService().downloadData(fromURL: url)
+        return response?.hits ?? []
     }
 
     /// Searches the comment index, returning comments ready to display.
