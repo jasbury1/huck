@@ -167,8 +167,8 @@ private extension View {
             .columnDivider()
     }
 
-    /// The hairline between the columns, which the system doesn't draw here —
-    /// and both are white once a story list is pushed in the leading one.
+    /// The line between the columns, which the system doesn't draw here — and
+    /// both are white once a story list is pushed in the leading one.
     ///
     /// Drawn by each detail page, because those are the pages this view builds:
     /// the leading column's are declared by its root, and a page pushed there
@@ -178,11 +178,19 @@ private extension View {
     /// it runs the full height.
     func columnDivider() -> some View {
         overlay(alignment: .leading) {
-            // In an `HStack`, so the divider runs vertically.
-            HStack {
-                Divider()
-            }
-            .ignoresSafeArea(edges: .vertical)
+            ColumnDivider()
+                .ignoresSafeArea(edges: .vertical)
         }
+    }
+}
+
+/// A vertical separator heavier than a `Divider`'s one-pixel hairline, so the
+/// boundary between the columns reads more clearly than the separators within
+/// them.
+private struct ColumnDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(Color(.separator))
+            .frame(width: 2.5)
     }
 }
