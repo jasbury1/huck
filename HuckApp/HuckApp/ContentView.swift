@@ -132,11 +132,22 @@ struct ContentView: View {
         .tint(.orange)
         .preferredColorScheme(appearance.colorScheme)
         // Measured on a background that ignores the safe area, so it's the
-        // whole window and the keyboard rising can't change the answer.
+        // whole window and the keyboard rising shouldn't change the answer.
         .background {
             Color.clear
                 .ignoresSafeArea()
-                .onGeometryChange(for: CGSize.self) { $0.size } action: { windowSize = $0 }
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { newSize in
+                    // A window that only got shorter at the same width is the
+                    // keyboard, not a new window shape — on a phone it would
+                    // push the proportions past the Duo threshold and flip the
+                    // thumbnails to the other side while a filter is typed. A
+                    // real change of shape (rotating, folding) changes the width.
+                    let isKeyboardResize = newSize.width == windowSize.width
+                        && newSize.height < windowSize.height
+                        && windowSize != .zero
+                    print("windowSize \(windowSize) -> \(newSize)\(isKeyboardResize ? " (ignored)" : "")")
+                    if !isKeyboardResize { windowSize = newSize }
+                }
         }
         // Chosen at the root, as split view columns take their environment from
         // above the split view rather than from their stacks.
