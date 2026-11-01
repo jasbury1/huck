@@ -64,6 +64,13 @@ struct StoryDetailsView: View {
             LinkedItemView(itemID: id, path: $path)
         case let .userProfile(user):
             UserView(username: user, path: $path)
+                // Added here rather than by the page, as the account tab shows
+                // the same page with its own account menu in the overflow.
+                .toolbarOverflowMenu {
+                    ProfileOptions(username: user)
+                        // Icons match their text, not the app's orange tint.
+                        .tint(.primary)
+                }
         case let .favorites(user):
             FavoritesView(username: user, path: $path)
         case .liked:

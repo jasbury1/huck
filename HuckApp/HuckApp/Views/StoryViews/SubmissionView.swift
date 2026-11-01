@@ -105,6 +105,7 @@ struct SubmissionView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
+                    DryRunBadge()
                     kindPicker
                     titleEditor
                     if kind == .link {
@@ -123,6 +124,14 @@ struct SubmissionView: View {
                 .animation(.snappy, value: trimmedTitle.isEmpty)
             }
             .scrollDismissesKeyboard(.interactively)
+            // Over the keyboard while the body is being written, the one field
+            // that takes formatting.
+            .formattingBar(
+                text: $text,
+                selection: $textSelection,
+                isPresented: focusedField == .text
+            )
+            .animation(.snappy, value: focusedField == .text)
             .navigationTitle("New Post")
             // Large at the top, shrinking into the bar once the form scrolls.
             .navigationBarTitleDisplayMode(.large)
@@ -254,11 +263,6 @@ struct SubmissionView: View {
         )
         .lineLimit(kind == .text ? 8... : 4...)
         .focused($focusedField, equals: .text)
-        .formattingKeyboardToolbar(
-            text: $text,
-            selection: $textSelection,
-            isEnabled: focusedField == .text
-        )
         .padding(14)
         .background(Color(.tertiarySystemFill), in: Self.fieldShape)
     }

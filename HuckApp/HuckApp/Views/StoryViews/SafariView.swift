@@ -74,6 +74,7 @@ private struct BrowserLink: Identifiable {
 private struct InAppBrowserModifier: ViewModifier {
     @Binding var path: NavigationPath
     @State private var link: BrowserLink?
+    @Environment(\.openThread) private var openThread
 
     func body(content: Content) -> some View {
         content
@@ -95,10 +96,16 @@ private struct InAppBrowserModifier: ViewModifier {
     }
 
     /// Pushes the in-app screen for a link to Hacker News, returning whether
-    /// `url` was one.
+    /// `url` was one. Items open as threads, which a split view shows in its
+    /// detail column.
     private func navigate(to url: URL) -> Bool {
         guard let destination = ItemNavigation(hackerNewsURL: url) else { return false }
-        path.append(destination)
+        switch destination {
+        case .item, .textStory:
+            openThread(destination, from: $path)
+        default:
+            path.append(destination)
+        }
         return true
     }
 }

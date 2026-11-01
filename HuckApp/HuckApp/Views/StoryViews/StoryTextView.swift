@@ -86,6 +86,7 @@ struct CommentCellView: View {
                 ),
                 // A collapsed row shrinks to its header alone.
                 text: isCollapsed ? nil : commentData.text,
+                isTextSelectable: true,
                 path: $path,
                 // Guarded rather than a toggle: a collapsed row is expanded by
                 // the tap handler on the whole cell, which stays live while
@@ -130,6 +131,7 @@ struct CommentCellView: View {
     /// to the set a lone comment offers (see `UserCommentRow`).
     private var optionsMenu: some View {
         CommentOptionsMenu {
+            CopyCommentTextButton(text: commentData.text)
             // A comment the reader posted seconds ago has no id yet, so there's
             // no permalink to copy until it has one.
             if let url = commentData.hackerNewsURL {
@@ -211,9 +213,18 @@ struct StoryTextView: View {
     @State private var titleHeight: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
 
-    /// The comment the composer is replying to, set by the Reply swipe action
-    /// and cleared when the draft is discarded.
-    @State private var replyTarget: Comment?
+    /// The comment being written here. The Reply swipe action sets what it
+    /// answers, and the toolbar's compose button opens it.
+    @State private var draft = CommentDraft()
+
+    /// The edge the system puts toolbar items on when it gathers them into a
+    /// vertical bar — an iPhone Duo — or `nil` where it doesn't.
+    @Environment(\.toolbarVerticalEdge) private var toolbarVerticalEdge
+
+    /// Whether the compose button floats over the thread. Where there's a
+    /// vertical bar it joins the thread's other buttons there instead, as a
+    /// toolbar item, rather than floating as a second set of controls.
+    private var floatsComposeButton: Bool { toolbarVerticalEdge == nil }
 
     /// The reader's comment awaiting confirmation of its deletion.
     @State private var deleteTarget: Comment?
@@ -308,7 +319,7 @@ struct StoryTextView: View {
                                     // the compose button. Offered for every
                                     // comment, including one just posted — its
                                     // id is looked up on send, if it's needed.
-                                    requireLogin { replyTarget = comment }
+                                    requireLogin { draft.replyTarget = comment }
                                 } label: {
                                     Label("Reply", systemImage: "arrowshape.turn.up.left")
                                 }
@@ -350,13 +361,17 @@ struct StoryTextView: View {
                     //SortableHeader(title: "Comments")
                 }
             }
+            // The scroll view stays full width, so it scrolls from anywhere;
+            // only the thread inside it is held to a readable column.
+            .readableContentWidth()
         }
         // Enables the row `swipeActions` above outside of a List (iOS 27+).
         .swipeActionsContainer()
         // Leaves room for the floating composer, so the last comment can scroll
         // clear of it instead of coming to rest underneath, close enough to read
-        // but with its own controls unreachable.
-        .contentMargins(.bottom, CommentComposer.reservedHeight)
+        // but with its own controls unreachable. Nothing floats at rest when
+        // the compose button is in the toolbar.
+        .contentMargins(.bottom, floatsComposeButton ? CommentComposer.reservedHeight : 0)
         .navigationBarTitleDisplayMode(.inline)
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
@@ -375,54 +390,71 @@ struct StoryTextView: View {
                     .truncationMode(.tail)
                     .opacity(titleCollapseProgress)
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                // The same options as a feed row's long-press menu.
-                Menu {
-                    StoryOptions(story: storyData)
-                        // Icons match their text, not the app's orange tint.
-                        .tint(.primary)
-                } label: {
-                    Label("Story Options", systemImage: "ellipsis")
+            // Where the compose button doesn't float — an iPhone Duo, whose
+            // toolbar runs down the side — it sits with the thread's other
+            // buttons, behind the same login gate as the floating one. Kept
+            // out of the overflow for as long as there's room, as the thread's
+            // most frequent action.
+            if !floatsComposeButton {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        requireLogin { draft.isOpen = true }
+                    } label: {
+                        Label("Add a Comment", systemImage: "bubble.and.pencil")
+                    }
                 }
+                .visibilityPriority(.high)
             }
         }
-        // Floating Liquid Glass compose control in the bottom-trailing corner.
-        .overlay(alignment: .bottomTrailing) {
-            CommentComposer(replyTarget: $replyTarget, storyTitle: storyData.title) { text in
-                // Read the target before posting: a successful post closes the
-                // composer, which clears it.
-                let parent = replyTarget
-                // Hacker News treats a top-level comment and a reply as the
-                // same thing posted against a different parent: the story
-                // itself, or the comment being answered.
-                // Replying to a comment the reader posted in this same sitting
-                // is the one thing that needs its Hacker News id, so this is
-                // where that lookup happens — and the only place it happens.
-                // Throwing keeps the draft, so "try again" is real advice.
-                let parentId: Int
-                if let parent {
-                    guard let resolved = await commentFetcher.resolveItemID(for: parent) else {
-                        throw APIError.unknownReplyTarget
-                    }
-                    parentId = resolved
-                } else {
-                    parentId = storyId
+        // The same options as a feed row's long-press menu, in the system's
+        // own overflow menu, so toolbar items the system overflows when space
+        // runs short join them there rather than under a second ellipsis.
+        .toolbarOverflowMenu {
+            StoryOptions(story: storyData)
+                // Icons match their text, not the app's orange tint.
+                .tint(.primary)
+        }
+        // Liquid Glass compose control: the floating compose button in the
+        // bottom-trailing corner at rest, where it floats, and the text box
+        // once writing — across the whole split view when there is one.
+        .commentComposer(
+            draft: draft,
+            storyTitle: storyData.title,
+            floatsComposeButton: floatsComposeButton
+        ) { text in
+            // Read the target before posting: a successful post closes the
+            // composer, which clears it.
+            let parent = draft.replyTarget
+            // Hacker News treats a top-level comment and a reply as the
+            // same thing posted against a different parent: the story
+            // itself, or the comment being answered.
+            // Replying to a comment the reader posted in this same sitting
+            // is the one thing that needs its Hacker News id, so this is
+            // where that lookup happens — and the only place it happens.
+            // Throwing keeps the draft, so "try again" is real advice.
+            let parentId: Int
+            if let parent {
+                guard let resolved = await commentFetcher.resolveItemID(for: parent) else {
+                    throw APIError.unknownReplyTarget
                 }
-                try await HackerNewsAPI.postComment(
-                    parentId: parentId,
-                    storyId: storyId,
-                    text: text
-                )
-                // Show it immediately rather than re-reading the whole thread,
-                // and scroll to it — a reply lands at the end of its parent's
-                // replies, which is often off screen.
-                let posted = commentFetcher.insertPostedComment(
-                    text: text,
-                    author: session.username ?? "",
-                    replyingTo: parent
-                )
-                scroll(to: posted.id, using: scrollProxy)
+                parentId = resolved
+            } else {
+                parentId = storyId
             }
+            try await HackerNewsAPI.postComment(
+                parentId: parentId,
+                storyId: storyId,
+                text: text
+            )
+            // Show it immediately rather than re-reading the whole thread,
+            // and scroll to it — a reply lands at the end of its parent's
+            // replies, which is often off screen.
+            let posted = commentFetcher.insertPostedComment(
+                text: text,
+                author: session.username ?? "",
+                replyingTo: parent
+            )
+            scroll(to: posted.id, using: scrollProxy)
         }
         .confirmsCommentDeletion(of: $deleteTarget, delete: delete)
         // Pull-to-refresh re-reads the thread and the story itself (its score

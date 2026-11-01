@@ -140,6 +140,19 @@ struct FormattedText {
         return result
     }
 
+    /// The text as the reader sees it, without its markup, for copying.
+    /// Quotes keep their `>` markers. Links are given by their address rather
+    /// than their text: Hacker News labels a link with its address, but cut
+    /// short, so the text alone would paste a URL that goes nowhere.
+    var plainText: String {
+        let rendered = attributedString(formatsCode: false)
+        var plain = ""
+        for (link, range) in rendered.runs[\.link] {
+            plain += link?.absoluteString ?? String(rendered[range].characters)
+        }
+        return plain
+    }
+
     // MARK: - Quotes
 
     /// A quote as it was written: each paragraph behind its `>`, for where

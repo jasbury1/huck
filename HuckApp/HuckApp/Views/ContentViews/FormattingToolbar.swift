@@ -7,40 +7,66 @@
 
 import SwiftUI
 
+/// Hacker News's formatting controls — code, italics, and quotes — acting on
+/// `text` at `selection`.
+///
+/// Shared by everywhere HN-formatted text is written, so the controls look
+/// and behave the same in a comment as in a post. Drawn by the app rather than
+/// placed in the keyboard's toolbar: the system doesn't reliably make room for
+/// that bar above a floating composer, and it sits flush against the keys.
+/// Each button is spelled out beside its symbol, since the markup isn't
+/// self-explanatory, falling back to symbols alone where that won't fit.
+struct FormattingButtons: View {
+    @Binding var text: String
+    @Binding var selection: TextSelection?
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            buttons(showsTitles: true)
+            buttons(showsTitles: false)
+        }
+        // Neutral icons, as in Notes, rather than the app's orange tint.
+        .tint(.primary)
+    }
+
+    private func buttons(showsTitles: Bool) -> some View {
+        HStack(spacing: 20) {
+            FormatButton(title: "Code", systemImage: "chevron.left.forwardslash.chevron.right", format: .code, showsTitle: showsTitles, text: $text, selection: $selection)
+            FormatButton(title: "Italic", systemImage: "italic", format: .italic, showsTitle: showsTitles, text: $text, selection: $selection)
+            FormatButton(title: "Quote", systemImage: "text.quote", format: .quote, showsTitle: showsTitles, text: $text, selection: $selection)
+        }
+    }
+}
+
 extension View {
-    /// Adds Hacker News's formatting controls — code and italics — to the
-    /// keyboard's floating bar, as in Notes, acting on `text` at `selection`.
-    ///
-    /// Shared by everywhere HN-formatted text is written, so the controls look
-    /// and behave the same in a comment as in a post. `isEnabled` scopes the
-    /// bar to one field when a form has several.
-    func formattingKeyboardToolbar(
+    /// Floats `FormattingButtons` in a Liquid Glass bar along the bottom of
+    /// this view while `isPresented` — above the keyboard, with a gap, as in
+    /// Notes. For a form, whose fields don't carry controls of their own.
+    func formattingBar(
         text: Binding<String>,
         selection: Binding<TextSelection?>,
-        isEnabled: Bool = true
+        isPresented: Bool
     ) -> some View {
-        toolbar {
-            if isEnabled {
-                ToolbarItemGroup(placement: .keyboard) {
-                    // Neutral icons, as in Notes, rather than the app's orange
-                    // tint.
-                    Group {
-                        FormatButton(title: "Code", systemImage: "chevron.left.forwardslash.chevron.right", format: .code, text: text, selection: selection)
-                        FormatButton(title: "Italic", systemImage: "italic", format: .italic, text: text, selection: selection)
-                    }
-                    .tint(.primary)
-                }
+        safeAreaInset(edge: .bottom) {
+            if isPresented {
+                FormattingButtons(text: text, selection: selection)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .glassEffect(.regular, in: .capsule)
+                    .padding(.bottom, 8)
+                    .transition(.opacity)
             }
         }
     }
 }
 
-/// One formatting button in the keyboard bar. Formats (or unformats) the
-/// highlighted text, or with just a cursor, inserts the markup to type into.
+/// One formatting button. Formats (or unformats) the highlighted text, or
+/// with just a cursor, inserts the markup to type into.
 private struct FormatButton: View {
     let title: LocalizedStringKey
     let systemImage: String
     let format: CommentFormat
+    let showsTitle: Bool
     @Binding var text: String
     @Binding var selection: TextSelection?
 
@@ -54,14 +80,16 @@ private struct FormatButton: View {
                 ? TextSelection(insertionPoint: result.range.lowerBound)
                 : TextSelection(range: result.range)
         } label: {
-            // Spelled out beside the symbol, since the markup these insert
-            // isn't self-explanatory. A plain HStack rather than a `Label`:
-            // toolbars reduce a `Label` to its icon, ignoring `labelStyle`.
-            HStack(spacing: 4) {
-                Image(systemName: systemImage)
-                Text(title)
+            // Icon-only keeps the title as the button's accessibility label.
+            if showsTitle {
+                Label(title, systemImage: systemImage)
+                    .labelStyle(.titleAndIcon)
+            } else {
+                Label(title, systemImage: systemImage)
+                    .labelStyle(.iconOnly)
             }
         }
+        .buttonStyle(.borderless)
     }
 
     /// The text's selection or cursor. Before the field reports one, the

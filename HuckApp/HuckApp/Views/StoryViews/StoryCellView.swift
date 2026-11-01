@@ -17,6 +17,10 @@ struct StoryCellView: View {
 
     /// Opens link posts in the standardized in-app Safari browser.
     @Environment(\.openInAppBrowser) private var openInAppBrowser
+    @Environment(\.openThread) private var openThread
+
+    /// Which side the thumbnail sits on; set from the Thumbnail Position setting.
+    @Environment(\.storyRowLayout) private var layout
 
     /// Shared interaction state (drives the upvote arrow's color) and the upvote
     /// action (handles the login gate and the vote toggle).
@@ -50,6 +54,12 @@ struct StoryCellView: View {
 
     var body: some View {
         HStack {
+            if layout == .wide {
+                thumbnailButton
+                    // More room than the stack's spacing alone, so the image
+                    // doesn't crowd the title beside it.
+                    .padding(.trailing, 8)
+            }
             VStack(alignment: .leading) {
                 switch storyData.storyType {
                 case .unknown:
@@ -73,6 +83,9 @@ struct StoryCellView: View {
                     }
                     .buttonStyle(.plain)
                     
+                    // Counts are abbreviated ("1.9K") and each label is held to
+                    // one line, so a narrow column — the feed beside a thread on
+                    // an iPhone Duo — can't break a number across lines.
                     HStack {
                         // Button to upvote the post. The arrow turns orange once
                         // upvoted; the action handles login and the toggle.
@@ -82,23 +95,25 @@ struct StoryCellView: View {
                             HStack {
                                 Image(systemName: "arrow.up")
                                     .foregroundColor(isUpvoted ? .orange : .gray)
-                                Text("\(displayedScore)")
+                                Text(displayedScore, format: .compactCount)
                                     .font(.footnote)
                                     .foregroundStyle(isUpvoted ? .orange : .gray)
+                                    .fixedSize()
                             }
                         }
                         .buttonStyle(.plain)
                         
                         // Button to view the comments
                         Button(action: {
-                            path.append(ItemNavigation.textStory(id: storyId))
+                            openThread(.textStory(id: storyId), from: $path)
                         }) {
                             HStack {
                                 Image(systemName: "bubble")
                                     .foregroundColor(.gray)
-                                Text("\(storyData.commentCount)")
+                                Text(storyData.commentCount, format: .compactCount)
                                     .font(.footnote)
                                     .foregroundStyle(.gray)
+                                    .fixedSize()
                             }
                         }
                         .buttonStyle(.plain)
@@ -109,6 +124,7 @@ struct StoryCellView: View {
                         Text(storyData.timestamp.ageString())
                             .font(.footnote)
                             .foregroundStyle(.gray)
+                            .fixedSize()
                         
                         // Share the post's Hacker News page via the share sheet.
                         ShareLink(item: storyData.hackerNewsURL) {
@@ -130,15 +146,8 @@ struct StoryCellView: View {
                 }
             }
             Spacer()
-            // The thumbnail navigates to the story just like the title does.
-            switch storyData.storyType {
-            case .unknown:
-                thumbnail
-            case .link, .text:
-                Button(action: openStory) {
-                    thumbnail
-                }
-                .buttonStyle(.plain)
+            if layout == .standard {
+                thumbnailButton
             }
         }
         .task {
@@ -163,6 +172,20 @@ struct StoryCellView: View {
         return Text("\(title)  \(domainText)")
     }
 
+    /// The thumbnail, navigating to the story just like the title does.
+    @ViewBuilder
+    private var thumbnailButton: some View {
+        switch storyData.storyType {
+        case .unknown:
+            thumbnail
+        case .link, .text:
+            Button(action: openStory) {
+                thumbnail
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     /// The image thumbnail (or its placeholder while loading / for text posts).
     private var thumbnail: some View {
         StoryThumbnailView(status: storyData.thumbnailStatus)
@@ -181,9 +204,30 @@ struct StoryCellView: View {
             }
         case .text:
             recentlyViewedStore.recordView(storyId)
-            path.append(ItemNavigation.textStory(id: storyId))
+            openThread(.textStory(id: storyId), from: $path)
         case .unknown:
             break
         }
     }
+}
+
+/// How a story row arranges its parts. `standard` is the iPhone row, with the
+/// thumbnail trailing. `wide` moves the thumbnail to the leading edge — by
+/// choice in Settings, or automatically for a window shaped wider than an
+/// iPhone's, such as an iPhone Duo, open or closed. Either way the author and
+/// actions sit under the title.
+enum StoryRowLayout {
+    case standard
+    case wide
+
+    /// The automatic choice for a window of `windowSize`: wide wherever the
+    /// window is squarer than an iPhone's, in either orientation, so a sideways
+    /// iPhone stays standard.
+    init(windowSize: CGSize) {
+        self = windowSize.isSquarerThanPhone ? .wide : .standard
+    }
+}
+
+extension EnvironmentValues {
+    @Entry var storyRowLayout = StoryRowLayout.standard
 }

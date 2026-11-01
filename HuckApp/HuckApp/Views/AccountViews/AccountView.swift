@@ -10,6 +10,8 @@ import Foundation
 
 struct AccountView: View {
     @Environment(UserSession.self) private var session
+    /// Set where Settings is a tab of its own, making the gear redundant.
+    @Environment(\.showsSettingsTab) private var showsSettingsTab
     @State private var path = NavigationPath()
 
     /// Whether the Settings sheet is presented. Settings lives here rather than
@@ -26,31 +28,33 @@ struct AccountView: View {
         // state: it's observable, so signing in or out re-evaluates the view.
         // The profile is shown either way — signed out it drops to the tabs and
         // actions that work without an account, and offers its own login sheet.
-        NavigationStack(path: $path) {
-            // The profile's own options live in `accountMenu` instead, so the
-            // nav bar keeps a single ellipsis.
+        // Side by side when there's room: the profile on the left, the thread of
+        // a post or comment opened from it on the right.
+        ThreadSplitNavigation(path: $path) {
             UserView(
                 username: session.username,
                 path: $path,
-                onSignIn: { showingLogin = true },
-                showsOptionsMenu: false
+                onSignIn: { showingLogin = true }
             )
                 .navigationDestination(for: ItemNavigation.self) { navigation in
                     StoryDetailsView(from: navigation, path: $path)
                 }
-                // Both items are always present, signed in or out, so the pair
-                // never shifts position underneath a tap.
+                // The gear goes only where Settings has no tab of its own.
                 .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showingSettings = true
-                        } label: {
-                            Label("Settings", systemImage: "gearshape")
+                    if !showsSettingsTab {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button {
+                                showingSettings = true
+                            } label: {
+                                Label("Settings", systemImage: "gearshape")
+                            }
                         }
                     }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        accountMenu
-                    }
+                }
+                // Present signed in or out, so the overflow button never
+                // shifts position underneath a tap.
+                .toolbarOverflowMenu {
+                    accountMenu
                 }
         }
         .sheet(isPresented: $showingSettings) {
@@ -65,24 +69,20 @@ struct AccountView: View {
         .onChange(of: session.isSignedIn) { _, signedIn in
             if signedIn { showingLogin = false }
         }
-        .inAppBrowser(path: $path)
         .storyActionsEnabled()
     }
 
     /// The account tab's overflow menu: the options for your profile, then the
     /// session action that applies right now.
+    @ViewBuilder
     private var accountMenu: some View {
-        Menu {
-            if let username = session.username {
-                ProfileOptions(username: username)
-                    // Icons match their text, not the app's orange tint.
-                    .tint(.primary)
-                Divider()
-            }
-            sessionAction
-        } label: {
-            Label("Account Options", systemImage: "ellipsis")
+        if let username = session.username {
+            ProfileOptions(username: username)
+                // Icons match their text, not the app's orange tint.
+                .tint(.primary)
+            Divider()
         }
+        sessionAction
     }
 
     /// Log Out when signed in, Sign In when signed out. A menu icon takes the

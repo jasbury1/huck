@@ -20,7 +20,9 @@ import Foundation
 ///
 /// These are about how the app was *built*. Choices the user makes belong in
 /// `@AppStorage`, not here.
-enum BuildConfiguration {
+///
+/// Fixed at build time, so readable from any isolation domain.
+nonisolated enum BuildConfiguration {
     /// Whether this is a debug build — Xcode's Debug configuration.
     #if DEBUG
     static let isDebugBuild = true
@@ -36,5 +38,14 @@ enum BuildConfiguration {
     static let isCloudSyncEnabled = true
     #else
     static let isCloudSyncEnabled = false
+    #endif
+
+    /// Whether writing to Hacker News is hard-disabled. Set by
+    /// `HUCK_DISABLE_POSTING`; while on, every write is a dry run (see
+    /// `PostingMode`), and the setting can't turn that off.
+    #if POSTING_DISABLED
+    static let isPostingDisabled = true
+    #else
+    static let isPostingDisabled = false
     #endif
 }

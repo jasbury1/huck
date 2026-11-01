@@ -15,6 +15,12 @@ enum FeedSettings {
     static let filtersKey = "feed.filters"
 }
 
+extension EnvironmentValues {
+    /// Whether Settings has a tab of its own right now, so the Account tab can
+    /// drop its gear rather than offer a second way to the same place.
+    @Entry var showsSettingsTab = false
+}
+
 /// Shared `@AppStorage` keys for how comments and posts are read.
 enum ReadingSettings {
     /// Whether code is drawn as code — monospaced, in a block of its own — or
@@ -38,8 +44,13 @@ struct SettingsView: View {
     @Environment(InteractionStore.self) private var interactionStore
     @Environment(\.dismiss) private var dismiss
 
+    /// Whether to offer Done. On for the sheet the Account tab presents; off
+    /// when Settings is a tab of its own, with nothing to dismiss.
+    var showsDoneButton = true
+
     /// Whether story cells show the link's domain after the title. Defaults on.
     @AppStorage(FeedSettings.displayStoryDomainKey) private var displayStoryDomain = true
+    @AppStorage(ThumbnailPosition.storageKey) private var thumbnailPosition: ThumbnailPosition = .automatic
 
     @AppStorage(ReadingSettings.formatsCodeKey) private var formatsCode = true
     @AppStorage(ReadingSettings.formatsQuotesKey) private var formatsQuotes = true
@@ -51,6 +62,10 @@ struct SettingsView: View {
 
     /// Shows the Debug tab. Only offered where `DebugMode.isAvailable`.
     @AppStorage(DebugMode.enabledKey) private var isDebugModeEnabled = false
+    /// Withhold writes to Hacker News, and whether to answer them as refused.
+    /// See `PostingMode`.
+    @AppStorage(PostingMode.dryRunKey) private var isPostingDryRun = false
+    @AppStorage(PostingMode.simulatesFailureKey) private var simulatesPostingFailure = false
     @Environment(UserSession.self) private var session
 
     @State private var isConfirmingClearHistory = false
@@ -58,6 +73,16 @@ struct SettingsView: View {
     /// Settings' own stack. Hidden Stories lists real story cells, so it's a
     /// story stack too: tapping one opens it here, in the sheet.
     @State private var path = NavigationPath()
+
+    /// The Dry Run toggle's state: held on in a build with posting disabled,
+    /// whatever the stored setting says.
+    private var dryRunBinding: Binding<Bool> {
+        Binding {
+            PostingMode.isDryRun(dryRunSetting: isPostingDryRun)
+        } set: {
+            isPostingDryRun = $0
+        }
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -97,7 +122,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Feed Appearance") {
+                Section {
                     Toggle(isOn: $displayStoryDomain) {
                         Label {
                             Text("Display Story Domain")
@@ -105,6 +130,22 @@ struct SettingsView: View {
                             SettingsIcon(systemImage: "globe", color: .blue)
                         }
                     }
+                    Picker(selection: $thumbnailPosition) {
+                        ForEach(ThumbnailPosition.allCases) { option in
+                            Label(option.title, systemImage: option.systemImage)
+                                .tag(option)
+                        }
+                    } label: {
+                        Label {
+                            Text("Thumbnail Position")
+                        } icon: {
+                            SettingsIcon(systemImage: thumbnailPosition.systemImage, color: .green)
+                        }
+                    }
+                } header: {
+                    Text("Feed Appearance")
+                } footer: {
+                    Text("Automatic puts thumbnails on the left on wider screens, such as iPhone Duo, and on the right on other iPhones.")
                 }
 
                 Section {
@@ -149,6 +190,32 @@ struct SettingsView: View {
                     } footer: {
                         Text("Adds a Debug tab with counts of every API request the app makes.")
                     }
+
+                    Section {
+                        Toggle(isOn: dryRunBinding) {
+                            Label {
+                                Text("Dry Run")
+                            } icon: {
+                                SettingsIcon(systemImage: "testtube.2", color: .gray)
+                            }
+                        }
+                        // A build with posting disabled is always a dry run.
+                        .disabled(BuildConfiguration.isPostingDisabled)
+                        Toggle(isOn: $simulatesPostingFailure) {
+                            Label {
+                                Text("Simulate Failure")
+                            } icon: {
+                                SettingsIcon(systemImage: "exclamationmark.triangle", color: .gray)
+                            }
+                        }
+                        .disabled(!PostingMode.isDryRun(dryRunSetting: isPostingDryRun))
+                    } footer: {
+                        if BuildConfiguration.isPostingDisabled {
+                            Text("Posting is disabled in this build, so comments, posts, and deletions are never sent to Hacker News. Simulate Failure answers them as refused instead of accepted.")
+                        } else {
+                            Text("Dry Run keeps comments, posts, and deletions from being sent to Hacker News; the app carries on as if they were accepted. Simulate Failure answers them as refused instead.")
+                        }
+                    }
                 }
             }
             // Toggles and the picker are content, so they keep the app's orange;
@@ -162,8 +229,10 @@ struct SettingsView: View {
             // to do nothing until it was dismissed.
             .preferredColorScheme(appearance.colorScheme)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                if showsDoneButton {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
                 }
             }
             .alert("Clear Viewing History?", isPresented: $isConfirmingClearHistory) {

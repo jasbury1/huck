@@ -39,17 +39,36 @@ struct ContentView: View {
 
     @Environment(\.scenePhase) private var scenePhase
 
+    /// The window's size, measured here above the tab view and its columns, to
+    /// choose the story row layout once for the whole app.
+    @State private var windowSize = CGSize.zero
+
     /// The light/dark override, chosen in Settings. Applied here at the root of
     /// the window's content so it reaches every tab, and every sheet and popover
     /// presented from them — those follow the window's scheme, not the view they
     /// were presented from.
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
 
+    /// Which side story thumbnails sit on, chosen in Settings. Automatic
+    /// decides from `windowSize`.
+    @AppStorage(ThumbnailPosition.storageKey) private var thumbnailPosition: ThumbnailPosition = .automatic
+
     /// Debug mode, switched on in Settings. Re-checked against the session so
     /// the tab goes away if the developer account signs out of a release build.
     @AppStorage(DebugMode.enabledKey) private var isDebugModeEnabled = false
     private var showsDebugTab: Bool {
         isDebugModeEnabled && DebugMode.isAvailable(for: session.username)
+    }
+
+    /// Whether Settings gets a tab of its own, rather than living behind the
+    /// Account tab's gear. Only where the tab bar has room to spare: an iPhone
+    /// Duo, folded or not and however it's held, puts its tabs in a column down
+    /// the trailing edge, and an iPad lays them along the top. SwiftUI reports
+    /// the Duo's column as a bottom bar, so it's recognised by the window's
+    /// shape instead. Every iPhone is too narrow a shape to qualify, so its
+    /// bottom bar keeps three tabs.
+    private var showsSettingsTab: Bool {
+        windowSize.isSquarerThanPhone
     }
 
     init() {
@@ -70,11 +89,18 @@ struct ContentView: View {
                 FeedView()
                     .tint(.primary)
             }
-            // Settings isn't a destination of its own — it's reached from the
-            // gear in the Account tab's toolbar.
+            // Settings is usually reached from the gear in the Account tab's
+            // toolbar; it only becomes a tab where there's room for one.
             Tab("Account", systemImage: "person.circle") {
                 AccountView()
                     .tint(.primary)
+            }
+            if showsSettingsTab {
+                Tab("Settings", systemImage: "gearshape") {
+                    // Already a tab, so there's no sheet for Done to close.
+                    SettingsView(showsDoneButton: false)
+                        .tint(.primary)
+                }
             }
             if showsDebugTab {
                 Tab("Debug", systemImage: "ladybug") {
@@ -92,6 +118,9 @@ struct ContentView: View {
                     .tint(.primary)
             }
         }
+        // A bottom tab bar on iPhone; at regular widths (iPad, an unfolded
+        // iPhone Duo) a top tab bar that can expand into a sidebar.
+        .tabViewStyle(.sidebarAdaptable)
         .tabViewSearchActivation(.searchTabSelection)
         // Orange is the tab bar's selection color. Each tab's content is tinted
         // primary instead, because that's what its navigation chrome follows:
@@ -102,6 +131,17 @@ struct ContentView: View {
         // orange (links, toggles) is tinted where it's drawn.
         .tint(.orange)
         .preferredColorScheme(appearance.colorScheme)
+        // Measured on a background that ignores the safe area, so it's the
+        // whole window and the keyboard rising can't change the answer.
+        .background {
+            Color.clear
+                .ignoresSafeArea()
+                .onGeometryChange(for: CGSize.self) { $0.size } action: { windowSize = $0 }
+        }
+        // Chosen at the root, as split view columns take their environment from
+        // above the split view rather than from their stacks.
+        .environment(\.storyRowLayout, thumbnailPosition.storyRowLayout(windowSize: windowSize))
+        .environment(\.showsSettingsTab, showsSettingsTab)
         .environment(session)
         .environment(interactionStore)
         .environment(interactionSync)

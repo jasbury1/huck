@@ -189,7 +189,7 @@ struct NewsYCService {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
 
-        let (_, response) = try await postingSession.countedData(for: request)
+        let response = try await sendWrite(request)
         // HN redirects on success and re-renders the form (200) on refusal, so
         // the status code is the whole answer — see `postingSession`.
         guard let http = response as? HTTPURLResponse, http.statusCode == 302 else {
@@ -252,7 +252,7 @@ struct NewsYCService {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
 
-        let (_, response) = try await postingSession.countedData(for: request)
+        let response = try await sendWrite(request)
         // As with comments, an accepted POST is answered with a redirect and a
         // refused one — a title too long, posting too fast — re-renders the form
         // with a 200. Where the redirect points tells the accepted cases apart:
@@ -419,7 +419,7 @@ struct NewsYCService {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
 
-        let (_, response) = try await postingSession.countedData(for: request)
+        let response = try await sendWrite(request)
         // Like the comment form, an accepted POST is answered with a redirect.
         guard let http = response as? HTTPURLResponse, http.statusCode == 302 else {
             throw APIError.deleteFailed
@@ -436,6 +436,35 @@ struct NewsYCService {
             URLQueryItem(name: "goto", value: "item?id=\(storyId)"),
         ]
         return components?.url
+    }
+
+    /// Sends a form POST that writes to Hacker News — the one way any write
+    /// leaves the app, so a dry run (see `PostingMode`) covers every one.
+    ///
+    /// In a dry run nothing is sent. The answer is made up instead, shaped like
+    /// Hacker News' own so each caller reads it as it would a real one: a
+    /// redirect to `newest` for an accepted write, and a 200 — HN re-rendering
+    /// the form — for a refused one. A short pause stands in for the network,
+    /// so in-flight states still show.
+    private static func sendWrite(_ request: URLRequest) async throws -> URLResponse {
+        guard PostingMode.isDryRun else {
+            return try await postingSession.countedData(for: request).1
+        }
+
+        let accepts = !PostingMode.simulatesFailure
+        print("⚠️ Dry run — not sending \(request.url?.path() ?? "request"), answering as \(accepts ? "accepted" : "refused")")
+        try await Task.sleep(for: .seconds(1))
+
+        guard let url = request.url,
+              let response = HTTPURLResponse(
+                  url: url,
+                  statusCode: accepts ? 302 : 200,
+                  httpVersion: nil,
+                  headerFields: accepts ? ["Location": "newest"] : nil
+              ) else {
+            throw APIError.unknown
+        }
+        return response
     }
 
     /// A session that keeps our `user` cookie — so HN knows who is writing — but
