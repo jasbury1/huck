@@ -67,29 +67,16 @@ struct CollectionView: View {
         }
         .navigationTitle(collection?.name ?? "Collection")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
+        .toolbarOverflowMenu {
             if let collection {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Group {
-                            // A menu icon takes the tint even on a destructive
-                            // row, so Delete is tinted red to keep its icon
-                            // matching its text.
-                            Button(role: .destructive) {
-                                collectionToDelete = collection
-                            } label: {
-                                Label("Delete Collection", systemImage: "trash")
-                            }
-                            .tint(.red)
-                        }
-                        // Icons match their text, not the app's orange tint. Set
-                        // on the content, not the `Menu`, so the ellipsis button
-                        // itself keeps the tint.
-                        .tint(.primary)
-                    } label: {
-                        Label("Collection Options", systemImage: "ellipsis")
-                    }
+                // A menu icon takes the tint even on a destructive row, so
+                // Delete is tinted red to keep its icon matching its text.
+                Button(role: .destructive) {
+                    collectionToDelete = collection
+                } label: {
+                    Label("Delete Collection", systemImage: "trash")
                 }
+                .tint(.red)
             }
         }
         // Leave before the collection goes, so this screen never shows a

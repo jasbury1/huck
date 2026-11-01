@@ -33,11 +33,17 @@ extension EnvironmentValues {
 
 /// A tab's navigation, adapting to the width it's given.
 ///
-/// Compact, it's a single stack, as on any iPhone. Regular — an unfolded iPhone
-/// Duo, iPad, or a wide window — `root` and everything pushed from it move to
-/// the leading column, and threads opened there show in a detail column
-/// alongside, so the list stays in view while reading. The detail column has
-/// its own stack, so profiles and links followed from a thread push there.
+/// Regular — an unfolded iPhone Duo, iPad, or a wide window — `root` and
+/// everything pushed from it sit in the leading column, and threads opened
+/// there show in a detail column alongside, so the list stays in view while
+/// reading. The detail column has its own stack, so profiles and links followed
+/// from a thread push there.
+///
+/// Compact — any iPhone, or a folded Duo — the split view collapses itself into
+/// one stack: the thread and its pages sit on top of the leading column's, and
+/// Back from the thread returns to the list. It's one split view at every
+/// width, rather than a split view swapped for a stack, so folding or unfolding
+/// keeps both stacks — and the system's bars — intact.
 ///
 /// `root` brings its own `navigationDestination`s; the detail column handles
 /// `ItemNavigation` itself.
@@ -58,38 +64,22 @@ struct ThreadSplitNavigation<Root: View>: View {
     @State private var selectedThread: ItemNavigation?
     /// Pages pushed within the detail column, above `selectedThread`.
     @State private var detailPath = NavigationPath()
-
-    var body: some View {
-        Group {
-            if horizontalSizeClass == .compact {
-                NavigationStack(path: $path) {
-                    root()
-                }
-                .inAppBrowser(path: $path)
-            } else {
-                splitView
-            }
-        }
-        // Folding down to one column keeps the thread being read: it's pushed
-        // onto the single stack. Anything pushed above it within the detail
-        // column doesn't carry over, as the two paths can't be joined.
-        .onChange(of: horizontalSizeClass) { _, sizeClass in
-            guard sizeClass == .compact, let thread = selectedThread else { return }
-            path.append(thread)
-            selectedThread = nil
-            detailPath = NavigationPath()
-        }
-    }
+    /// Which column is on top once collapsed: the detail column while a thread
+    /// is open, the leading one after Back. The split view sets it back to
+    /// `.sidebar` itself when the thread is popped.
+    @State private var preferredCompactColumn = NavigationSplitViewColumn.sidebar
 
     // Pages pushed within a split view's columns take their environment from
     // the split view, not from modifiers around the column's stack. So the
     // leading column's actions are set outside the split view, and the detail
     // column's are applied to each of its pages directly, overriding them.
-    private var splitView: some View {
-        NavigationSplitView {
+    var body: some View {
+        NavigationSplitView(preferredCompactColumn: $preferredCompactColumn) {
             NavigationStack(path: $path) {
                 root()
-                    .environment(\.isSidebarColumnRoot, true)
+                    // Only beside a detail column: collapsed, the leading
+                    // column is the whole screen and keeps the phone's styling.
+                    .environment(\.isSidebarColumnRoot, horizontalSizeClass == .regular)
             }
             // Never narrower than an iPhone's screen, which story rows and the
             // profile's header and tab pills are laid out for; the system may
@@ -128,6 +118,8 @@ struct ThreadSplitNavigation<Root: View>: View {
         .environment(\.openThread, OpenThreadAction { thread, _ in
             selectedThread = thread
             detailPath = NavigationPath()
+            // Collapsed, this is what pushes the thread over the list.
+            preferredCompactColumn = .detail
         })
     }
 }
@@ -188,9 +180,15 @@ private extension View {
 /// boundary between the columns reads more clearly than the separators within
 /// them.
 private struct ColumnDivider: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     var body: some View {
-        Rectangle()
-            .fill(Color(.separator))
-            .frame(width: 2.5)
+        // Collapsed, the detail page is the whole screen, with no column
+        // beside it to divide from.
+        if horizontalSizeClass == .regular {
+            Rectangle()
+                .fill(Color(.separator))
+                .frame(width: 2.5)
+        }
     }
 }

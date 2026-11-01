@@ -31,20 +31,15 @@ struct AccountView: View {
         // Side by side when there's room: the profile on the left, the thread of
         // a post or comment opened from it on the right.
         ThreadSplitNavigation(path: $path) {
-            // The profile's own options live in `accountMenu` instead, so the
-            // nav bar keeps a single ellipsis.
             UserView(
                 username: session.username,
                 path: $path,
-                onSignIn: { showingLogin = true },
-                showsOptionsMenu: false
+                onSignIn: { showingLogin = true }
             )
                 .navigationDestination(for: ItemNavigation.self) { navigation in
                     StoryDetailsView(from: navigation, path: $path)
                 }
-                // Both items are present signed in or out, so the pair never
-                // shifts position underneath a tap. The gear goes only where
-                // Settings has its own tab.
+                // The gear goes only where Settings has no tab of its own.
                 .toolbar {
                     if !showsSettingsTab {
                         ToolbarItem(placement: .topBarTrailing) {
@@ -55,9 +50,11 @@ struct AccountView: View {
                             }
                         }
                     }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        accountMenu
-                    }
+                }
+                // Present signed in or out, so the overflow button never
+                // shifts position underneath a tap.
+                .toolbarOverflowMenu {
+                    accountMenu
                 }
         }
         .sheet(isPresented: $showingSettings) {
@@ -77,18 +74,15 @@ struct AccountView: View {
 
     /// The account tab's overflow menu: the options for your profile, then the
     /// session action that applies right now.
+    @ViewBuilder
     private var accountMenu: some View {
-        Menu {
-            if let username = session.username {
-                ProfileOptions(username: username)
-                    // Icons match their text, not the app's orange tint.
-                    .tint(.primary)
-                Divider()
-            }
-            sessionAction
-        } label: {
-            Label("Account Options", systemImage: "ellipsis")
+        if let username = session.username {
+            ProfileOptions(username: username)
+                // Icons match their text, not the app's orange tint.
+                .tint(.primary)
+            Divider()
         }
+        sessionAction
     }
 
     /// Log Out when signed in, Sign In when signed out. A menu icon takes the

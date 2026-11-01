@@ -142,9 +142,6 @@ struct ContentView: View {
         // above the split view rather than from their stacks.
         .environment(\.storyRowLayout, thumbnailPosition.storyRowLayout(windowSize: windowSize))
         .environment(\.showsSettingsTab, showsSettingsTab)
-        // Where the toolbar runs down the window's side, the compose button
-        // joins it rather than floating over the thread.
-        .environment(\.floatsComposeButton, !windowSize.isSquarerThanPhone)
         .environment(session)
         .environment(interactionStore)
         .environment(interactionSync)

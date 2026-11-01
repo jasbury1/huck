@@ -65,6 +65,10 @@ struct CommentComposer: View {
     /// comment the way a reply names its author.
     let storyTitle: String
 
+    /// Whether the resting compose button floats here, or the caller offers it
+    /// in the toolbar instead.
+    let floatsComposeButton: Bool
+
     /// Posts the trimmed comment when the user taps send. Throwing leaves the
     /// draft in place and surfaces the error, so a refused or dropped comment is
     /// never silently lost; returning normally means it's published.
@@ -74,10 +78,6 @@ struct CommentComposer: View {
     /// the app's shared login gate rather than letting someone write a comment
     /// they can't post.
     @Environment(\.requireLogin) private var requireLogin
-
-    /// Whether the resting compose button floats here, or the caller offers it
-    /// in the toolbar instead.
-    @Environment(\.floatsComposeButton) private var floatsComposeButton
 
     @State private var state: CommentComposerState = .cancelled
     @State private var draft = ""
@@ -475,15 +475,8 @@ struct CommentComposer: View {
         CommentComposer(
             replyTarget: $replyTarget,
             isOpen: $isOpen,
-            storyTitle: "Show HN: A Hacker News client"
+            storyTitle: "Show HN: A Hacker News client",
+            floatsComposeButton: true
         ) { _ in }
     }
-}
-
-extension EnvironmentValues {
-    /// Whether the comment composer's resting compose button floats over the
-    /// thread. Off where the system gathers toolbar items into a vertical bar
-    /// down the window's edge — an iPhone Duo — so the button joins the
-    /// thread's other buttons there as a toolbar item instead.
-    @Entry var floatsComposeButton = true
 }

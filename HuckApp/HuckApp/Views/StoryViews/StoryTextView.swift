@@ -219,8 +219,14 @@ struct StoryTextView: View {
     /// where the button doesn't float over the thread.
     @State private var isComposing = false
 
-    /// Whether the compose button floats over the thread or sits in the toolbar.
-    @Environment(\.floatsComposeButton) private var floatsComposeButton
+    /// The edge the system puts toolbar items on when it gathers them into a
+    /// vertical bar — an iPhone Duo — or `nil` where it doesn't.
+    @Environment(\.toolbarVerticalEdge) private var toolbarVerticalEdge
+
+    /// Whether the compose button floats over the thread. Where there's a
+    /// vertical bar it joins the thread's other buttons there instead, as a
+    /// toolbar item, rather than floating as a second set of controls.
+    private var floatsComposeButton: Bool { toolbarVerticalEdge == nil }
 
     /// The reader's comment awaiting confirmation of its deletion.
     @State private var deleteTarget: Comment?
@@ -388,7 +394,9 @@ struct StoryTextView: View {
             }
             // Where the compose button doesn't float — an iPhone Duo, whose
             // toolbar runs down the side — it sits with the thread's other
-            // buttons, behind the same login gate as the floating one.
+            // buttons, behind the same login gate as the floating one. Kept
+            // out of the overflow for as long as there's room, as the thread's
+            // most frequent action.
             if !floatsComposeButton {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -397,17 +405,16 @@ struct StoryTextView: View {
                         Label("Add a Comment", systemImage: "bubble.and.pencil")
                     }
                 }
+                .visibilityPriority(.high)
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                // The same options as a feed row's long-press menu.
-                Menu {
-                    StoryOptions(story: storyData)
-                        // Icons match their text, not the app's orange tint.
-                        .tint(.primary)
-                } label: {
-                    Label("Story Options", systemImage: "ellipsis")
-                }
-            }
+        }
+        // The same options as a feed row's long-press menu, in the system's
+        // own overflow menu, so toolbar items the system overflows when space
+        // runs short join them there rather than under a second ellipsis.
+        .toolbarOverflowMenu {
+            StoryOptions(story: storyData)
+                // Icons match their text, not the app's orange tint.
+                .tint(.primary)
         }
         // Liquid Glass compose control in the bottom-trailing corner: the
         // floating compose button at rest, where it floats, and the text box
@@ -416,7 +423,8 @@ struct StoryTextView: View {
             CommentComposer(
                 replyTarget: $replyTarget,
                 isOpen: $isComposing,
-                storyTitle: storyData.title
+                storyTitle: storyData.title,
+                floatsComposeButton: floatsComposeButton
             ) { text in
                 // Read the target before posting: a successful post closes the
                 // composer, which clears it.

@@ -216,27 +216,21 @@ struct StoryFeedView: View {
         .onChange(of: filters) {
             withAnimation { applyFilters() }
         }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Menu {
-                    Group {
-                        Button("New Post", systemImage: "square.and.pencil") {
-                            composeNewPost { openThread(.textStory(id: $0), from: $path) }
-                        }
-                        Section {
-                            ForEach(FeedFilter.toggleable) { filter in
-                                Toggle(isOn: isOn(filter)) {
-                                    Label(filter.title, systemImage: filter.systemImage)
-                                }
-                            }
+        .toolbarOverflowMenu {
+            Group {
+                Button("New Post", systemImage: "square.and.pencil") {
+                    composeNewPost { openThread(.textStory(id: $0), from: $path) }
+                }
+                Section {
+                    ForEach(FeedFilter.toggleable) { filter in
+                        Toggle(isOn: isOn(filter)) {
+                            Label(filter.title, systemImage: filter.systemImage)
                         }
                     }
-                    // Icons match their text, not the app's orange tint.
-                    .tint(.primary)
-                } label: {
-                    Label("Feed Options", systemImage: "ellipsis")
                 }
             }
+            // Icons match their text, not the app's orange tint.
+            .tint(.primary)
         }
         .navigationTitle(feedKind.displayName())
         // Says when filters are narrowing the feed, so missing stories are

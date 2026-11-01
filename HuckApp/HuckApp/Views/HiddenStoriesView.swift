@@ -77,22 +77,13 @@ struct HiddenStoriesView: View {
         }
         .navigationTitle("Hidden Stories")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Group {
-                        Button("Unhide All", systemImage: "eye") {
-                            isConfirmingUnhideAll = true
-                        }
-                        .disabled(interactionStore.hiddenIDs.isEmpty)
-                    }
-                    // Icons match their text, not the app's orange tint. Set on
-                    // the content, so the ellipsis button itself keeps it.
-                    .tint(.primary)
-                } label: {
-                    Label("Hidden Stories Options", systemImage: "ellipsis")
-                }
+        .toolbarOverflowMenu {
+            Button("Unhide All", systemImage: "eye") {
+                isConfirmingUnhideAll = true
             }
+            .disabled(interactionStore.hiddenIDs.isEmpty)
+            // Icons match their text, not the app's orange tint.
+            .tint(.primary)
         }
         .alert("Unhide All Stories?", isPresented: $isConfirmingUnhideAll) {
             Button("Unhide All") {
