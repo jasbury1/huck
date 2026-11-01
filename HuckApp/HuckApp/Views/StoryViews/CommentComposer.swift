@@ -55,6 +55,12 @@ struct CommentComposer: View {
     /// composer, and so the caller knows where to post the draft.
     @Binding var replyTarget: Comment?
 
+    /// Whether the composer is open, in any state but `cancelled`. Setting it
+    /// opens the composer, so a compose button hosted elsewhere — the toolbar,
+    /// where the button doesn't float — can drive it; the composer clears it
+    /// once the draft is posted or discarded.
+    @Binding var isOpen: Bool
+
     /// The story being commented on, named in the header of a new top-level
     /// comment the way a reply names its author.
     let storyTitle: String
@@ -68,6 +74,10 @@ struct CommentComposer: View {
     /// the app's shared login gate rather than letting someone write a comment
     /// they can't post.
     @Environment(\.requireLogin) private var requireLogin
+
+    /// Whether the resting compose button floats here, or the caller offers it
+    /// in the toolbar instead.
+    @Environment(\.floatsComposeButton) private var floatsComposeButton
 
     @State private var state: CommentComposerState = .cancelled
     @State private var draft = ""
@@ -113,7 +123,9 @@ struct CommentComposer: View {
     var body: some View {
         GlassEffectContainer(spacing: 20) {
             if state == .cancelled {
-                composeButton
+                if floatsComposeButton {
+                    composeButton
+                }
             } else {
                 // The editor stays in one slot across every size: putting it in
                 // a second branch would rebuild the text field, dropping focus
@@ -147,6 +159,12 @@ struct CommentComposer: View {
         // composer is closed, so open it — and focus the field — in response.
         .onChange(of: replyTarget?.id) { _, id in
             if id != nil, state == .cancelled {
+                move(to: .normal)
+            }
+        }
+        // The toolbar's compose button asks to open the composer this way.
+        .onChange(of: isOpen) { _, open in
+            if open, state == .cancelled {
                 move(to: .normal)
             }
         }
@@ -196,6 +214,7 @@ struct CommentComposer: View {
             replyTarget = nil
         }
         withAnimation(transition) { state = newState }
+        isOpen = newState != .cancelled
 
         if !newState.wantsKeyboard {
             isFocused = false
@@ -450,8 +469,21 @@ struct CommentComposer: View {
 
 #Preview {
     @Previewable @State var replyTarget: Comment?
+    @Previewable @State var isOpen = false
     ZStack(alignment: .bottomTrailing) {
         Color(.systemBackground)
-        CommentComposer(replyTarget: $replyTarget, storyTitle: "Show HN: A Hacker News client") { _ in }
+        CommentComposer(
+            replyTarget: $replyTarget,
+            isOpen: $isOpen,
+            storyTitle: "Show HN: A Hacker News client"
+        ) { _ in }
     }
+}
+
+extension EnvironmentValues {
+    /// Whether the comment composer's resting compose button floats over the
+    /// thread. Off where the system gathers toolbar items into a vertical bar
+    /// down the window's edge — an iPhone Duo — so the button joins the
+    /// thread's other buttons there as a toolbar item instead.
+    @Entry var floatsComposeButton = true
 }

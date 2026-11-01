@@ -83,6 +83,9 @@ struct StoryCellView: View {
                     }
                     .buttonStyle(.plain)
                     
+                    // Counts are abbreviated ("1.9K") and each label is held to
+                    // one line, so a narrow column — the feed beside a thread on
+                    // an iPhone Duo — can't break a number across lines.
                     HStack {
                         // Button to upvote the post. The arrow turns orange once
                         // upvoted; the action handles login and the toggle.
@@ -92,9 +95,10 @@ struct StoryCellView: View {
                             HStack {
                                 Image(systemName: "arrow.up")
                                     .foregroundColor(isUpvoted ? .orange : .gray)
-                                Text("\(displayedScore)")
+                                Text(displayedScore, format: .compactCount)
                                     .font(.footnote)
                                     .foregroundStyle(isUpvoted ? .orange : .gray)
+                                    .fixedSize()
                             }
                         }
                         .buttonStyle(.plain)
@@ -106,9 +110,10 @@ struct StoryCellView: View {
                             HStack {
                                 Image(systemName: "bubble")
                                     .foregroundColor(.gray)
-                                Text("\(storyData.commentCount)")
+                                Text(storyData.commentCount, format: .compactCount)
                                     .font(.footnote)
                                     .foregroundStyle(.gray)
+                                    .fixedSize()
                             }
                         }
                         .buttonStyle(.plain)
@@ -119,6 +124,7 @@ struct StoryCellView: View {
                         Text(storyData.timestamp.ageString())
                             .font(.footnote)
                             .foregroundStyle(.gray)
+                            .fixedSize()
                         
                         // Share the post's Hacker News page via the share sheet.
                         ShareLink(item: storyData.hackerNewsURL) {

@@ -215,6 +215,13 @@ struct StoryTextView: View {
     /// and cleared when the draft is discarded.
     @State private var replyTarget: Comment?
 
+    /// Whether the composer is open. Lets the toolbar's compose button open it
+    /// where the button doesn't float over the thread.
+    @State private var isComposing = false
+
+    /// Whether the compose button floats over the thread or sits in the toolbar.
+    @Environment(\.floatsComposeButton) private var floatsComposeButton
+
     /// The reader's comment awaiting confirmation of its deletion.
     @State private var deleteTarget: Comment?
 
@@ -358,8 +365,9 @@ struct StoryTextView: View {
         .swipeActionsContainer()
         // Leaves room for the floating composer, so the last comment can scroll
         // clear of it instead of coming to rest underneath, close enough to read
-        // but with its own controls unreachable.
-        .contentMargins(.bottom, CommentComposer.reservedHeight)
+        // but with its own controls unreachable. Nothing floats at rest when
+        // the compose button is in the toolbar.
+        .contentMargins(.bottom, floatsComposeButton ? CommentComposer.reservedHeight : 0)
         .navigationBarTitleDisplayMode(.inline)
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             geometry.contentOffset.y + geometry.contentInsets.top
@@ -378,6 +386,18 @@ struct StoryTextView: View {
                     .truncationMode(.tail)
                     .opacity(titleCollapseProgress)
             }
+            // Where the compose button doesn't float — an iPhone Duo, whose
+            // toolbar runs down the side — it sits with the thread's other
+            // buttons, behind the same login gate as the floating one.
+            if !floatsComposeButton {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        requireLogin { isComposing = true }
+                    } label: {
+                        Label("Add a Comment", systemImage: "bubble.and.pencil")
+                    }
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 // The same options as a feed row's long-press menu.
                 Menu {
@@ -389,9 +409,15 @@ struct StoryTextView: View {
                 }
             }
         }
-        // Floating Liquid Glass compose control in the bottom-trailing corner.
+        // Liquid Glass compose control in the bottom-trailing corner: the
+        // floating compose button at rest, where it floats, and the text box
+        // once writing.
         .overlay(alignment: .bottomTrailing) {
-            CommentComposer(replyTarget: $replyTarget, storyTitle: storyData.title) { text in
+            CommentComposer(
+                replyTarget: $replyTarget,
+                isOpen: $isComposing,
+                storyTitle: storyData.title
+            ) { text in
                 // Read the target before posting: a successful post closes the
                 // composer, which clears it.
                 let parent = replyTarget
