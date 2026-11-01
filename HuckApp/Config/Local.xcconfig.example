@@ -13,3 +13,7 @@
 
 // Sync collections through iCloud. Requires the paid team above.
 // HUCK_ICLOUD_SYNC = YES
+
+// Never send comments, posts, or deletions to Hacker News, whatever the Dry
+// Run setting says.
+// HUCK_DISABLE_POSTING = YES

@@ -62,6 +62,10 @@ struct SettingsView: View {
 
     /// Shows the Debug tab. Only offered where `DebugMode.isAvailable`.
     @AppStorage(DebugMode.enabledKey) private var isDebugModeEnabled = false
+    /// Withhold writes to Hacker News, and whether to answer them as refused.
+    /// See `PostingMode`.
+    @AppStorage(PostingMode.dryRunKey) private var isPostingDryRun = false
+    @AppStorage(PostingMode.simulatesFailureKey) private var simulatesPostingFailure = false
     @Environment(UserSession.self) private var session
 
     @State private var isConfirmingClearHistory = false
@@ -69,6 +73,16 @@ struct SettingsView: View {
     /// Settings' own stack. Hidden Stories lists real story cells, so it's a
     /// story stack too: tapping one opens it here, in the sheet.
     @State private var path = NavigationPath()
+
+    /// The Dry Run toggle's state: held on in a build with posting disabled,
+    /// whatever the stored setting says.
+    private var dryRunBinding: Binding<Bool> {
+        Binding {
+            PostingMode.isDryRun(dryRunSetting: isPostingDryRun)
+        } set: {
+            isPostingDryRun = $0
+        }
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -175,6 +189,32 @@ struct SettingsView: View {
                         Text("Developer")
                     } footer: {
                         Text("Adds a Debug tab with counts of every API request the app makes.")
+                    }
+
+                    Section {
+                        Toggle(isOn: dryRunBinding) {
+                            Label {
+                                Text("Dry Run")
+                            } icon: {
+                                SettingsIcon(systemImage: "testtube.2", color: .gray)
+                            }
+                        }
+                        // A build with posting disabled is always a dry run.
+                        .disabled(BuildConfiguration.isPostingDisabled)
+                        Toggle(isOn: $simulatesPostingFailure) {
+                            Label {
+                                Text("Simulate Failure")
+                            } icon: {
+                                SettingsIcon(systemImage: "exclamationmark.triangle", color: .gray)
+                            }
+                        }
+                        .disabled(!PostingMode.isDryRun(dryRunSetting: isPostingDryRun))
+                    } footer: {
+                        if BuildConfiguration.isPostingDisabled {
+                            Text("Posting is disabled in this build, so comments, posts, and deletions are never sent to Hacker News. Simulate Failure answers them as refused instead of accepted.")
+                        } else {
+                            Text("Dry Run keeps comments, posts, and deletions from being sent to Hacker News; the app carries on as if they were accepted. Simulate Failure answers them as refused instead.")
+                        }
                     }
                 }
             }

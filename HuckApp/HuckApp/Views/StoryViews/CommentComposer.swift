@@ -71,8 +71,8 @@ final class CommentDraft {
 /// width, that can be collapsed to a single line or expanded into a larger
 /// editor.
 ///
-/// Dragging the grabber moves one state per swipe; the text box's glass shape
-/// morphs between sizes because every state shares one `glassEffectID`.
+/// Dragging the grabber moves one state per swipe; the text box resizes in
+/// place, as one view across every state.
 struct CommentComposer: View {
     /// The comment being written, owned by the thread.
     @Bindable var draft: CommentDraft
@@ -109,7 +109,7 @@ struct CommentComposer: View {
     @FocusState private var isFocused: Bool
     /// Presents the "discard this comment?" confirmation.
     @State private var isConfirmingDiscard = false
-    /// Lets the button and the text box morph into one another.
+    /// Lets the expand and cancel circles morph as they come and go.
     @Namespace private var namespace
 
     /// The resting compose button's diameter.
@@ -140,8 +140,19 @@ struct CommentComposer: View {
         draft.text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Whether a run of text is selected — so its handles are showing — rather
+    /// than there being just a cursor.
+    private var hasSelectedRange: Bool {
+        guard case .selection(let range) = selection?.indices else { return false }
+        return !range.isEmpty
+    }
+
     var body: some View {
-        GlassEffectContainer(spacing: 20) {
+        // A plain group, not a `GlassEffectContainer`: a container draws the
+        // glass of everything in it as one layer over their content, which
+        // would hide the text box's text behind its own glass (see `editor`).
+        // Only the circles beside the box share a container.
+        Group {
             if state == .cancelled {
                 if floatsComposeButton {
                     composeButton
@@ -157,12 +168,17 @@ struct CommentComposer: View {
                     // Expanding gives the text box the full width, so the glass
                     // circles step aside and the "X" moves inside the box.
                     if state != .expanded {
-                        VStack(spacing: 12) {
-                            expandButton
-                            cancelButton
+                        GlassEffectContainer(spacing: 12) {
+                            VStack(spacing: 12) {
+                                expandButton
+                                cancelButton
+                            }
                         }
                     }
                 }
+                // Grows out of the compose button's corner, and shrinks back
+                // into it.
+                .transition(.scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity))
             }
         }
         .padding(.horizontal, 16)
@@ -305,16 +321,19 @@ struct CommentComposer: View {
         }
         .buttonStyle(.plain)
         .glassEffect(.regular.interactive(), in: .circle)
-        .glassEffectID("composer", in: namespace)
+        .transition(.scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity))
         .accessibilityLabel("Add a comment")
     }
 
     /// The text box: a top row for resizing and discarding, the reply header,
-    /// the field itself, and send.
+    /// the field itself, and send — joined, once expanded, by the formatting
+    /// controls.
     private var editor: some View {
         VStack(spacing: 8) {
             topRow
             destinationHeader
+            // The field keeps its place in this row at every size, so growing
+            // or shrinking the box never rebuilds it and drops focus.
             HStack(alignment: .bottom, spacing: 8) {
                 TextField(
                     draft.replyTarget == nil ? "Add a comment…" : "Add a reply…",
@@ -324,27 +343,22 @@ struct CommentComposer: View {
                 )
                 .focused($isFocused)
                 .lineLimit(state.lineLimit)
-                // Only the expanded editor, where longer and formatted
-                // comments get written, offers the formatting controls.
-                .formattingKeyboardToolbar(text: $draft.text, selection: $selection, isEnabled: state == .expanded)
-                Button {
-                    submit()
-                } label: {
-                    // A fixed frame for both states, so the row doesn't shift
-                    // as the spinner takes the arrow's place.
-                    Group {
-                        if isPosting {
-                            ProgressView()
-                        } else {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.title2)
-                        }
-                    }
-                    .frame(width: 28, height: 28)
+                if state != .expanded {
+                    sendButton
                 }
-                .buttonStyle(.plain)
-                .disabled(trimmedDraft.isEmpty || isPosting)
-                .accessibilityLabel("Post comment")
+            }
+            // Only the expanded editor, where longer and formatted comments
+            // get written, offers the formatting controls — inside the box,
+            // beside send, rather than in the keyboard's toolbar, which the
+            // system doesn't reliably make room for under a floating composer.
+            if state == .expanded {
+                HStack {
+                    FormattingButtons(text: $draft.text, selection: $selection)
+                    Spacer(minLength: 12)
+                    sendButton
+                }
+                .padding(.top, 4)
+                .transition(.opacity)
             }
         }
         .padding(.horizontal, 16)
@@ -353,8 +367,40 @@ struct CommentComposer: View {
         .padding(.top, state == .expanded ? 0 : 8)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
-        .glassEffectID("composer", in: namespace)
+        // The glass is drawn on a shape behind the box rather than applied to
+        // the box itself. Glass draws the view it's applied to inside its own
+        // effect layers, and from in there a touch just outside the field's
+        // frame never reaches it — which is where a first-line selection's
+        // start handle draws its knob, leaving only the handle's stem
+        // grabbable. For the same reason the box stays out of any
+        // `GlassEffectContainer` (see `body`), and isn't `interactive()`,
+        // unlike the buttons beside it: it would squish under the handle.
+        .background {
+            Color.clear
+                .glassEffect(.regular, in: .rect(cornerRadius: 24))
+        }
+    }
+
+    /// Posts the draft.
+    private var sendButton: some View {
+        Button {
+            submit()
+        } label: {
+            // A fixed frame for both states, so the row doesn't shift as the
+            // spinner takes the arrow's place.
+            Group {
+                if isPosting {
+                    ProgressView()
+                } else {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title2)
+                }
+            }
+            .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .disabled(trimmedDraft.isEmpty || isPosting)
+        .accessibilityLabel("Post comment")
     }
 
     /// Names where the draft will land — the comment being answered, or the
@@ -364,18 +410,26 @@ struct CommentComposer: View {
     private var destinationHeader: some View {
         // A branch rather than a ternary inside `Text`, so both stay
         // `LocalizedStringKey`s.
-        Group {
-            if let replyTarget = draft.replyTarget {
-                Text("Replying to \(replyTarget.author)…")
-            } else {
-                Text("Posting to \(storyTitle)…")
+        HStack {
+            Group {
+                if let replyTarget = draft.replyTarget {
+                    Text("Replying to \(replyTarget.author)…")
+                } else {
+                    Text("Posting to \(storyTitle)…")
+                }
             }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            DryRunBadge()
         }
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .lineLimit(1)
-        .truncationMode(.tail)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // Lets touches through to the field below. A first-line selection's
+        // start handle draws its knob up here, outside the field's frame, and
+        // the header — like any `Text` — would otherwise take the touch, so
+        // only the handle's stem could be grabbed.
+        .allowsHitTesting(false)
         .transition(.opacity)
     }
 
@@ -478,6 +532,9 @@ struct CommentComposer: View {
             // A tall, full-width hit area so the thin pill is easy to grab.
             .frame(maxWidth: .infinity, minHeight: 20)
             .contentShape(Rectangle())
+            // Off while text is selected. The start handle's knob, on the
+            // first line, reaches up into this hit area, and the drag would
+            // win the touch — leaving the handle stuck where it is.
             .gesture(
                 DragGesture(minimumDistance: 5)
                     .onChanged { value in
@@ -493,7 +550,8 @@ struct CommentComposer: View {
                         } else if travel > dragThreshold {
                             move(to: state.lowered)
                         }
-                    }
+                    },
+                isEnabled: !hasSelectedRange
             )
             .accessibilityLabel("Composer size")
             .accessibilityHint("Swipe up to expand, swipe down to collapse")
