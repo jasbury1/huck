@@ -1,0 +1,23 @@
+//
+//  HuckUITests.xcconfig
+//  Huck
+//
+//  The UI test target, for both configurations. Drives the app from outside
+//  it, so it has no access to the app's code. Shared settings come from
+//  Base.xcconfig.
+//
+
+PRODUCT_NAME = $(TARGET_NAME)
+PRODUCT_BUNDLE_IDENTIFIER = $(HUCK_BUNDLE_ID_PREFIX).HuckUITests
+GENERATE_INFOPLIST_FILE = YES
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
+
+TEST_TARGET_NAME = Huck
+
+// XCTestCase's members are nonisolated, so overriding them can't be main-actor
+// isolated by default the way the app and unit tests are. Mark UI test methods
+// @MainActor instead.
+SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated
+
+#include? "Local.xcconfig"

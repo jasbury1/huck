@@ -1,0 +1,11 @@
+//
+//  Debug.xcconfig
+//  Huck
+//
+//  The app target's Debug configuration. Debug-only values go between the two
+//  includes, so Local.xcconfig can still override them.
+//
+
+#include "App.xcconfig"
+
+#include? "Local.xcconfig"

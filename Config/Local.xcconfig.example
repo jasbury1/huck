@@ -1,0 +1,19 @@
+//
+//  Local.xcconfig.example
+//  Huck
+//
+//  Per-developer overrides. Copy this file to Local.xcconfig, which git
+//  ignores, and uncomment what you need. It's included last, so anything here
+//  overrides every other xcconfig.
+//
+
+// A paid Apple Developer Program team, needed for iCloud and other paid
+// capabilities.
+// DEVELOPMENT_TEAM = ABCDE12345
+
+// Sync collections through iCloud. Requires the paid team above.
+// HUCK_ICLOUD_SYNC = YES
+
+// Never send comments, posts, or deletions to Hacker News, whatever the Dry
+// Run setting says.
+// HUCK_DISABLE_POSTING = YES

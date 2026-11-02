@@ -1,0 +1,72 @@
+//
+//  StoryCache.swift
+//  Huck
+//
+//  Created by James Asbury on 12/24/25.
+//
+
+import Foundation
+
+/// Caches stories by id, behind the API facade.
+///
+/// `StoryCache` is an internal detail of the API layer — callers reach it only through
+/// `HackerNewsAPI` (`getStory` / `prefetchStories`), never directly.
+///
+/// Storage, request coalescing, and LRU eviction all come from the shared `LRUCache`;
+/// this type only adds the story-specific fetch and the bounded-concurrency prefetch
+/// pass on top.
+actor StoryCache {
+    static let shared = StoryCache()
+
+    /// How many stories are kept. Sized to hold the launch warm-up — most of
+    /// the Top, Best, New and Show lists at once (see
+    /// `HackerNewsAPI.warmLaunchFeeds()`) — with room to browse beyond them.
+    static let capacity = 1000
+
+    private let cache = LRUCache<Int, FirebaseStoryData>(capacity: capacity)
+
+    /// Maximum number of concurrent fetches during a prefetch pass.
+    private let maxConcurrentPrefetches = 8
+
+    private init() {}
+
+    /// Returns a story, fetching it if necessary. Concurrent calls for the same id
+    /// share one network request.
+    func story(id: Int) async -> FirebaseStoryData? {
+        await cache.value(for: id) { await FirebaseAPIService.getStoryAsync(id: id) }
+    }
+
+    /// Drops the cached story for `id`, so the next read re-fetches it.
+    ///
+    /// Unlike `CommentCache`, entries here never expire on their own, so a story
+    /// whose `descendants`/`kids` have changed stays wrong until something says
+    /// so — which matters when the reader has just commented on it, because the
+    /// comment machinery compares Algolia's tree against this `descendants` count
+    /// to decide whether its index is stale.
+    func invalidate(_ id: Int) async {
+        await cache.remove(id)
+    }
+
+    /// Warms the cache for the given ids, fetching missing ones in parallel with a
+    /// bounded degree of concurrency. Ids already cached or in flight cost nothing —
+    /// `story(id:)` serves them without a network request.
+    func prefetch(ids: [Int]) async {
+        var iterator = ids.makeIterator()
+        await withTaskGroup(of: Void.self) { group in
+            var active = 0
+            // Seed the group up to the concurrency limit.
+            while active < maxConcurrentPrefetches, let id = iterator.next() {
+                group.addTask { _ = await self.story(id: id) }
+                active += 1
+            }
+            // As each finishes, start the next pending id.
+            while await group.next() != nil {
+                active -= 1
+                if let id = iterator.next() {
+                    group.addTask { _ = await self.story(id: id) }
+                    active += 1
+                }
+            }
+        }
+    }
+}

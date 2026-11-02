@@ -1,0 +1,41 @@
+//
+//  Base.xcconfig
+//  Huck
+//
+//  Settings shared by every target — the app and its tests. Attached at the
+//  project level, so each target inherits these and its own xcconfig
+//  (App.xcconfig, HuckTests.xcconfig, HuckUITests.xcconfig) layers on top.
+//
+//  How the files fit together:
+//
+//    Base.xcconfig            project level: every target, every configuration
+//    ├── Debug.xcconfig       app target, Debug    → App.xcconfig → Local.xcconfig
+//    ├── Release.xcconfig     app target, Release  → App.xcconfig → Local.xcconfig
+//    ├── HuckTests.xcconfig   unit tests           → Local.xcconfig
+//    └── HuckUITests.xcconfig UI tests             → Local.xcconfig
+//
+//  Settings typed into a target's Build Settings editor override these files,
+//  so make changes here instead and keep project.pbxproj free of settings.
+//
+
+// MARK: - Signing
+
+// The signing team. Free Personal Teams can't provision paid capabilities
+// such as iCloud; set a paid team in Local.xcconfig to use those.
+DEVELOPMENT_TEAM = E69X269LBT
+CODE_SIGN_STYLE = Automatic
+
+// MARK: - Platform
+
+IPHONEOS_DEPLOYMENT_TARGET = 27.1
+TARGETED_DEVICE_FAMILY = 1,2
+
+// MARK: - Swift
+
+SWIFT_VERSION = 6.0
+SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
+SWIFT_APPROACHABLE_CONCURRENCY = YES
+SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES
+
+// The bundle identifier prefix every target's identifier starts with.
+HUCK_BUNDLE_ID_PREFIX = jasbury

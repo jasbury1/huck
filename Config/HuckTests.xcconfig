@@ -1,0 +1,18 @@
+//
+//  HuckTests.xcconfig
+//  Huck
+//
+//  The unit test target, for both configurations. Runs inside the app, so it
+//  can `@testable import Huck`. Shared settings come from Base.xcconfig.
+//
+
+PRODUCT_NAME = $(TARGET_NAME)
+PRODUCT_BUNDLE_IDENTIFIER = $(HUCK_BUNDLE_ID_PREFIX).HuckTests
+GENERATE_INFOPLIST_FILE = YES
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
+
+BUNDLE_LOADER = $(TEST_HOST)
+TEST_HOST = $(BUILT_PRODUCTS_DIR)/Huck.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Huck
+
+#include? "Local.xcconfig"

@@ -1,0 +1,11 @@
+//
+//  Release.xcconfig
+//  Huck
+//
+//  The app target's Release configuration. Release-only values go between the two
+//  includes, so Local.xcconfig can still override them.
+//
+
+#include "App.xcconfig"
+
+#include? "Local.xcconfig"

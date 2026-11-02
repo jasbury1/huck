@@ -1,0 +1,81 @@
+# SwiftLint configuration — https://github.com/realm/SwiftLint
+#
+# SwiftFormat (.swiftformat) owns layout; SwiftLint is here for code smells.
+# Rules that only restate formatting are disabled so the two never disagree.
+# Run `make lint`. CI fails on errors; warnings are refactoring hints.
+
+included:
+  - Huck
+  - HuckTests
+  - HuckUITests
+
+excluded:
+  - DerivedData
+  - build
+
+disabled_rules:
+  # Owned by SwiftFormat.
+  - trailing_comma
+  - trailing_whitespace
+  - opening_brace
+  - statement_position
+  - vertical_whitespace
+  - comma
+  - colon
+  - comment_spacing
+  - modifier_order
+  - trailing_newline
+  # SwiftUI's `Button { } label: { }` and similar read better with
+  # multiple trailing closures.
+  - multiple_closures_with_trailing_closure
+
+opt_in_rules:
+  - closure_spacing
+  - contains_over_first_not_nil
+  - empty_count
+  - empty_string
+  - first_where
+  - last_where
+  - private_swiftui_state
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - unused_import
+
+analyzer_rules:
+  - unused_declaration
+
+line_length:
+  warning: 140
+  error: 300
+  ignores_comments: true
+  ignores_urls: true
+  ignores_interpolated_strings: true
+
+file_length:
+  warning: 500
+  error: 1000
+  ignore_comment_only_lines: true
+
+type_body_length:
+  warning: 300
+  error: 600
+
+function_body_length:
+  warning: 80
+  error: 200
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  excluded: [x, y, h, m, d, i, n, id]
+  allowed_symbols: [_]
+
+large_tuple:
+  warning: 3
+  error: 4
+
+nesting:
+  type_level: 2

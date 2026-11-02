@@ -1,0 +1,156 @@
+//
+//  StoryActions.swift
+//  Huck
+//
+//  Created by James Asbury on 8/16/26.
+//
+
+import SwiftUI
+
+/// Requests an upvote toggle for a story. Injected into the environment by
+/// `storyActionsEnabled()` and called from any story view's arrow, so the login
+/// gate and the dispatch to `InteractionStore` live in one place, not at each site.
+struct UpvoteAction {
+    let handler: (StoryModel) -> Void
+    func callAsFunction(_ story: StoryModel) { handler(story) }
+}
+
+/// Requests an upvote toggle for a comment. Takes an item id rather than a
+/// model because the two kinds of comment row hold different types — a thread's
+/// `Comment` and a standalone `UserComment` — and the id is all a vote needs.
+struct UpvoteCommentAction {
+    let handler: (Int) -> Void
+    func callAsFunction(id: Int) { handler(id) }
+}
+
+/// Requests a favorite toggle for a story. The favorites counterpart to
+/// `UpvoteAction`, sharing the same login gate.
+struct FavoriteAction {
+    let handler: (StoryModel) -> Void
+    func callAsFunction(_ story: StoryModel) { handler(story) }
+}
+
+/// Presents the collection picker for a story. Collections belong to the
+/// device, not an HN account, so there's no login gate. The sheet is owned by
+/// `storyActionsEnabled()`
+/// rather than the caller because the usual caller is a menu row, and a menu
+/// is gone by the time a sheet attached to it would present.
+struct AddToCollectionAction {
+    let handler: (StoryModel) -> Void
+    func callAsFunction(_ story: StoryModel) { handler(story) }
+}
+
+/// Opens the new-post page, behind the login gate. Owned by
+/// `storyActionsEnabled()` for the same reason as `AddToCollectionAction`:
+/// it's offered from menus, which are gone by the time a presentation attached
+/// to them would appear — and it keeps the home screen's compose button and the
+/// feeds' menus opening the one page.
+///
+/// `openPost` is handed the id of the post once it's published, so the caller
+/// can open it in its own navigation stack.
+struct ComposeNewPostAction {
+    let handler: (_ openPost: @escaping (Int) -> Void) -> Void
+    func callAsFunction(openPost: @escaping (Int) -> Void) { handler(openPost) }
+}
+
+/// Runs a closure only when signed in, otherwise presenting the login screen —
+/// the same gate as upvote/favorite, exposed for actions that aren't tied to a
+/// single story (e.g. voting in a poll). The default runs the closure
+/// immediately, so it degrades gracefully outside a `storyActionsEnabled` subtree.
+struct RequireLoginAction {
+    let handler: (@escaping () -> Void) -> Void
+    func callAsFunction(_ action: @escaping () -> Void) { handler(action) }
+}
+
+extension EnvironmentValues {
+    @Entry var upvote = UpvoteAction { _ in }
+    @Entry var upvoteComment = UpvoteCommentAction { _ in }
+    @Entry var favorite = FavoriteAction { _ in }
+    @Entry var addToCollection = AddToCollectionAction { _ in }
+    @Entry var composeNewPost = ComposeNewPostAction { _ in }
+    @Entry var requireLogin = RequireLoginAction { $0() }
+}
+
+/// Wires the story action environment values for its subtree: logged-in taps toggle
+/// the upvote/favorite through the shared `InteractionStore`; logged-out taps present
+/// the login screen, and a successful login reloads the store for the now-current
+/// user. One login gate is shared by both actions.
+private struct StoryActionsModifier: ViewModifier {
+    @Environment(InteractionStore.self) private var store
+    @Environment(UserSession.self) private var session
+    @State private var isPresentingLogin = false
+    /// The story whose collection picker is showing, if any.
+    @State private var collectionStory: StoryModel?
+    @State private var isComposingPost = false
+    /// Where the post being composed opens once published, from whoever asked
+    /// for it.
+    @State private var openPost: (Int) -> Void = { _ in }
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.upvote, UpvoteAction { story in
+                perform { await store.toggleUpvote(story) }
+            })
+            .environment(\.upvoteComment, UpvoteCommentAction { id in
+                perform { await store.toggleCommentUpvote(id: id) }
+            })
+            .environment(\.favorite, FavoriteAction { story in
+                perform { await store.toggleFavorite(story) }
+            })
+            .environment(\.addToCollection, AddToCollectionAction { story in
+                collectionStory = story
+            })
+            .environment(\.composeNewPost, ComposeNewPostAction { open in
+                requireLogin {
+                    openPost = open
+                    isComposingPost = true
+                }
+            })
+            .environment(\.requireLogin, RequireLoginAction(handler: requireLogin))
+            .sheet(isPresented: $isPresentingLogin) {
+                LoginView()
+            }
+            .sheet(item: $collectionStory) { story in
+                AddToCollectionView(story: story)
+            }
+            .fullScreenCover(isPresented: $isComposingPost) {
+                SubmissionView(onPosted: openPost)
+            }
+            // Signing in is what the sheet was for, so dismiss it once it has.
+            // The per-user reload is not this modifier's job — it happens once,
+            // at the root, for every way the account can change.
+            .onChange(of: session.account) {
+                if session.isSignedIn { isPresentingLogin = false }
+            }
+    }
+
+    /// Runs `action` when signed in, or presents login when signed out.
+    private func requireLogin(_ action: @escaping () -> Void) {
+        if session.isSignedIn {
+            action()
+        } else {
+            isPresentingLogin = true
+        }
+    }
+
+    /// Runs a store action when signed in, or routes to login when signed out.
+    private func perform(_ action: @escaping () async -> Void) {
+        if session.isSignedIn {
+            Task { await action() }
+        } else {
+            isPresentingLogin = true
+        }
+    }
+}
+
+extension View {
+    /// Enables `@Environment(\.upvote)`, `@Environment(\.favorite)`,
+    /// `@Environment(\.addToCollection)`, `@Environment(\.composeNewPost)`, and
+    /// `@Environment(\.requireLogin)` for
+    /// this view's subtree, routing taps through
+    /// the interaction store and presenting login when signed out. Apply it once
+    /// per navigation stack, above the story views that show these actions.
+    func storyActionsEnabled() -> some View {
+        modifier(StoryActionsModifier())
+    }
+}
