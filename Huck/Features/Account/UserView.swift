@@ -70,33 +70,72 @@ struct UserView: View {
     @State private var viewportSize: CGSize = .zero
     @State private var tabBarHeight: CGFloat = 0
 
-    // Per-tab scroll position. The tabs share one scroll view (it's what lets
-    // the nav bar track it), so each tab's position is remembered as how far
-    // its list had scrolled past the pinned tab bar, and restored on return.
+    // MARK: Scroll state
+
+    //
+    // The tabs share one scroll view (it's what lets the nav bar track it).
+    // Pinning is measured inside the scroll content, where nothing moves but
+    // the pinned tab bar: it rests directly below the header, at the header's
+    // height, and once pinned it's pushed down past that spot to stay under
+    // the nav bar. How far it's been pushed is how far the current list has
+    // scrolled beneath it. Measured this way it doesn't depend on the scroll
+    // view's content insets, which the system changes as the bars change.
+    //
+    // `body` reads only `isTabBarPinned`, which changes once per pin or
+    // unpin — never the measurements, which change every frame while pinned.
+    // Reading them in `body` would re-render the page on every frame of a
+    // scroll, from inside the scroll view's own layout pass.
+
     @State private var scrollPosition = ScrollPosition()
-    /// How far the page is scrolled from its top.
-    @State private var scrollOffset: CGFloat = 0
-    /// The tab bar's bottom and the list's top, in the page's coordinate
-    /// space. They coincide until the bar pins; after that the list runs on
-    /// beneath it, and the gap is how far the list has scrolled.
-    @State private var tabBarBottom: CGFloat = 0
-    @State private var listTop: CGFloat = 0
-    /// The page offset at which the tab bar pins, learned while it's pinned.
-    @State private var pinOffset: CGFloat?
+    /// The profile header's height, which is where the tab bar rests.
+    @State private var headerHeight: CGFloat = 0
+    /// The tab bar's top in the scroll content's coordinate space.
+    @State private var tabBarMinY: CGFloat = 0
+    /// Whether the tab bar is pinned beneath the navigation bar.
+    @State private var isTabBarPinned = false
+    /// The height of the scroll view's visible region (inside its insets).
+    @State private var visibleHeight: CGFloat = 0
+    /// Where the current list's laid-out rows sit, in the content space.
+    @State private var rowFrames = ListRowFrames(space: .named(UserView.contentSpace))
     /// Each tab's list scroll, saved as the tab is left while the bar is pinned.
-    @State private var listOffsets: [ContentTab: CGFloat] = [:]
+    @State private var savedScrolls: [ContentTab: SavedScroll] = [:]
+    /// An offset to scroll to once a tab switch has swapped the list in.
+    @State private var pendingScrollY: CGFloat?
 
-    /// The page's coordinate space: the scroll view's visible frame.
-    private nonisolated static let pageSpace = "UserView.page"
-
-    /// How far the current list has scrolled under the pinned tab bar.
-    private var listScrolled: CGFloat {
-        let gap = tabBarBottom - listTop
-        return gap > 0.5 ? gap : 0
+    /// Where a tab's list was left, while the tab bar was pinned.
+    ///
+    /// Each switch rebuilds the incoming list, which estimates the heights of
+    /// rows it hasn't laid out yet — so the same offset lands on different
+    /// rows than it was taken at. The restore goes by row instead: the first
+    /// row at or below the top of the visible region, and how far below it
+    /// started. Its identity survives the rebuild. The offset is the fallback
+    /// for when there's no such row to go by.
+    private struct SavedScroll {
+        /// How far the list had scrolled under the pinned tab bar.
+        var listOffset: CGFloat
+        /// The row to restore to: its identity, how far its top sat below the
+        /// visible region's top, and its height.
+        var row: (id: any Hashable & Sendable, top: CGFloat, height: CGFloat)?
     }
 
-    /// Whether the tab bar is pinned beneath the navigation bar.
-    private var isTabBarPinned: Bool { listScrolled > 0 }
+    /// The scroll content's coordinate space, which scrolls with it.
+    private nonisolated static let contentSpace = "UserView.content"
+
+    /// How far the current list has scrolled under the pinned tab bar, or
+    /// `nil` while the bar rests below the header. Exactly at the pin point
+    /// the two can't be told apart, so `switchTab(to:)` lands just past it.
+    private var pinnedListOffset: CGFloat? {
+        PinnedTabBarGeometry.pinnedListOffset(tabBarMinY: tabBarMinY, headerHeight: headerHeight)
+    }
+
+    /// Brings `isTabBarPinned` up to date, assigning it only when it changes
+    /// so the page re-renders just once per pin or unpin.
+    private func updateTabBarPinned() {
+        let pinned = pinnedListOffset != nil
+        if pinned != isTabBarPinned {
+            isTabBarPinned = pinned
+        }
+    }
 
     /// The view's background (white in light mode).
     private let cardBackgroundColor = Color(UIColor.systemBackground)
@@ -144,37 +183,38 @@ struct UserView: View {
                     pinnedTabBar
                 }
             }
+            .coordinateSpace(.named(Self.contentSpace))
         }
-        .coordinateSpace(.named(Self.pageSpace))
         .onGeometryChange(for: CGSize.self) { $0.size } action: { viewportSize = $0 }
         .scrollPosition($scrollPosition)
-        .onScrollGeometryChange(for: CGFloat.self) { geometry in
-            geometry.contentOffset.y + geometry.contentInsets.top
-        } action: { _, offset in
-            scrollOffset = offset
+        .onScrollGeometryChange(for: CGFloat.self) { $0.containerSize.height } action: { _, height in
+            visibleHeight = height
         }
         .refreshable { await refresh(currentTab) }
         // In a split view's leading column the bar draws no background of its
-        // own, and the system renders the page's content beneath the bar above
-        // anything the page lays there — so once the tab bar pins, the header
-        // would go on scrolling visibly behind the title and buttons. Instead
-        // the scroll view stops drawing under the bar while pinned: its mask
-        // reaches up under the bar only until then. The bar is left
-        // showing the page's background, white while pinned (see below), which
-        // is why the mask comes before it.
-        // A mask, not a conditional clip, so the scroll view keeps its identity
-        // and its position as the bar pins and unpins.
-        .mask {
-            // Every other edge stays open, so the list still runs on beneath
-            // the home indicator and to the sides.
-            Rectangle()
-                .ignoresSafeArea(edges: isTabBarPinned ? [.horizontal, .bottom] : .all)
+        // own, so once the tab bar pins, the header would go on scrolling
+        // visibly behind the title and buttons. Instead, while pinned, a white
+        // panel covers the page from the top of the scroll view up behind the
+        // bar, joining the white tab bar below it.
+        // The panel is always there, and only its opacity follows the pin, so
+        // its frame never changes. Anything around the scroll view whose frame
+        // reaches into the safe area resizes the scroll view's host container,
+        // and with it the scroll view's insets — which move the pinned tab
+        // bar. A mask that reached up under the bar only while unpinned did
+        // exactly that: pinning moved the bar, which unpinned it, which moved
+        // it back, forever (an observation-tracking feedback loop).
+        .overlay(alignment: .top) {
+            cardBackgroundColor
+                .frame(height: 0)
+                .ignoresSafeArea(edges: .top)
+                .opacity(isTabBarPinned ? 1 : 0)
+                .allowsHitTesting(false)
         }
         // Grey above, white below: the large title and an overscroll at the top
         // (behind the pull-to-refresh spinner) sit on the header's grey
         // backdrop, while a bounce at the bottom continues the white list.
-        // White above too while the tab bar is pinned: that's what shows
-        // behind the navigation bar then (see the mask above).
+        // White above too while the tab bar is pinned, matching the panel
+        // above.
         .background {
             VStack(spacing: 0) {
                 isTabBarPinned ? cardBackgroundColor : Color(.secondarySystemBackground)
@@ -198,6 +238,14 @@ struct UserView: View {
             // stories viewed since it was last shown.
             if newTab == .recentlyViewed {
                 Task { await refreshRecentlyViewed() }
+            }
+            // An offset scroll made in the same update as the list swap lands
+            // against the outgoing list; made here, after it, it lands right.
+            if let y = pendingScrollY {
+                pendingScrollY = nil
+                withTransaction(\.animation, nil) {
+                    scrollPosition.scrollTo(y: y)
+                }
             }
         }
         // Keyed on `username` so signing in or out reloads in place rather than
@@ -295,6 +343,11 @@ struct UserView: View {
         // A subtle grey backdrop behind the profile info that sets the white
         // bio/action cards apart — stopping before the pinned tab bar below.
         .background(Color(.secondarySystemBackground))
+        // The tab bar pins once the page has scrolled this far.
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+            headerHeight = $0
+            updateTabBarPinned()
+        }
     }
 
     /// The tab pills, pinned beneath the navigation bar once the profile
@@ -309,9 +362,10 @@ struct UserView: View {
         .background(cardBackgroundColor)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tabBarHeight = $0 }
         .onGeometryChange(for: CGFloat.self) {
-            $0.frame(in: .named(Self.pageSpace)).maxY
+            $0.frame(in: .named(Self.contentSpace)).minY
         } action: {
-            tabBarBottom = $0
+            tabBarMinY = $0
+            updateTabBarPinned()
         }
     }
 
@@ -525,11 +579,8 @@ struct UserView: View {
             .frame(maxWidth: .infinity)
             .frame(minHeight: max(0, viewportSize.height - tabBarHeight), alignment: .top)
             .background(cardBackgroundColor)
-            .onGeometryChange(for: CGFloat.self) {
-                $0.frame(in: .named(Self.pageSpace)).minY
-            } action: {
-                listTop = $0
-            }
+            // The list's rows report where they sit, for `switchTab(to:)`.
+            .environment(\.listRowFrames, rowFrames)
     }
 
     /// Switches to `tab`. The header is shared by every tab, so a switch never
@@ -541,27 +592,48 @@ struct UserView: View {
     ///   made while pinned.
     private func switchTab(to tab: ContentTab) {
         guard tab != currentTab else { return }
-        let scrolled = listScrolled
-        if scrolled > 0 { pinOffset = scrollOffset - scrolled }
-        // Pinned with nothing yet under the bar — as a tab just switched to is
-        // — leaves no gap to measure, so the known pin point decides that case.
-        let isPinned = scrolled > 0 || pinOffset.map { scrollOffset >= $0 - 1 } == true
-        listOffsets[currentTab] = isPinned ? scrolled : nil
+        let outgoingOffset = pinnedListOffset
+        savedScrolls[currentTab] = outgoingOffset.map(saveScroll(listOffset:))
+        let incoming = savedScrolls[tab]
 
-        let target: CGFloat? = if isPinned, let pinOffset {
-            pinOffset + (listOffsets[tab] ?? 0)
-        } else {
-            nil
-        }
-        // Left to the caller's animation, so the pills still animate on a tap.
-        currentTab = tab
-        // The jump to the incoming tab's position, though, is instant.
-        if let target {
-            var transaction = Transaction()
-            transaction.disablesAnimations = true
-            withTransaction(transaction) {
-                scrollPosition.scrollTo(y: target)
+        // The swap and the jump happen together, with no animation. The pill
+        // tap arrives inside `withAnimation`; left in it, the incoming list's
+        // height would animate in, and the jump — made against a page still
+        // too short — would land short of the saved spot. The pills animate
+        // regardless, through their own `.animation(_:value:)`.
+        withTransaction(\.animation, nil) {
+            currentTab = tab
+            if outgoingOffset != nil {
+                restoreScroll(incoming)
             }
+        }
+    }
+
+    /// Records where the current list was left, `listOffset` under the
+    /// pinned tab bar.
+    private func saveScroll(listOffset: CGFloat) -> SavedScroll {
+        // The pinned bar's top is the top of the visible region.
+        let row = rowFrames.firstRow(startingAtOrBelow: tabBarMinY)
+        return SavedScroll(
+            listOffset: listOffset,
+            row: row.map { ($0.id, $0.frame.minY - tabBarMinY, $0.frame.height) }
+        )
+    }
+
+    /// Scrolls the incoming list back to where it was left, keeping the tab
+    /// bar pinned.
+    private func restoreScroll(_ saved: SavedScroll?) {
+        // By row where there is one that fits on screen; by offset otherwise,
+        // including for a tab never left while pinned.
+        if let row = saved?.row,
+           let anchor = PinnedTabBarGeometry.restoreAnchor(
+               rowTop: row.top, rowHeight: row.height, visibleHeight: visibleHeight
+           ) {
+            scrollPosition.scrollTo(id: row.id, anchor: anchor)
+        } else {
+            pendingScrollY = PinnedTabBarGeometry.fallbackScrollY(
+                headerHeight: headerHeight, listOffset: saved?.listOffset
+            )
         }
     }
 

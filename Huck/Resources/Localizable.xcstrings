@@ -1,7 +1,739 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
 
+    },
+    "·" : {
+
+    },
+    "(%@)" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  %2$@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
+    "%lld filters on" : {
+
+    },
+    "%lld karma" : {
+
+    },
+    "%lld points" : {
+
+    },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "^[%lld vote](inflect: true)" : {
+
+    },
+    "^[%lld vote](inflect: true), %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "^[%1$lld vote](inflect: true), %2$@"
+          }
+        }
+      }
+    },
+    "0" : {
+
+    },
+    "1" : {
+
+    },
+    "About Collections" : {
+
+    },
+    "Account" : {
+
+    },
+    "Activity" : {
+
+    },
+    "Add %@ prefix" : {
+
+    },
+    "Add a comment" : {
+
+    },
+    "Add a Comment" : {
+
+    },
+    "Add a comment…" : {
+
+    },
+    "Add a reply…" : {
+
+    },
+    "Add some context (optional)" : {
+
+    },
+    "Add stories from a story's “More” menu to see them here." : {
+
+    },
+    "Add to Collection" : {
+
+    },
+    "Add to..." : {
+
+    },
+    "Adds a Debug tab with counts of every API request the app makes." : {
+
+    },
+    "All Caught Up" : {
+
+    },
+    "All time" : {
+
+    },
+    "Already on Hacker News" : {
+
+    },
+    "Any" : {
+
+    },
+    "Appearance" : {
+
+    },
+    "Apply" : {
+
+    },
+    "Ask" : {
+
+    },
+    "Ask Hacker News" : {
+
+    },
+    "Ask HN" : {
+
+    },
+    "Author" : {
+
+    },
+    "Auto" : {
+
+    },
+    "Automatic puts thumbnails on the left on wider screens, such as iPhone Duo, and on the right on other iPhones." : {
+
+    },
+    "Best" : {
+
+    },
+    "By" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Choose a name for your collection." : {
+
+    },
+    "Choose a story's comments to read them here." : {
+
+    },
+    "Clear" : {
+
+    },
+    "Clear Filters" : {
+
+    },
+    "Clear Viewing History?" : {
+
+    },
+    "Closed" : {
+
+    },
+    "Code" : {
+
+    },
+    "Collapse" : {
+
+    },
+    "Collapse Thread" : {
+
+    },
+    "Collections are saved on this device, not to Hacker News, so they stay put when you sign in or out." : {
+
+    },
+    "Comments" : {
+
+    },
+    "Comments %@ posts will show up here." : {
+
+    },
+    "Comments you favorite will show up here." : {
+
+    },
+    "Comments you like will show up here." : {
+
+    },
+    "Composer size" : {
+
+    },
+    "Copy HN Link" : {
+
+    },
+    "Copy Link" : {
+
+    },
+    "Copy Page Link" : {
+
+    },
+    "Copy Profile Link" : {
+
+    },
+    "Copy Text" : {
+
+    },
+    "Couldn't Delete Comment" : {
+
+    },
+    "Couldn't Open Link" : {
+
+    },
+    "Couldn't Post" : {
+
+    },
+    "Couldn't Post Comment" : {
+
+    },
+    "Counting since %@" : {
+
+    },
+    "Create" : {
+
+    },
+    "Create an account" : {
+
+    },
+    "Dark" : {
+
+    },
+    "Debug" : {
+
+    },
+    "Debug Mode" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete “%@”?" : {
+
+    },
+    "Delete Collection" : {
+
+    },
+    "Delete Comment?" : {
+
+    },
+    "Developer" : {
+
+    },
+    "Discard" : {
+
+    },
+    "Discard comment" : {
+
+    },
+    "Discard this comment?" : {
+
+    },
+    "Discard this post?" : {
+
+    },
+    "Display Story Domain" : {
+
+    },
+    "Done" : {
+
+    },
+    "Dry Run" : {
+
+    },
+    "Dry Run · Fails" : {
+
+    },
+    "Dry Run keeps comments, posts, and deletions from being sent to Hacker News; the app carries on as if they were accepted. Simulate Failure answers them as refused instead." : {
+
+    },
+    "Dry run: nothing will be posted" : {
+
+    },
+    "Dry run: posting will fail" : {
+
+    },
+    "Edit filters" : {
+
+    },
+    "Enter a web address, like example.com/article." : {
+
+    },
+    "example.com/article" : {
+
+    },
+    "Expand composer" : {
+
+    },
+    "Favorite" : {
+
+    },
+    "Favorites" : {
+
+    },
+    "Feed" : {
+
+    },
+    "Feed Appearance" : {
+
+    },
+    "Feeds" : {
+
+    },
+    "Filters" : {
+
+    },
+    "Find stories, comments, polls, Show and Ask HN posts, and users." : {
+
+    },
+    "Format Code" : {
+
+    },
+    "Format Code shows code in a monospaced font, set apart from the text around it. Format Quotes outlines paragraphs quoted with “>”. Highlight New Users tints the names of recently created accounts green, as Hacker News does while you're signed in." : {
+
+    },
+    "Format Quotes" : {
+
+    },
+    "Hacker News" : {
+
+    },
+    "Hidden Stories" : {
+
+    },
+    "Hidden stories left out" : {
+
+    },
+    "Hide" : {
+
+    },
+    "Hide Read" : {
+
+    },
+    "Highlight New Users" : {
+
+    },
+    "Hot" : {
+
+    },
+    "Huck's Collections" : {
+
+    },
+    "Huck's picks for “%@” are on the way." : {
+
+    },
+    "iCloud Is Off" : {
+
+    },
+    "It will be removed from Hacker News. This can't be undone." : {
+
+    },
+    "Italic" : {
+
+    },
+    "Job Listings" : {
+
+    },
+    "Jobs" : {
+
+    },
+    "Karma: %lld" : {
+
+    },
+    "Keep Editing" : {
+
+    },
+    "Last day" : {
+
+    },
+    "Last month" : {
+
+    },
+    "Last week" : {
+
+    },
+    "Last year" : {
+
+    },
+    "Left" : {
+
+    },
+    "Light" : {
+
+    },
+    "Likes" : {
+
+    },
+    "Link" : {
+
+    },
+    "Log Out" : {
+
+    },
+    "Login" : {
+
+    },
+    "Mark Read" : {
+
+    },
+    "Mark Unread" : {
+
+    },
+    "Minimum" : {
+
+    },
+    "Name" : {
+
+    },
+    "New" : {
+
+    },
+    "New Collection" : {
+
+    },
+    "New Post" : {
+
+    },
+    "Newest" : {
+
+    },
+    "No %@ match “%@”." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No %1$@ match “%2$@”."
+          }
+        }
+      }
+    },
+    "No Account Needed" : {
+
+    },
+    "No Comments" : {
+
+    },
+    "No comments yet." : {
+
+    },
+    "No Favorite Comments" : {
+
+    },
+    "No Favorite Posts" : {
+
+    },
+    "No Hidden Stories" : {
+
+    },
+    "No Liked Comments" : {
+
+    },
+    "No Liked Posts" : {
+
+    },
+    "No Posts" : {
+
+    },
+    "No Recently Viewed" : {
+
+    },
+    "No Results" : {
+
+    },
+    "No Stories" : {
+
+    },
+    "No Story Selected" : {
+
+    },
+    "No user named “%@”." : {
+
+    },
+    "Nothing Here Yet" : {
+
+    },
+    "now" : {
+
+    },
+    "OK" : {
+
+    },
+    "Only show results submitted by this user." : {
+
+    },
+    "Only show results with at least this many comments." : {
+
+    },
+    "Open in Thread" : {
+
+    },
+    "Password" : {
+
+    },
+    "Polls" : {
+
+    },
+    "Post" : {
+
+    },
+    "Post comment" : {
+
+    },
+    "Posting" : {
+
+    },
+    "Posting is disabled in this build, so comments, posts, and deletions are never sent to Hacker News. Simulate Failure answers them as refused instead of accepted." : {
+
+    },
+    "Posting to %@…" : {
+
+    },
+    "Posts" : {
+
+    },
+    "Preview" : {
+
+    },
+    "Preview of your post in the feed" : {
+
+    },
+    "Quote" : {
+
+    },
+    "Quote: %@" : {
+
+    },
+    "Read more" : {
+
+    },
+    "Read stories hidden" : {
+
+    },
+    "Recently viewed" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Remove %@ prefix" : {
+
+    },
+    "Remove filter: %@" : {
+
+    },
+    "Remove upvote" : {
+
+    },
+    "Remove Upvote" : {
+
+    },
+    "Reply" : {
+
+    },
+    "Replying to %@…" : {
+
+    },
+    "Reset" : {
+
+    },
+    "Right" : {
+
+    },
+    "Search" : {
+
+    },
+    "Search %@" : {
+
+    },
+    "Search Hacker News" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Share Profile" : {
+
+    },
+    "Show" : {
+
+    },
+    "Show All Stories" : {
+
+    },
+    "Show Hacker News" : {
+
+    },
+    "Show HN" : {
+
+    },
+    "Shrink composer" : {
+
+    },
+    "Sign In" : {
+
+    },
+    "Sign in to iCloud in Settings to keep collections in sync across your devices." : {
+
+    },
+    "Sign in to see your posts, comments, and favorites." : {
+
+    },
+    "Simulate Failure" : {
+
+    },
+    "Stories" : {
+
+    },
+    "Stories %@ submits will show up here." : {
+
+    },
+    "Stories you favorite will show up here." : {
+
+    },
+    "Stories you like will show up here." : {
+
+    },
+    "Stories you open will show up here." : {
+
+    },
+    "Story Hidden" : {
+
+    },
+    "Swipe left on a story in a feed to hide it." : {
+
+    },
+    "Swipe up to expand, swipe down to collapse" : {
+
+    },
+    "Synced with iCloud" : {
+
+    },
+    "System" : {
+
+    },
+    "Text" : {
+
+    },
+    "Theme" : {
+
+    },
+    "They stay up to date on your other devices signed in to the same iCloud account." : {
+
+    },
+    "They'll appear in your feeds again." : {
+
+    },
+    "This can't be undone." : {
+
+    },
+    "This link has already been posted, so Hacker News counted your submission as an upvote instead." : {
+
+    },
+    "This post may have been deleted, or the connection was lost." : {
+
+    },
+    "This will remove your list of recently viewed stories. This can't be undone." : {
+
+    },
+    "Thumbnail Position" : {
+
+    },
+    "Time Range" : {
+
+    },
+    "Title" : {
+
+    },
+    "Top" : {
+
+    },
+    "Top Stories" : {
+
+    },
+    "Total Requests" : {
+
+    },
+    "Undo" : {
+
+    },
+    "Unfavorite" : {
+
+    },
+    "Unhide" : {
+
+    },
+    "Unhide All" : {
+
+    },
+    "Unhide All Stories?" : {
+
+    },
+    "Upvote" : {
+
+    },
+    "Username" : {
+
+    },
+    "Users" : {
+
+    },
+    "View Post" : {
+
+    },
+    "What would you like to discuss?" : {
+
+    },
+    "You haven't created any collections yet." : {
+
+    },
+    "Your Collections" : {
+
+    },
+    "Your comment" : {
+
+    },
+    "Your comment will be lost." : {
+
+    },
+    "Your filters are hiding every story here." : {
+
+    },
+    "Your post will be lost." : {
+
+    }
   },
   "version" : "1.1"
 }
