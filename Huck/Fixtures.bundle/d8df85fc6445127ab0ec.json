@@ -1,0 +1,8 @@
+{
+  "by" : "xinu2020",
+  "id" : 50418491,
+  "parent" : 50417407,
+  "text" : "- <a href=\"https:&#x2F;&#x2F;probl.dev\" rel=\"nofollow\">https:&#x2F;&#x2F;probl.dev</a>: A &quot;probabilistic&quot; programming language where we can do things like `if 45% { x } else { y }`. It works by creating many weighted worlds, that are then merged when identical. Operators like `observe` can remove possibilities. There is also a sampling mode that instead run many simulations to get an approximate result.<p>- <a href=\"https:&#x2F;&#x2F;github.com&#x2F;garlab&#x2F;gloss\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;garlab&#x2F;gloss</a> | `brew install garlab&#x2F;tap&#x2F;gloss`: render markdown, sources, images, chess and go (game) records in the terminal. It&#x27;s built for libghostty but fallback on other terms.",
+  "time" : 1794178925,
+  "type" : "comment"
+}

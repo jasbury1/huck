@@ -5,11 +5,11 @@
 //  Created by James Asbury on 12/22/25.
 //
 
-internal import Combine
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject var appController: ApplicationController = .init()
+    /// The Hacker News the app talks to, chosen at launch by `HuckApp`.
+    private let api: any HackerNewsService
 
     /// Who is signed in — the root of the per-user object graph, since the
     /// interaction and recently-viewed stores below key their state off it.
@@ -71,11 +71,12 @@ struct ContentView: View {
         windowSize.isSquarerThanPhone
     }
 
-    init() {
+    init(api: any HackerNewsService) {
+        self.api = api
         // Built here as one graph rather than defaulting independently: each of
         // these depends on the session, and the sync also writes into the store.
-        let session = UserSession()
-        let interactionStore = InteractionStore(session: session)
+        let session = UserSession(api: api)
+        let interactionStore = InteractionStore(session: session, api: api)
         _session = State(initialValue: session)
         _interactionStore = State(initialValue: interactionStore)
         _interactionSync = State(initialValue: InteractionSync(store: interactionStore, session: session))
@@ -153,15 +154,20 @@ struct ContentView: View {
         // above the split view rather than from their stacks.
         .environment(\.storyRowLayout, thumbnailPosition.storyRowLayout(windowSize: windowSize))
         .environment(\.showsSettingsTab, showsSettingsTab)
+        .environment(\.hackerNews, api)
         .environment(session)
         .environment(interactionStore)
         .environment(interactionSync)
         .environment(recentlyViewedStore)
         .environment(collectionsStore)
-        .onAppear(perform: startApp)
         // Launch.
         .task {
             await interactionSync.refresh()
+        }
+        // Warm the main feeds, so the first visit to each is already
+        // populated instead of loading on appear.
+        .task(priority: .medium) {
+            await api.warmLaunchFeeds()
         }
         // Collections changed on the user's other devices, for the app's lifetime.
         .task {
@@ -189,24 +195,8 @@ struct ContentView: View {
             Task { await interactionSync.refresh() }
         }
     }
-
-    func startApp() {
-        print("Initializing application")
-    }
-}
-
-class ApplicationController: ObservableObject {
-    @Published private(set) var temp = false
-
-    init() {
-        Task(priority: .medium) {
-            // Warm the main feeds, so the first visit to each is already
-            // populated instead of loading on appear.
-            await HackerNewsAPI.warmLaunchFeeds()
-        }
-    }
 }
 
 #Preview {
-    ContentView()
+    ContentView(api: HackerNewsAPI.live)
 }

@@ -49,12 +49,12 @@ nonisolated struct AlgoliaUserData: Codable, Sendable {
     let submitted: [Int]?
 }
 
-private nonisolated struct AlgoliaSearchResponse: Codable, Sendable {
+nonisolated struct AlgoliaSearchResponse: Codable, Sendable {
     let hits: [AlgoliaHit]
     let nbPages: Int
 }
 
-private nonisolated struct AlgoliaHit: Codable, Sendable {
+nonisolated struct AlgoliaHit: Codable, Sendable {
     let objectID: String
 }
 
@@ -73,16 +73,16 @@ nonisolated struct AlgoliaLinkStoryData: Codable, Sendable {
     }
 }
 
-private nonisolated struct AlgoliaLinkSearchResponse: Codable, Sendable {
+nonisolated struct AlgoliaLinkSearchResponse: Codable, Sendable {
     let hits: [AlgoliaLinkStoryData]
 }
 
-private nonisolated struct AlgoliaCommentSearchResponse: Codable, Sendable {
+nonisolated struct AlgoliaCommentSearchResponse: Codable, Sendable {
     let hits: [AlgoliaCommentHit]
     let nbPages: Int
 }
 
-private nonisolated struct AlgoliaCommentHit: Codable, Sendable {
+nonisolated struct AlgoliaCommentHit: Codable, Sendable {
     let objectID: String
     let author: String?
     let commentText: String?
@@ -102,8 +102,10 @@ private nonisolated struct AlgoliaCommentHit: Codable, Sendable {
 
 // MARK: - Service
 
-enum AlgoliaAPIService {
-    private static let baseUri = "https://hn.algolia.com/api/v1"
+struct AlgoliaAPIService {
+    let transport: any HTTPTransport
+
+    static let baseUri = "https://hn.algolia.com/api/v1"
 
     /// Results per search request. Larger than a screenful on purpose: the API
     /// is capped at 10,000 requests an hour, and a bigger page means a long
@@ -119,25 +121,14 @@ enum AlgoliaAPIService {
         category: "AlgoliaSearch"
     )
 
-    static func getItemById(id: Int) async -> AlgoliaItemData? {
-        print("Calling Algolia API")
-        // Ex: http://hn.algolia.com/api/v1/items/1
-        let url = "\(baseUri)/items/\(id)"
-        guard let item: AlgoliaItemData = await WebService().downloadData(fromURL: url) else {
-            print("Algolia API returned nil")
-            return nil
-        }
-        print("Item: \(item.title ?? "No title")")
-        return item
+    /// An item with its whole comment tree.
+    func getItemById(id: Int) async -> AlgoliaItemData? {
+        await transport.json(fromURL: "\(Self.baseUri)/items/\(id)")
     }
 
-    static func getUserData(_ username: String) async -> AlgoliaUserData? {
+    func getUserData(_ username: String) async -> AlgoliaUserData? {
         let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? username
-        let url = "\(baseUri)/users/\(encoded)"
-        guard let user: AlgoliaUserData = await WebService().downloadData(fromURL: url) else {
-            return nil
-        }
-        return user
+        return await transport.json(fromURL: "\(Self.baseUri)/users/\(encoded)")
     }
 
     // MARK: - Search
@@ -149,21 +140,25 @@ enum AlgoliaAPIService {
     /// title/url/points, but adopting them would mean a second, subtly different
     /// story type — and the cache fetch that replaces it is a Firebase request,
     /// which doesn't draw on Algolia's hourly allowance.
-    static func searchStoryIds(
+    func searchStoryIds(
         query: String = "",
         tags: [String] = [],
         numericFilters: [String] = [],
         page: Int = 0,
         hitsPerPage: Int = defaultHitsPerPage
     ) async -> (ids: [Int], hasMore: Bool) {
-        guard let url = searchURL(
+        guard let url = Self.searchURL(
             query: query, tags: tags, numericFilters: numericFilters,
             page: page, hitsPerPage: hitsPerPage
-        ), let response: AlgoliaSearchResponse = await WebService().downloadData(fromURL: url) else {
+        ), let response: AlgoliaSearchResponse = await transport.json(fromURL: url) else {
             return ([], false)
         }
-        let ids = response.hits.compactMap { Int($0.objectID) }
-        return (ids, page + 1 < response.nbPages)
+        return Self.storyIds(in: response, page: page)
+    }
+
+    /// The story ids on a search page, and whether a further page exists.
+    static func storyIds(in response: AlgoliaSearchResponse, page: Int) -> (ids: [Int], hasMore: Bool) {
+        (response.hits.compactMap { Int($0.objectID) }, page + 1 < response.nbPages)
     }
 
     /// Stories submitted since `since` that link to `domain`, with at least
@@ -173,13 +168,13 @@ enum AlgoliaAPIService {
     /// The query is restricted to the `url` attribute, so a story that merely
     /// mentions the domain in its title isn't matched. It's a text match, not
     /// an exact one: callers still check the host themselves.
-    static func getRecentLinkStories(
+    func getRecentLinkStories(
         domain: String,
         since: Date,
         minPoints: Int,
         hitsPerPage: Int
     ) async -> [AlgoliaLinkStoryData] {
-        guard var components = URLComponents(string: "\(baseUri)/search") else { return [] }
+        guard var components = URLComponents(string: "\(Self.baseUri)/search") else { return [] }
         let numericFilters = [
             "created_at_i>\(Int(since.timeIntervalSince1970))",
             "points>=\(minPoints)",
@@ -192,27 +187,33 @@ enum AlgoliaAPIService {
             URLQueryItem(name: "hitsPerPage", value: String(hitsPerPage)),
         ]
         guard let url = components.url?.absoluteString else { return [] }
-        searchLog.info(
+        Self.searchLog.info(
             "Link search request: domain=\(domain, privacy: .public) minPoints=\(minPoints, privacy: .public) hitsPerPage=\(hitsPerPage, privacy: .public)"
         )
-        let response: AlgoliaLinkSearchResponse? = await WebService().downloadData(fromURL: url)
+        let response: AlgoliaLinkSearchResponse? = await transport.json(fromURL: url)
         return response?.hits ?? []
     }
 
     /// Searches the comment index, returning comments ready to display.
-    static func searchComments(
+    func searchComments(
         query: String = "",
         tags: [String] = [],
         numericFilters: [String] = [],
         page: Int = 0,
         hitsPerPage: Int = defaultHitsPerPage
     ) async -> (comments: [UserComment], hasMore: Bool) {
-        guard let url = searchURL(
+        guard let url = Self.searchURL(
             query: query, tags: tags, numericFilters: numericFilters,
             page: page, hitsPerPage: hitsPerPage
-        ), let response: AlgoliaCommentSearchResponse = await WebService().downloadData(fromURL: url) else {
+        ), let response: AlgoliaCommentSearchResponse = await transport.json(fromURL: url) else {
             return ([], false)
         }
+        return Self.comments(in: response, page: page)
+    }
+
+    /// The comments on a search page, ready to display, and whether a further
+    /// page exists. Hits without text — deleted comments — are left out.
+    static func comments(in response: AlgoliaCommentSearchResponse, page: Int) -> (comments: [UserComment], hasMore: Bool) {
         let comments = response.hits.compactMap { hit -> UserComment? in
             guard let id = Int(hit.objectID), let text = hit.commentText else { return nil }
             return UserComment(
@@ -231,7 +232,7 @@ enum AlgoliaAPIService {
     /// with one correction: it leaves `+` alone, which the server would read as
     /// a space — and "C++" is an entirely ordinary thing to search Hacker News
     /// for.
-    private static func searchURL(
+    static func searchURL(
         query: String,
         tags: [String],
         numericFilters: [String],
@@ -266,11 +267,11 @@ enum AlgoliaAPIService {
 
     /// Stories submitted by a user — the same search endpoint, narrowed to one
     /// author with no query text.
-    static func getUserStoryIds(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
+    func getUserStoryIds(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
         await searchStoryIds(tags: ["story", "author_\(username)"], page: page, hitsPerPage: 20)
     }
 
-    static func getUserComments(username: String, page: Int = 0) async -> (comments: [UserComment], hasMore: Bool) {
+    func getUserComments(username: String, page: Int = 0) async -> (comments: [UserComment], hasMore: Bool) {
         await searchComments(tags: ["comment", "author_\(username)"], page: page, hitsPerPage: 20)
     }
 }

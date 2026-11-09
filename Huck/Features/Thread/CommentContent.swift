@@ -261,6 +261,7 @@ struct CommentUpvoteButton: View {
 /// the arrow is drawn straight away so the header doesn't shift when the
 /// number lands. If it can't be read, the arrow stands alone.
 struct CommentScoreLabel: View {
+    @Environment(\.hackerNews) private var api
     let id: Int
 
     /// The reader, whose comment this is.
@@ -285,7 +286,7 @@ struct CommentScoreLabel: View {
         .animation(.default, value: score)
         .task(id: id) {
             guard let username = session.username else { return }
-            score = await HackerNewsAPI.ownCommentScore(id: id, username: username)
+            score = await api.ownCommentScore(id: id, username: username)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(score.map { "\($0) points" } ?? "Your comment")

@@ -15,6 +15,7 @@ import SwiftUI
 /// back. Results are always visible — Hacker News shows them to everyone,
 /// voter or not.
 struct PollView: View {
+    @Environment(\.hackerNews) private var api
     @State private var poll: PollModel
 
     @Environment(UserSession.self) private var session
@@ -45,10 +46,10 @@ struct PollView: View {
         // bars slide and the outline fades in together with the tap.
         .animation(.snappy, value: poll.totalVotes)
         .sensoryFeedback(.selection, trigger: voteTaps)
-        .task { await poll.loadOptions() }
+        .task { await poll.loadOptions(using: api) }
         // Re-read whenever the account changes, so signing in from the login
         // sheet brings in the reader's votes, and signing out clears them.
-        .task(id: session.username) { await poll.loadBallot() }
+        .task(id: session.username) { await poll.loadBallot(using: api) }
     }
 
     private func optionButton(for option: PollOption) -> some View {
@@ -58,7 +59,7 @@ struct PollView: View {
         return Button {
             requireLogin {
                 voteTaps += 1
-                Task { await poll.toggleVote(on: option) }
+                Task { await poll.toggleVote(on: option, using: api) }
             }
         } label: {
             PollOptionLabel(text: option.text, votes: votes, share: share, isVoted: isVoted)

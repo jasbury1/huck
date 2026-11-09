@@ -1,0 +1,8 @@
+{
+  "by" : "janosch9001",
+  "id" : 50418341,
+  "parent" : 50417407,
+  "text" : "I’ve been working on my inertial navigation library. It actually beats ArduPilot’s navigation subsystem in my benchmarks. I’ve been working on these algorithms since my PhD thesis and now I am releasing the stuff as open source embedded C and Python library:<p><a href=\"https:&#x2F;&#x2F;github.com&#x2F;jnz&#x2F;inslib\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;jnz&#x2F;inslib</a>",
+  "time" : 1794178185,
+  "type" : "comment"
+}

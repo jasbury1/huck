@@ -1,0 +1,12 @@
+{
+  "by" : "schopra909",
+  "descendants" : 29,
+  "id" : 50368208,
+  "kids" : [ 50383078, 50385454, 50389020, 50385303, 50382762, 50381842, 50382209, 50384496, 50388054, 50381665, 50382483, 50383865, 50383926, 50383724, 50385887, 50390030, 50386361, 50387608, 50391722, 50385585, 50388376, 50390849 ],
+  "score" : 284,
+  "text" : "My brother and I run a 2-person lab that trains our own generative video models from scratch. The ultimate goal is a set of creative tools that make it easier for anyone to make animation.<p>Video models today are too slow&#x2F;expensive and lack sufficient controls. Creativity is an iterative process. You make, you tweak, you get better. In our opinion, they&#x27;re not usable yet for storytelling.<p>When we set out to build Linum v3 (our next video model) earlier this year, the primary goal was to bring the cost envelope of inference down significantly. If our model is fast and cheap, it&#x27;s the first step (of many) towards useful creative tools.<p>Typically, you see &quot;latent diffusion models&quot;. A VAE (Variational Autoencoder) compresses the input data into a smaller &quot;latent space&quot; and the diffusion model learns how to generate within this subspace.<p>Over the past few months, we&#x27;ve been publishing our work on efficient pixel-space diffusion models. These throw away the VAE, having the diffusion model learn a latent-space optimized for its exact task.<p>This serves 3 purposes:\n1) Simplify Architecture (no 2-stage model training)\n2) Faster Convergence (11x faster convergence vs. our latent diffusion counterpart)\n3) Cheaper Inference (4x more aggressive token reduction in attention context-windows, without significant loss in quality)<p>This past month we were pressure testing our latest architecture (Pyramid-JiT) by training a text-to-image model longer than the typical one-off experiment. Specifically, we trained it for ~$20K on 660M samples.<p>We were surprised by the quality of results, so we thought we&#x27;d release it as open weights for the community (Apache 2.0). The research itself is already public, on our website.<p>For us, it&#x27;s a big stepping stone towards cheaper video models, since pretty much all video models start as image models. We like to say these models have to learn nouns before they learn verbs.",
+  "time" : 1793810711,
+  "title" : "Show HN: A decent text-to-image model trained for ~$20K (Apache 2.0 Weights)",
+  "type" : "story",
+  "url" : "https://www.linum.ai/field-notes/pjit-21k"
+}

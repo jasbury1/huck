@@ -1,0 +1,8 @@
+{
+  "by" : "devgoth",
+  "id" : 50417734,
+  "parent" : 50417407,
+  "text" : "<a href=\"https:&#x2F;&#x2F;sdkgarden.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;sdkgarden.com&#x2F;</a><p>been curious about the intersection between observability, SDKs, and product analytics. i couldn&#x27;t find anything around SDK observability so built this little tool. curious what yall think!<p>i assume at bigger orgs there is some internal handrolled tool like this that ingests datadog&#x2F;sentry&#x2F;whatever info...if anyone plays around in this space and has feedback id love it!",
+  "time" : 1794174783,
+  "type" : "comment"
+}

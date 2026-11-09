@@ -1,0 +1,11 @@
+{
+  "by" : "jaypatelani",
+  "descendants" : 3,
+  "id" : 50361106,
+  "kids" : [ 50363724, 50364647 ],
+  "score" : 58,
+  "time" : 1793761875,
+  "title" : "NetBSD 11.1",
+  "type" : "story",
+  "url" : "https://netbsd.org/releases/formal-11/NetBSD-11.1.html"
+}

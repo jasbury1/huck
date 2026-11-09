@@ -1,0 +1,11 @@
+{
+  "by" : "ntur1337",
+  "descendants" : 27,
+  "id" : 50354097,
+  "kids" : [ 50403387, 50402082, 50401810, 50405869, 50401087, 50402722, 50402078, 50402866, 50401165, 50405004 ],
+  "score" : 124,
+  "time" : 1793723423,
+  "title" : "Can GROUP BY still be optimized after all these years?",
+  "type" : "story",
+  "url" : "https://pivotlake.io/blog/know-your-limit-faster-top-k-aggregation/"
+}

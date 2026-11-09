@@ -1,0 +1,10 @@
+{
+  "by" : "madprops",
+  "descendants" : 0,
+  "id" : 50417858,
+  "score" : 1,
+  "text" : "https:&#x2F;&#x2F;github.com&#x2F;Merkoba&#x2F;Harambe<p>I worked heavily on this around 2025. I wasn&#x27;t using AI. It&#x27;s completely hand-coded. I think I did good job at it, functionally, and aesthetically. It supports different types of files, and there are various ways to find posts. The only caveat is that every post must have exactly 1 file. There are no image galleries for instance. If multiple images are uploaded a zip file is created, or it offers you if you want to turn them into a gif through the &quot;magic&quot; system. You are free to use this, or collaborate with me on it. I made this repo public again. I host it myself and I use it as my main file upload and sharing site. I made some Dolphin actions to upload files quickly. Check out the screenshots in the readme, check the site, leave me a message.",
+  "time" : 1794175483,
+  "title" : "File sharing platform made in Python – Not vibe coded – Since 2025",
+  "type" : "story"
+}

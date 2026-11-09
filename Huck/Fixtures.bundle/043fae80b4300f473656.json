@@ -1,0 +1,11 @@
+{
+  "by" : "pg",
+  "descendants" : 35,
+  "id" : 2420344,
+  "kids" : [ 2420490, 2420577, 2420548, 2420628, 2420781, 2421615, 2421660, 2421970, 2421104, 2422384, 2421287, 2422816, 2421757, 2420593, 2421084 ],
+  "score" : 275,
+  "text" : "Tonight we're going to email everyone who applied for summer 2011.  We use the email address in the email field of the HN account used to apply.  So if you applied, please check that you have a working email address (not foobar AT gmail.com) in the email field of your profile.<p>(That field is not publicly visible, as you can see if you try logging out and looking at your profile.)",
+  "time" : 1302197621,
+  "title" : "If you applied to YC this cycle, please put your email address in your profile",
+  "type" : "story"
+}

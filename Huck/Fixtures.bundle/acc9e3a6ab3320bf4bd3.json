@@ -1,0 +1,8 @@
+{
+  "by" : "solyin",
+  "id" : 50389705,
+  "parent" : 50417407,
+  "text" : "A proportional width font terminal. &quot;i&quot; and &quot;w&quot; shouldn&#x27;t take up the same amount of horizontal space. We used to have to do that because computers were slow and we counted cycles and every bits mattered. We live in a land of plenty now though so we can spend cycles doing math so that ls -l&#x2F;top&#x2F;etc table output is still aligned but &quot;i&quot; and &quot;w&quot; can take up the appropriate amount of horizontal space.",
+  "time" : 1793954328,
+  "type" : "comment"
+}

@@ -1,0 +1,11 @@
+{
+  "by" : "boldi",
+  "descendants" : 37,
+  "id" : 50355009,
+  "kids" : [ 50402785, 50357160, 50401658, 50403791, 50409004, 50403358, 50404028, 50402780, 50401410, 50401241, 50401309, 50402423, 50402116, 50401459, 50406891 ],
+  "score" : 62,
+  "time" : 1793726721,
+  "title" : "Show HN: Tmux-restore saves tmux windows and agent sessions across reboots",
+  "type" : "story",
+  "url" : "https://github.com/andrewboldi/tmux-restore"
+}

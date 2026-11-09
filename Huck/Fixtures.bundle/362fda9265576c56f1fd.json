@@ -1,0 +1,11 @@
+{
+  "by" : "AmirCat",
+  "descendants" : 1,
+  "id" : 50413876,
+  "kids" : [ 50413937, 50413877 ],
+  "score" : 2,
+  "time" : 1794149985,
+  "title" : "Show HN: Joggo – a self-hosted GitHub Actions runner for the Windows PC you use",
+  "type" : "story",
+  "url" : "https://github.com/telluric-dev/joggo"
+}

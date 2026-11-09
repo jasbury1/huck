@@ -1,0 +1,11 @@
+{
+  "by" : "WaywardGeek",
+  "descendants" : 26,
+  "id" : 50410279,
+  "kids" : [ 50414712, 50410836, 50413908, 50410280, 50410539, 50410543, 50410698 ],
+  "score" : 19,
+  "time" : 1794109915,
+  "title" : "I Use Development-Driven Specs, Not Spec-Driven Development",
+  "type" : "story",
+  "url" : "https://github.com/waywardgeek/ensemble"
+}

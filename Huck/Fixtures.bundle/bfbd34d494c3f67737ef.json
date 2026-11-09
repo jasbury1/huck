@@ -1,0 +1,10 @@
+{
+  "by" : "fanf2",
+  "descendants" : 0,
+  "id" : 50415810,
+  "score" : 3,
+  "time" : 1794163327,
+  "title" : "Web frameworks overtrust the HTTP Forwarded: header",
+  "type" : "story",
+  "url" : "https://www.lkoskela.fi/blog/2026-11-05-forwarded-without-question/"
+}

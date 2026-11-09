@@ -1,0 +1,8 @@
+{
+  "by" : "WillAdams",
+  "id" : 50418292,
+  "parent" : 50417407,
+  "text" : "Since the 1.0 announcement for flet.dev I have been working on making small apps to make DXF files for CNC projects with drawn previews.<p><a href=\"https:&#x2F;&#x2F;studio.flet.dev&#x2F;run&#x2F;bicQWc3Aul&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;studio.flet.dev&#x2F;run&#x2F;bicQWc3Aul&#x2F;</a><p>which is now at a working state for rabbet joinery boxes with a sliding lid, or omitting the lid:<p><a href=\"https:&#x2F;&#x2F;community.carbide3d.com&#x2F;uploads&#x2F;default&#x2F;original&#x2F;3X&#x2F;e&#x2F;1&#x2F;e13e8d021e73b4b6b1bc7f069da6597471bfd1a3.jpeg\" rel=\"nofollow\">https:&#x2F;&#x2F;community.carbide3d.com&#x2F;uploads&#x2F;default&#x2F;original&#x2F;3X&#x2F;...</a><p>Next up is a hinged lid option and cleaning up the wireframe preview to look better&#x2F;be more accurate.",
+  "time" : 1794177921,
+  "type" : "comment"
+}

@@ -11,6 +11,7 @@ import SwiftUI
 /// added. Rows navigate like any story cell; a trailing swipe removes the story
 /// from the collection. Edits synced from other devices appear live.
 struct CollectionView: View {
+    @Environment(\.hackerNews) private var api
     let collectionID: StoryCollection.ID
     @Binding var path: NavigationPath
 
@@ -37,7 +38,7 @@ struct CollectionView: View {
                     ForEach(feed.stories) { story in
                         StoryCellView(model: story, path: $path)
                             .onAppear {
-                                Task { await feed.prefetchAhead(after: story.id) }
+                                Task { await feed.prefetchAhead(after: story.id, using: api) }
                             }
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
@@ -87,12 +88,12 @@ struct CollectionView: View {
         // deleted the whole collection, leave rather than show an empty shell.
         .onChange(of: collection?.storyIDs) {
             guard collection != nil else { return dismiss() }
-            Task { await feed?.reload() }
+            Task { await feed?.reload(using: api) }
         }
         .task {
             let feed = feed ?? StoryFeed.collection(collectionID, in: collectionsStore)
             self.feed = feed
-            await feed.reload()
+            await feed.reload(using: api)
         }
     }
 }

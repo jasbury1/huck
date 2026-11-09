@@ -1,0 +1,11 @@
+{
+  "by" : "ibobev",
+  "descendants" : 38,
+  "id" : 50358702,
+  "kids" : [ 50361063, 50359266, 50364672, 50361046, 50362154, 50361076, 50401378, 50382388, 50360879, 50361038, 50362288, 50363040 ],
+  "score" : 377,
+  "time" : 1793742666,
+  "title" : "The Internals of PostgreSQL",
+  "type" : "story",
+  "url" : "https://www.interdb.jp/pg/index.html"
+}

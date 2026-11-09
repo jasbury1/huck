@@ -1,0 +1,12 @@
+{
+  "by" : "prnysoni",
+  "descendants" : 22,
+  "id" : 50408350,
+  "kids" : [ 50408940, 50408788, 50409169, 50412816, 50410186, 50409981, 50408810, 50410625, 50408977, 50413870, 50410666 ],
+  "score" : 38,
+  "text" : "Profession like software engineer, mechanical &#x2F; graphics designer takes a lot of strain on your eyes, observing minute details for hours and hours on screen can significantly reduce the blink rate which you might not even notice until it gets irreversibly painful, leaving you with dry eyes. I am already a victim of it, working 20 years as a research engineer in computer vision, zooming into pixel level details to hand craft algorithms. Now the doctors says its only regular use of lubricating drops can keep your eyes safe.<p>Now with AI and available fantastic libraries it&#x27;s possible to play safe so that your body does not pay the price of your profession. EyesRhythm is build to help you keep the blink rhythm healthy by giving small audio &#x2F; visual indication to maintain healthy blink rhythm not just by monitoring healthy blink rate but also keeping a watch on how rhythmic they are.<p>EyeRhythm also has a visual log for the neck movement. It is also capable to automatically track the face using multiple webcams that you might have on your working desk to get the best view of your eyes for accurate blink detection.<p>Most importantly it works completely local no internet required.",
+  "time" : 1794088067,
+  "title" : "Show HN: An offline desktop companion to help maintain a healthy blink rhythm",
+  "type" : "story",
+  "url" : "https://eyesrhythm.com/"
+}

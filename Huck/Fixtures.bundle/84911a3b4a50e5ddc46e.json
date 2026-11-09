@@ -1,0 +1,12 @@
+{
+  "by" : "andrearitossa",
+  "descendants" : 1,
+  "id" : 50391261,
+  "kids" : [ 50404463 ],
+  "score" : 2,
+  "text" : "Agent-powered pentesting workspace with a visual investigation canvas, sandboxed terminals, recorded tests, and traceable evidence.<p>What do you think about it?",
+  "time" : 1793965985,
+  "title" : "Show HN: PentestCanvas – Pentesting Workspace; with Claude and Kali",
+  "type" : "story",
+  "url" : "https://github.com/andrearitossa/pentest-canvas"
+}

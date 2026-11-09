@@ -1,0 +1,8 @@
+{
+  "by" : "enesalatas",
+  "id" : 50418478,
+  "parent" : 50417407,
+  "text" : "I’m working on Spool, an open-source tool for running persistent Claude Code loops.<p><a href=\"https:&#x2F;&#x2F;github.com&#x2F;enes-alatas&#x2F;spool\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;enes-alatas&#x2F;spool</a><p>I wanted a way to manage multiple loops without babysitting terminal sessions and to talk to them as they work. With Spool, you can create and manage loops from a web UI, chat with them through Telegram or Slack, and let them communicate with each other. Each loop can run on your environment directly having access to everything you have, or in its own container or even better on Anthropic&#x27;s cloud.<p>I’m using Spool to build Spool and figuring out what works well when several loops collaborate on the same project. That&#x27;s also an interesting experiment going on.<p>I’d also love to hear how others are managing long-running or persistent agents.",
+  "time" : 1794178868,
+  "type" : "comment"
+}

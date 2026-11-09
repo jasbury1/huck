@@ -1,0 +1,12 @@
+{
+  "by" : "Ir0n",
+  "descendants" : 3,
+  "id" : 50400374,
+  "kids" : [ 50400815, 50404073, 50411438, 50401690 ],
+  "score" : 9,
+  "text" : "Hey, we launched Goethe, because deploying models on hardware you control end-to-end is pain in the ass.<p>Goethe is like Vercel, but for AI models and hardware. It manages your models and hardware you point it and runs corresponding optimal inference.\n-- install it \n-- deploy any model you want\n-- get an API you can use with any client securely",
+  "time" : 1794011181,
+  "title" : "Show HN: Goethe – The infrastructure for self-hosted AI",
+  "type" : "story",
+  "url" : "https://github.com/meshapplied/Goethe"
+}

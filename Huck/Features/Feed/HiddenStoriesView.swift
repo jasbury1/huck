@@ -14,6 +14,7 @@ import SwiftUI
 /// action on the trailing swipe and the action for the whole list in the
 /// ellipsis menu. A swipe brings one story back; Unhide All, the lot.
 struct HiddenStoriesView: View {
+    @Environment(\.hackerNews) private var api
     @Binding var path: NavigationPath
 
     @Environment(InteractionStore.self) private var interactionStore
@@ -31,7 +32,7 @@ struct HiddenStoriesView: View {
                     ForEach(feed.stories) { story in
                         StoryCellView(model: story, path: $path)
                             .onAppear {
-                                Task { await feed.prefetchAhead(after: story.id) }
+                                Task { await feed.prefetchAhead(after: story.id, using: api) }
                             }
                             // Where Hide sits on a feed's rows, so undoing it is
                             // the same gesture.
@@ -96,12 +97,12 @@ struct HiddenStoriesView: View {
         .task {
             let feed = feed ?? StoryFeed.hidden(in: interactionStore)
             self.feed = feed
-            await feed.reload()
+            await feed.reload(using: api)
         }
         // Every way a story is unhidden — a swipe, Unhide All — lands here.
         .onChange(of: interactionStore.hiddenIDs) {
             Task {
-                await feed?.reload()
+                await feed?.reload(using: api)
             }
         }
     }

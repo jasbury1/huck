@@ -1,0 +1,8 @@
+{
+  "by" : "ramijames",
+  "id" : 50418336,
+  "parent" : 50417407,
+  "text" : "I&#x27;ve started maintaining my own Firefox fork that:<p>- removes the stuff that I don&#x27;t care about (Firefox sync, VPN, etc.)<p>- fixes a lot of the awful UX&#x2F;UI choices that the (frankly) incompetent product team at Mozilla refuse to<p>- actually adds stuff that I do like integrated mail and calendar, a document library system (basically Notion), native ad-blocking, terminal, task-tracking like Trello, time-tracking like Harvest, etc.<p>- has integrated AI (Apple intelligence for MacOS for the easy stuff and Claude for the hard stuff<p>It means that instead of having half a dozen applications open, I can just work within my Firefox fork. Because it&#x27;s all deeply integrated, I can do wild stuff like:<p>- tell my AI to search the web on a schedule and send me a custom daily brief with my own email<p>- maintain a comprehensive memory of all of the work that I do, across half a dozen clients, and be able to query it easily<p>- pull analytics from multiple web dashboards and format them into something cohesive<p>- program the web with a node-based infinite canvas that has live websites as part of the workflow<p>- manage my tasks across multiple domains (for example, it will see that I sent an email to a client and automatically update a task that says that I need to do that)<p>It&#x27;s incredibly powerful and it has made me much, much more efficient.",
+  "time" : 1794178147,
+  "type" : "comment"
+}

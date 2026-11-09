@@ -18,6 +18,7 @@ import UIKit
 /// inside a thread: rails, collapsing, an options menu. Tapping it opens the
 /// thread at this comment, which is the one thing a lone comment can't give you.
 struct UserCommentRow: View {
+    @Environment(\.hackerNews) private var api
     let comment: UserComment
     @Binding var path: NavigationPath
     /// Called once the comment has been deleted, so the list can drop the row.
@@ -86,7 +87,7 @@ struct UserCommentRow: View {
         }
         .confirmsCommentDeletion(of: $deleteTarget) { comment in
             guard let storyId = comment.storyId else { throw APIError.deleteFailed }
-            try await HackerNewsAPI.deleteComment(id: comment.id, storyId: storyId)
+            try await api.deleteComment(id: comment.id, storyId: storyId)
             onDeleted?()
         }
     }

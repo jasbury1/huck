@@ -1,0 +1,11 @@
+{
+  "by" : "sshah03",
+  "descendants" : 23,
+  "id" : 50394292,
+  "kids" : [ 50395556, 50395374, 50395534, 50398407, 50395438, 50395360, 50399102, 50395380 ],
+  "score" : 67,
+  "time" : 1793981703,
+  "title" : "Scriptable GeoDNS: Leaving AWS for Bunny",
+  "type" : "story",
+  "url" : "https://vincent.bernat.ch/en/blog/2026-bunny-geodns"
+}

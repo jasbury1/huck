@@ -25,8 +25,6 @@ import Foundation
 ///   fresh walk from the newest page. Scores are worth showing because they
 ///   move, and recent comments, which move most, are all on the first page.
 actor CommentScoreCache {
-    static let shared = CommentScoreCache()
-
     private let timeToLive: TimeInterval = 2 * 60
 
     /// How far back a walk goes before older comments are asked for one by
@@ -62,7 +60,11 @@ actor CommentScoreCache {
     /// Bounds concurrent fallbacks. LIFO, so rows on screen go first.
     private let gate = AsyncSemaphore(value: 2)
 
-    private init() {}
+    private let newsYC: NewsYCService
+
+    init(newsYC: NewsYCService) {
+        self.newsYC = newsYC
+    }
 
     /// The score of one of `username`'s comments, from memory when fresh,
     /// otherwise from `/threads`, otherwise from the comment's own page.
@@ -123,7 +125,7 @@ actor CommentScoreCache {
     /// Reads the walk's next page and keeps every score on it.
     private func readNextPage() async {
         guard var current = walk else { return }
-        let page = await NewsYCService.threadScores(username: current.username, next: current.next)
+        let page = await newsYC.threadScores(username: current.username, next: current.next)
         guard let page else {
             current.isFinished = true
             walk = current
@@ -147,9 +149,10 @@ actor CommentScoreCache {
     private func fetchItemScore(_ id: Int) async -> Int? {
         if let existing = itemFetches[id] { return await existing.value }
         let gate = gate
+        let newsYC = newsYC
         let task = Task {
             await gate.wait()
-            let score = await NewsYCService.commentScore(id: id)
+            let score = await newsYC.commentScore(id: id)
             await gate.signal()
             return score
         }

@@ -1,0 +1,11 @@
+{
+  "by" : "schille",
+  "descendants" : 0,
+  "id" : 50393896,
+  "kids" : [ 50393961 ],
+  "score" : 2,
+  "time" : 1793980351,
+  "title" : "Show HN: Bot scans DDoS your Django app? Hurricane 2.0 (now Rust-powered)",
+  "type" : "story",
+  "url" : "https://django-hurricane.io"
+}

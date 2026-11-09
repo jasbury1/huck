@@ -1,0 +1,11 @@
+{
+  "by" : "user052919",
+  "descendants" : 163,
+  "id" : 50352757,
+  "kids" : [ 50354985, 50356642, 50355424, 50353398, 50354180, 50354980, 50357332, 50356234, 50356765, 50354707, 50353665, 50353526, 50390334, 50353588, 50356664, 50355800, 50365114, 50355111, 50355466, 50354766, 50356785, 50356997, 50379058, 50354200, 50356729, 50363852, 50356388, 50355901, 50355088, 50357594, 50353296, 50353624, 50361564, 50360056, 50354311, 50358038, 50360998, 50357696, 50361673, 50355777, 50355097, 50353917, 50354600, 50408120, 50354481, 50363624, 50354523, 50365231, 50361675, 50364362, 50354172, 50368200, 50355067, 50353934, 50354719, 50354592, 50353981, 50355955, 50353408, 50354912, 50354271 ],
+  "score" : 533,
+  "text" : "My company is pretty paranoid about leaking IP to the frontier labs through prompts, so we&#x27;ve all been diligent about disabling data sharing in Codex&#x2F;Claude Code&#x2F;etc. But yesterday my coworkers and I noticed that the setting had been silently reenabled in Codex. None of us knowingly opted back in.<p>You can check your settings here: https:&#x2F;&#x2F;chatgpt.com&#x2F;settings&#x2F;data-controls. Look for &quot;Improve the model for everyone&quot;.<p>Curious if this is an isolated issue or something more widespread.<p>EDIT: looks like this has been noted before https:&#x2F;&#x2F;news.ycombinator.com&#x2F;item?id=49643556<p>EDIT: apparently you can also turn off data sharing here: https:&#x2F;&#x2F;privacy.openai.com&#x2F;policies?modal=take-control",
+  "time" : 1793717621,
+  "title" : "OpenAI seems to be silently re-enabling model training on Codex chats",
+  "type" : "story"
+}

@@ -1,0 +1,9 @@
+{
+  "by" : "aleda145",
+  "id" : 50417862,
+  "kids" : [ 50418060 ],
+  "parent" : 50417407,
+  "text" : "Still working on Kavla, my open source SQL canvas <a href=\"https:&#x2F;&#x2F;github.com&#x2F;aleda145&#x2F;kavla\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;aleda145&#x2F;kavla</a><p>I&#x27;m very excited by adding interactivity. I have a new &quot;knob&quot; feature that pops out when you type {var}. It infers the column&#x27;s type and values.<p>`SELECT * FROM hn_posts WHERE score&gt;{score}` will grant you a slider that goes from 0 to 6015<p>Titanic Browser demo (no login, it&#x27;s all WASM): <a href=\"https:&#x2F;&#x2F;app.kavla.dev&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;app.kavla.dev&#x2F;</a><p>Also been working on a &quot;chat to data ingestion pipeline&quot;. Not sure where I&#x27;m going with this but I like the idea? <a href=\"https:&#x2F;&#x2F;github.com&#x2F;aleda145&#x2F;pompos\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;aleda145&#x2F;pompos</a>",
+  "time" : 1794175494,
+  "type" : "comment"
+}

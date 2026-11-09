@@ -71,14 +71,14 @@ More in [`docs/`](docs/).
 
 ```sh
 make test       # unit tests
-make test-ui    # UI tests (need network access)
+make test-ui    # UI tests (offline, over recorded fixtures)
 make lint       # SwiftFormat + SwiftLint checks, as CI runs them
 make format     # fix what can be fixed automatically
 ```
 
 ## CI and releases
 
-- **GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) lints and runs the unit tests on every pull request and on every push to `main`.
+- **GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) lints and runs the unit and UI tests on every pull request and on every push to `main`. The UI tests replay recorded responses, so CI never touches Hacker News; re-record them with `make record-fixtures`.
 - **Xcode Cloud** builds archives for TestFlight and the App Store. Its workflows are configured in App Store Connect; the repository's hook scripts are in [`ci_scripts/`](ci_scripts/). Xcode Cloud sets the build number, so bump only `MARKETING_VERSION` in `App.xcconfig` for a release.
 
 ## License

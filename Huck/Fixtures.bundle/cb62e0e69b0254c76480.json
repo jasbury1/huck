@@ -1,0 +1,9 @@
+{
+  "by" : "OneManHorde",
+  "id" : 50418525,
+  "kids" : [ 50418559 ],
+  "parent" : 50417407,
+  "text" : "Teaching myself how to build a Spiking Graph Neural Network in Zig, to run on my Brainchip Akida AKD1500 neuromorphic accelerators (and Efinix Titanium Ti60 FPGAs).<p>Good times, but lots of foundational math I hadn&#x27;t previously been exposed to.<p>Some reading material if anyone else is interested in that:<p>Spiking Graph Convolutional Networks (2022): <a href=\"https:&#x2F;&#x2F;doi.org&#x2F;10.24963&#x2F;ijcai.2022&#x2F;338\" rel=\"nofollow\">https:&#x2F;&#x2F;doi.org&#x2F;10.24963&#x2F;ijcai.2022&#x2F;338</a><p>A Tutorial on Spectral Clustering (2007): <a href=\"https:&#x2F;&#x2F;doi.org&#x2F;10.1007&#x2F;s11222-007-9033-z\" rel=\"nofollow\">https:&#x2F;&#x2F;doi.org&#x2F;10.1007&#x2F;s11222-007-9033-z</a><p>Semi-Supervised Clustering with Graph Convolutional Networks (2017): <a href=\"https:&#x2F;&#x2F;arxiv.org&#x2F;abs&#x2F;1609.02907\" rel=\"nofollow\">https:&#x2F;&#x2F;arxiv.org&#x2F;abs&#x2F;1609.02907</a><p>Spectral and Algebraic Graph Theory (2025, draft book): <a href=\"http:&#x2F;&#x2F;cs-www.cs.yale.edu&#x2F;homes&#x2F;spielman&#x2F;sagt&#x2F;sagt.pdf\" rel=\"nofollow\">http:&#x2F;&#x2F;cs-www.cs.yale.edu&#x2F;homes&#x2F;spielman&#x2F;sagt&#x2F;sagt.pdf</a>",
+  "time" : 1794179069,
+  "type" : "comment"
+}

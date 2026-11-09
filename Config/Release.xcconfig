@@ -8,4 +8,8 @@
 
 #include "App.xcconfig"
 
+// The recorded API responses UI tests replay (see LaunchConfiguration) are a
+// debug-build tool, and never ship.
+EXCLUDED_SOURCE_FILE_NAMES = $(inherited) Fixtures.bundle
+
 #include? "Local.xcconfig"

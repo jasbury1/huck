@@ -1,0 +1,11 @@
+{
+  "by" : "gsemet",
+  "descendants" : 0,
+  "id" : 50382105,
+  "score" : 3,
+  "text" : "A WYSIWYG rich Markdown editor for VS Code.<p>I use agent a lot for planning, and there is not so much real beautiful and confortable Markdown editor. It gets better but i needed several special things: first-class frontmatter with validation, Sphinx MyST edition, in-cell table edition and do not kill my raw text formatting.<p>I hope the rendering is extra-clean, allowing to edit a paragraph or a admonition. It supports mermaid, plantuml, vega&#x2F;vega-lite graph without extern dependencies. It also supports all Sphinx MyST and GitHub Flavored Markdown. I also like the custom &quot;radio choice&quot; similar to GFM tick, really useful for decision making directly in Markdown.\nI use it as an active working document with my agents and later as a rich collaborative surface in small team. HTML artifacts are amazing with coding agents, but heavy, cannot be displayed as it in Gitlab&#x2F;Github file, and cannot easily keep states such as choices or micro edition.<p>It is also used to be a great frontmatter editor OKF Schema that gives a JSONSchema to a frontmatter for OpenKnownledge Format document.",
+  "time" : 1793901226,
+  "title" : "Show HN: Markdown OKF-Schema Studio for VS Code",
+  "type" : "story",
+  "url" : "https://github.com/gsemet/markdown-okf-schema-studio"
+}

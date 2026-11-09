@@ -1,0 +1,9 @@
+{
+  "by" : "Benjamin_Dobell",
+  "id" : 50417795,
+  "kids" : [ 50418440 ],
+  "parent" : 50417407,
+  "text" : "A complete implementation of React in Godot:<p><a href=\"https:&#x2F;&#x2F;react.breaka.club\" rel=\"nofollow\">https:&#x2F;&#x2F;react.breaka.club</a><p>Because I can. Well, let&#x27;s be honest: because LLMs can. There&#x27;s nothing particularly novel about this. It&#x27;s just wiring a bunch of libraries together. Certainly would have been time consuming, but not difficult, strictly speaking, since all the heavy lifting is done by the libraries utilised.<p>Likely going to migrate <a href=\"https:&#x2F;&#x2F;breaka.club\" rel=\"nofollow\">https:&#x2F;&#x2F;breaka.club</a> HUDs and editor UI to React since Godot control nodes are by no means impossible to work with, but somewhat cumbersome.<p>EDIT: Oh, will be open source like a lot of Breaka Club&#x27;s other libraries very soon. Still optimising.",
+  "time" : 1794175159,
+  "type" : "comment"
+}

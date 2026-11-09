@@ -1,0 +1,11 @@
+{
+  "by" : "ranwhatcom",
+  "descendants" : 0,
+  "id" : 50386034,
+  "score" : 2,
+  "text" : "I run a couple of VPSes, some are for clients and some for my own internal projects. Now the problem is when a big vulnerability&#x2F;exploit happens in a service or an app i use, I need to lose about a day of work to patch all of the servers, and it&#x27;s always a mess, so I built stenvakt.<p>Stenvakt is a mac app that connects to your servers over SSH, it&#x27;s used for updating, patching, hardening, watching and reviewing servers. Database backups, shutting down ports, coolify integration.<p>It&#x27;s also very handy when setting up a fresh new server. I also loved the idea of getting a notification either to your email or inside the stenvakt app.<p>Safe mode stops you accidentally locking yourself out of the server, it automatically rolls back to the previous saved settings in case you make a big mistake. Before a big firewall or SSH change, the server saves the files that could lock you out and starts a rollback timer on the server itself.<p>Limits: macOS only for now (Apple silicon, macOS 14+). Tested on Ubuntu and Debian. It’s not notarized yet, so macOS asks you to click “Open Anyway” once. The app is closed source, but everything it runs on the server is plain bash you can read before it runs.<p>Free covers everything you need to secure a server yourself, on any number of servers. Pro (€4.99&#x2F;month) does the repetitive part for you: watching logs and patching all your servers at once.<p>Let me know what you think. \nBest,\nMatija",
+  "time" : 1793921177,
+  "title" : "Show HN: Stenvakt, a server hardening and patching tool",
+  "type" : "story",
+  "url" : "https://stenvakt.com/"
+}

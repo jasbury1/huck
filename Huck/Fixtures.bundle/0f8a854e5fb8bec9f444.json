@@ -1,0 +1,8 @@
+{
+  "by" : "dawidp",
+  "id" : 50391325,
+  "parent" : 50390436,
+  "text" : "Software is complicated by nature. It&#x27;s our job to make it easy for the user.<p>Take a look at FFmpeg as an example. It&#x27;s a complex tool that can do most things audio&#x2F;video. A power user can do magical things, but they still provide simple commands for the most basic use-cases like conversion or trimming.<p><a href=\"https:&#x2F;&#x2F;www.clipcat.com&#x2F;blog&#x2F;how-to-use-ffmpeg-a-beginners-guide-for-developers-in-2025&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;www.clipcat.com&#x2F;blog&#x2F;how-to-use-ffmpeg-a-beginners-g...</a><p>1. Provide sensible defaults\n2. Study user journeys and write simple manuals for them. \n3. Ask friends or internet communities for feedback.<p>Don&#x27;t get discouraged, you can do it!",
+  "time" : 1793966345,
+  "type" : "comment"
+}

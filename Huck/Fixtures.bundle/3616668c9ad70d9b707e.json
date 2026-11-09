@@ -1,0 +1,8 @@
+{
+  "by" : "properbrew",
+  "id" : 50418031,
+  "parent" : 50417407,
+  "text" : "Still cracking on with <a href=\"https:&#x2F;&#x2F;whistle-enterprise.com\" rel=\"nofollow\">https:&#x2F;&#x2F;whistle-enterprise.com</a> and making improvements to the document generation model. I&#x27;m ditching my old trusty Phi4 model and testing out some other small models to fine tune, something about Phi4 just seemed to work quite well for what it was so it&#x27;s a hard contender to beat for midrange laptop CPU inference at a decent rate and quality.",
+  "time" : 1794176467,
+  "type" : "comment"
+}

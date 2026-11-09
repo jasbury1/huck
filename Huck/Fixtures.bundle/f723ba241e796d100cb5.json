@@ -1,0 +1,11 @@
+{
+  "by" : "DAlperin",
+  "descendants" : 73,
+  "id" : 50397099,
+  "kids" : [ 50400381, 50400695, 50403377, 50401543, 50412060, 50400136, 50401432, 50402893, 50401625, 50401324, 50401930, 50401109, 50400590, 50401485, 50405426, 50407866, 50403220, 50400097, 50404253 ],
+  "score" : 235,
+  "time" : 1793993061,
+  "title" : "GitHub's new Git storage architecture",
+  "type" : "story",
+  "url" : "https://github.blog/engineering/architecture-optimization/inside-githubs-new-git-storage-architecture/"
+}

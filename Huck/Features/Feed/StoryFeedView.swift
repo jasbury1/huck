@@ -10,6 +10,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct StoryFeedView: View {
+    @Environment(\.hackerNews) private var api
     @State var feedKind: FeedKind
     @State private var feed: StoryFeed
 
@@ -63,7 +64,7 @@ struct StoryFeedView: View {
                     // As each row appears, warm the details and thumbnails of the
                     // rows just below it so they are ready before they scroll in.
                     .onAppear {
-                        Task { await feed.prefetchAhead(after: story.id) }
+                        Task { await feed.prefetchAhead(after: story.id, using: api) }
                     }
                     // Trailing swipe hides or marks the story read; a full swipe
                     // hides it. Hide is listed first so it's the full-swipe
@@ -183,7 +184,7 @@ struct StoryFeedView: View {
         // the Search tab's query of all of Hacker News. Re-run per keystroke;
         // after the first, matching is local and instant.
         .task(id: searchText) {
-            await feed.search(searchText)
+            await feed.search(searchText, using: api)
         }
         // Pull-to-refresh re-fetches the current feed kind's story ids, and takes the
         // opportunity to reconcile upvote/favorite state so the arrows and hearts
@@ -200,7 +201,7 @@ struct StoryFeedView: View {
             guard !hasLoaded else { return }
             hasLoaded = true
             applyFilters()
-            await feed.loadMore()
+            await feed.loadMore(using: api)
         }
         .onChange(of: feedKind) {
             // A real kind change swaps in a fresh feed (a different id source)
@@ -209,8 +210,8 @@ struct StoryFeedView: View {
             applyFilters()
             // Carries an in-progress search over to the new kind's stories.
             Task {
-                await feed.search(searchText)
-                await feed.loadMore()
+                await feed.search(searchText, using: api)
+                await feed.loadMore(using: api)
             }
         }
         .onChange(of: filters) {
@@ -268,8 +269,8 @@ struct StoryFeedView: View {
     /// so opening it is instant; a pull is an explicit ask for the current
     /// ranking, so it fetches a fresh list first, which the reload then reads.
     private func refreshFeed() async {
-        _ = await HackerNewsAPI.refreshStoryIds(kind: feedKind)
-        await feed.reload()
+        _ = await api.refreshStoryIds(kind: feedKind)
+        await feed.reload(using: api)
         // A refresh is when stories read since the last one drop out.
         withAnimation { applyFilters() }
     }

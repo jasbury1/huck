@@ -1,0 +1,11 @@
+{
+  "by" : "zapt02",
+  "descendants" : 3,
+  "id" : 50400576,
+  "kids" : [ 50404246, 50402392, 50401008 ],
+  "score" : 22,
+  "time" : 1794013270,
+  "title" : "Implementing GPT-2 in CSS",
+  "type" : "story",
+  "url" : "https://shubhampatil.dev/blog/gpt2-css"
+}

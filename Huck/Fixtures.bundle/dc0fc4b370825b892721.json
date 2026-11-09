@@ -1,0 +1,8 @@
+{
+  "by" : "tasoeur",
+  "id" : 50418929,
+  "parent" : 50417407,
+  "text" : "For Halloween I made a VR survival horror game for meta quest 3&#x2F;3s.<p>- <a href=\"https:&#x2F;&#x2F;sxp.studio&#x2F;aftercorp\" rel=\"nofollow\">https:&#x2F;&#x2F;sxp.studio&#x2F;aftercorp</a><p>The cool thing about that game is that it uses a realtime environment mesh reconstruction algorithm that allows me to create an approximation of the world 3D geometry and project a dummy “flashlight” with hand tracking. I think I’ve only seen one other game do that technique on quest (some laser tag game).<p>It runs at 60fps with a tight GPU budget. Consequently it’s not the most beautiful game,  but it’s actually pretty fun, immersive and can scale to all sorts of environments.\nI’ll be porting it to iOS next (handheld AR style).",
+  "time" : 1794181133,
+  "type" : "comment"
+}

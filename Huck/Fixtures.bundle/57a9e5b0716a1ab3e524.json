@@ -1,0 +1,11 @@
+{
+  "by" : "linsomniac",
+  "descendants" : 139,
+  "id" : 50393105,
+  "kids" : [ 50394421, 50395062, 50395394, 50395745, 50393489, 50402903, 50394372, 50394235, 50395886, 50393755, 50393926, 50399741, 50402198, 50393671, 50395203, 50394594, 50406887, 50396196, 50395456, 50403244, 50397091, 50398807, 50402649, 50393495, 50394724 ],
+  "score" : 217,
+  "text" : "Ubuntu has CVE-2026-98432 marked as a 9.8, but yet it&#x27;s coming up on a week with no update to fix it.  It&#x27;s still marked as &quot;work in progress&quot; (though at least now they&#x27;ve listed a mitigation):<p>https:&#x2F;&#x2F;ubuntu.com&#x2F;security&#x2F;CVE-2026-98432<p>I&#x27;ve had mitigations in place for a week, but this response is really shaking my confidence in Ubuntu.  I&#x27;m just trying to understand what is going on with Ubuntu.  Do they have too many kernels (that page is loooong), do they not have enough automation in the build&#x2F;test pipeline, are their engineers overwhelmed?<p>We are moving into a world where there are going to be vastly more security issues; if you can&#x27;t keep up now, where are you going to be in the next 6 months?<p>For a long time keeping on top of OS updates has been a huge part of keeping the attackers at bay.    However, the world is changing.",
+  "time" : 1793977113,
+  "title" : "Ask HN: What in the world is taking Ubuntu so long?",
+  "type" : "story"
+}

@@ -13,6 +13,7 @@ import SwiftUI
 /// a `List`) so it drops into custom scroll containers such as `UserView`'s
 /// collapsing-header pager.
 struct StoryList: View {
+    @Environment(\.hackerNews) private var api
     /// The feed to render. Owned (as `@State`) by the parent; read here so
     /// SwiftUI observes its `stories`/`hasMore` and refreshes as pages arrive.
     let feed: StoryFeed
@@ -34,7 +35,7 @@ struct StoryList: View {
                             .padding(.vertical, 8)
                             // Warm the window of stories below this row before they scroll in.
                             .onAppear {
-                                Task { await feed.prefetchAhead(after: story.id) }
+                                Task { await feed.prefetchAhead(after: story.id, using: api) }
                             }
                         Divider()
                     }
@@ -47,7 +48,7 @@ struct StoryList: View {
                         .padding()
                         .frame(maxWidth: .infinity)
                         .onAppear {
-                            Task { await feed.loadMore() }
+                            Task { await feed.loadMore(using: api) }
                         }
                 }
             }

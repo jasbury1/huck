@@ -53,8 +53,12 @@ class InteractionStore {
     private var upvotedWalk = ListWalk()
     private var upvotedCommentsWalk = ListWalk()
 
-    init(session: UserSession) {
+    /// Where votes, favorites and the reader's lists are sent and read.
+    private let api: any HackerNewsService
+
+    init(session: UserSession, api: any HackerNewsService = HackerNewsAPI.live) {
         self.session = session
+        self.api = api
         loadForCurrentUser()
     }
 
@@ -99,9 +103,9 @@ class InteractionStore {
 
         do {
             if wasUpvoted {
-                try await HackerNewsAPI.unvoteStory(id: id)
+                try await api.unvoteStory(id: id)
             } else {
-                try await HackerNewsAPI.upvoteStory(id: id)
+                try await api.upvoteStory(id: id)
             }
             persist()
         } catch {
@@ -127,7 +131,7 @@ class InteractionStore {
     /// votes. In practice `username` is always the signed-in user, since Hacker
     /// News shows `/upvoted` to no one else.
     func likedStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
-        guard let result = await HackerNewsAPI.getLikedStories(username: username, page: page) else {
+        guard let result = await api.getLikedStories(username: username, page: page) else {
             return ([], false)
         }
         if username == self.username {
@@ -158,9 +162,9 @@ class InteractionStore {
 
         do {
             if wasUpvoted {
-                try await HackerNewsAPI.unvoteComment(id: id)
+                try await api.unvoteComment(id: id)
             } else {
-                try await HackerNewsAPI.upvoteComment(id: id)
+                try await api.upvoteComment(id: id)
             }
             persist()
         } catch {
@@ -177,7 +181,7 @@ class InteractionStore {
     /// Hacker News shows the list to no one but its owner, so in practice
     /// `username` is always the signed-in user.
     func likedComments(username: String, page: Int = 0) async -> (comments: [UserComment], hasMore: Bool) {
-        guard let result = await HackerNewsAPI.getLikedComments(username: username, page: page) else {
+        guard let result = await api.getLikedComments(username: username, page: page) else {
             return ([], false)
         }
         if username == self.username {
@@ -232,9 +236,9 @@ class InteractionStore {
 
         do {
             if wasFavorited {
-                try await HackerNewsAPI.unfavoriteStory(id: id)
+                try await api.unfavoriteStory(id: id)
             } else {
-                try await HackerNewsAPI.favoriteStory(id: id)
+                try await api.favoriteStory(id: id)
             }
             persist()
         } catch {
@@ -251,7 +255,7 @@ class InteractionStore {
     /// user's favorites are returned untouched: they say nothing about what *we*
     /// have favorited.
     func favoriteStories(username: String, page: Int = 0) async -> (ids: [Int], hasMore: Bool) {
-        guard let result = await HackerNewsAPI.getFavoriteStories(username: username, page: page) else {
+        guard let result = await api.getFavoriteStories(username: username, page: page) else {
             return ([], false)
         }
         if username == self.username {

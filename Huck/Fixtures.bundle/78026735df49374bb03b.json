@@ -1,0 +1,11 @@
+{
+  "by" : "pg",
+  "descendants" : 134,
+  "id" : 1861577,
+  "kids" : [ 1861776, 1861647, 1861660, 1861664, 1861690, 1862575, 1861849, 1861722, 1862520, 1861695, 1861869, 1864163, 1863527, 1863286, 1861673, 1862030, 1863321, 1861895, 1862513, 1863334, 1862488, 1862421, 1862083, 1863481, 1861680, 1864940, 1861962, 1863390, 1861674, 1861697, 1862223, 1863707, 1861727, 1862815, 1861810, 1861997, 1861760, 1862112, 1863194, 1861723, 1863021, 1861661, 1862014, 1861763, 1861709, 1863004, 1863863, 1861918 ],
+  "score" : 224,
+  "text" : "\"Rate My Startup\" posts have increased dramatically in the\nlast couple months, to the point where spammers started to\npost links with \"Rate My Startup\" prepended.  Obviously we \ncan't just allow any newly-created account to post a link\nto any site, no matter how offtopic it would otherwise be,\nwith the claim that it's their startup (or weekend project,\nor whatever).  And yet I would not want to ban RMS             \nposts entirely.  We need some way to separate legit ones,\nand it seems like the simplest policy is to allow them \nfrom established accounts but not newly created ones.<p>I'd been planning to consider ways to embody this in the software, maybe with a new type of item that (like polls) had a karma threshold, but I've been postponing dealing\nwith it till I was done reading YC applications.  In the meantime\nfor the past several weeks I've been killing RMS posts that\nweren't from established accounts.<p>I really need to get back to reviewing applications, since today\nis the last day.  In a couple days I'll revisit the matter.",
+  "time" : 1288721444,
+  "title" : "\"Rate My Startup\" Post Policy",
+  "type" : "story"
+}

@@ -1,0 +1,8 @@
+{
+  "by" : "2001zhaozhao",
+  "id" : 50418451,
+  "parent" : 50417938,
+  "text" : "This is super cool, I&#x27;ve been thinking in this direction as well.<p>The codebase memory knowledge graph should be maintained alongside the codebase whenever possible, which basically means checking the graph into the repo alongside the code, or some other architecture that has an equivalent effect. But then it complicates the design of the retrieval indexing; I think your SQLite rebuild idea might work for that though.<p>I have a question for your design: since your knowledge graph is checked into Git and therefore Git worktrees should already isolate them and resolve conflicts between branches, why did you include the section about concurrent agents as well? Is that for maintaining the SQLite index which is not checked in?",
+  "time" : 1794178745,
+  "type" : "comment"
+}

@@ -1,0 +1,8 @@
+{
+  "by" : "Namerek",
+  "id" : 50333273,
+  "parent" : 50417407,
+  "text" : "For now Im working on an agent-orchestration application that is taking tickets from a tracker and giving them to an Agent. It&#x27;s called Even Keel.<p>The main feature is, that I can use different subscriptions&#x2F;API keys (Claude and Codex - v0.1.4) and trackers (GitHub, Linear and Huly - v0.1.4) to make Even Keel start an agent for every single issue, task by task, one at a time per folder. There is also a parallel feature, so I can run more than 1 project at a time.<p>Once upon a time, when codex agent was integrated into the app, I wrote a ticket to make codex his own hook. It reused a hook that blocked its own git merge, if tests did not pass. I started calling it &quot;A new agent writes its own cage&quot;... Right after, it turned out it doesn&#x27;t listen to the hook and it fixed it<p>Version 0.1.4 is already shipped, but v0.2 is coming soon with more supported trackers, agents and new features.<p><a href=\"https:&#x2F;&#x2F;github.com&#x2F;NamerekT&#x2F;even-keel\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;NamerekT&#x2F;even-keel</a>",
+  "time" : 1793595124,
+  "type" : "comment"
+}

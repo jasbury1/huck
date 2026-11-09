@@ -1,0 +1,9 @@
+{
+  "by" : "gabriel666smith",
+  "id" : 50389922,
+  "kids" : [ 50418177, 50390391 ],
+  "parent" : 50417407,
+  "text" : "A suite of high-dopamine games which use smart exercise bikes as the control interface.<p>When playing Zwift, Rouvy, etc, I find that I get too competitive and ruin longer workouts by trying to keep up with or sprint past people who are much faster than me over long distances.<p>This is bad for building stamina and endurance, but I get bored, and it&#x27;s hard to fight boredom and physical strain both at once.<p>I do not get bored sitting in front of Balatro, Raccoin, Tetris - anything with bright colours and satisfying noises and combos.<p>The first finished prototype game is very simple: you sort coloured marbles. Higher watt output from the bike means marbles are blown, by wind, upwards as they roll across the screen. Lower watt output means they fall. Steady watt output means they move horizontally. Marble goes into correct hole -&gt; satisfying noise. It rewards steady watt output over time, with minor adjustments, which is what I&#x27;m trying to work on right now.<p>I was pretty amazed by how engaging I found it (total iPad baby brain). The miles really fly by - I get tired before I get bored.<p>I think that next I&#x27;ll either do a tower defence game, or a less-dopamine-rewarding game in the style of Kerbal Space Program. Taking your actual weight and watt output, putting a bike with wings into a physics engine, and the gameplay loop being unlocking increasingly large airplane pieces, and designing - then flying - increasingly ridiculous airborne bicycles seems like a compelling idea, though less good for fitness.<p>The control surface being so limited - essentially one measurement which can either go up or down - is a really fun constraint for creativity.",
+  "time" : 1793955917,
+  "type" : "comment"
+}

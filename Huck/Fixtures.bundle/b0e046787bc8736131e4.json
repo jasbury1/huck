@@ -1,0 +1,9 @@
+{
+  "by" : "ubicray",
+  "id" : 50330022,
+  "kids" : [ 50330074 ],
+  "parent" : 50417407,
+  "text" : "I’m building Tinta, a journal app for Android where all the AI runs on the phone. It works in airplane mode once the models are downloaded.<p>You write or dictate an entry, and a small model (LFM2.5 1.2B) asks you a question to reflect further. It turns out 1.2B models are decent at asking questions, so I leaned into that. An embedding model finds older entries about the same thing and shows bits of them under the new one.<p>Most people using it are on budget phones running the models on the CPU, where the app provides good experience.<p><a href=\"https:&#x2F;&#x2F;tinta.page\" rel=\"nofollow\">https:&#x2F;&#x2F;tinta.page</a>",
+  "time" : 1793568112,
+  "type" : "comment"
+}

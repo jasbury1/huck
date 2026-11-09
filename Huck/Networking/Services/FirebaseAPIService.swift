@@ -77,63 +77,59 @@ nonisolated struct FirebaseUserData: Codable, Sendable {
 
 // MARK: - Service
 
-enum FirebaseAPIService {
+/// The official Firebase HN API: realtime story lists, items and users.
+struct FirebaseAPIService {
     static let baseUri = "https://hacker-news.firebaseio.com"
 
-    static func getStoryIdsAsync(kind: FeedKind) async -> [Int] {
-        let url = switch kind {
-        case .topStories:
-            "\(baseUri)/v0/topstories.json?print=pretty"
-        case .bestStories:
-            "\(baseUri)/v0/beststories.json?print=pretty"
-        case .newStories:
-            "\(baseUri)/v0/newstories.json?print=pretty"
-        case .askStories:
-            "\(baseUri)/v0/askstories.json?print=pretty"
-        case .showStories:
-            "\(baseUri)/v0/showstories.json?print=pretty"
-        case .jobStories:
-            "\(baseUri)/v0/jobstories.json?print=pretty"
+    let transport: any HTTPTransport
+
+    // MARK: Requests
+
+    static func storyIdsURL(kind: FeedKind) -> String {
+        let list = switch kind {
+        case .topStories: "topstories"
+        case .bestStories: "beststories"
+        case .newStories: "newstories"
+        case .askStories: "askstories"
+        case .showStories: "showstories"
+        case .jobStories: "jobstories"
         }
-        guard let stories: [Int] = await WebService().downloadData(fromURL: url) else {
-            return []
-        }
-        return stories
+        return "\(baseUri)/v0/\(list).json?print=pretty"
     }
 
-    static func getStoryAsync(id: Int) async -> FirebaseStoryData? {
-        let url = "\(baseUri)/v0/item/\(id).json?print=pretty"
-        guard let story: FirebaseStoryData = await WebService().downloadData(fromURL: url) else {
-            return nil
-        }
-        return story
+    static func itemURL(id: Int) -> String {
+        "\(baseUri)/v0/item/\(id).json?print=pretty"
     }
 
-    static func getUserAsync(username: String) async -> FirebaseUserData? {
+    static func userURL(username: String) -> String {
         let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? username
-        let url = "\(baseUri)/v0/user/\(encoded).json?print=pretty"
-        guard let user: FirebaseUserData = await WebService().downloadData(fromURL: url) else {
-            return nil
-        }
-        return user
+        return "\(baseUri)/v0/user/\(encoded).json?print=pretty"
+    }
+
+    // MARK: Fetching
+
+    func getStoryIdsAsync(kind: FeedKind) async -> [Int] {
+        await transport.json(fromURL: Self.storyIdsURL(kind: kind)) ?? []
+    }
+
+    func getStoryAsync(id: Int) async -> FirebaseStoryData? {
+        await transport.json(fromURL: Self.itemURL(id: id))
+    }
+
+    func getUserAsync(username: String) async -> FirebaseUserData? {
+        await transport.json(fromURL: Self.userURL(username: username))
     }
 
     /// Just enough of any item to say what it is and what it hangs from.
-    static func getItemHeaderAsync(id: Int) async -> FirebaseItemHeader? {
-        let url = "\(baseUri)/v0/item/\(id).json"
-        return await WebService().downloadData(fromURL: url)
+    func getItemHeaderAsync(id: Int) async -> FirebaseItemHeader? {
+        await transport.json(fromURL: Self.itemURL(id: id))
     }
 
-    static func getPollOptionAsync(id: Int) async -> FirebasePollOptionData? {
-        let url = "\(baseUri)/v0/item/\(id).json"
-        return await WebService().downloadData(fromURL: url)
+    func getPollOptionAsync(id: Int) async -> FirebasePollOptionData? {
+        await transport.json(fromURL: Self.itemURL(id: id))
     }
 
-    static func getCommentAsync(id: Int) async -> FirebaseCommentData? {
-        let url = "\(baseUri)/v0/item/\(id).json?print=pretty"
-        guard let comment: FirebaseCommentData = await WebService().downloadData(fromURL: url) else {
-            return nil
-        }
-        return comment
+    func getCommentAsync(id: Int) async -> FirebaseCommentData? {
+        await transport.json(fromURL: Self.itemURL(id: id))
     }
 }

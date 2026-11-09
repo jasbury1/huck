@@ -33,7 +33,11 @@ final class UserSession {
         let expiration: Date
     }
 
-    init() {
+    /// Where signing in and out is sent.
+    private let api: any HackerNewsService
+
+    init(api: any HackerNewsService = HackerNewsAPI.live) {
+        self.api = api
         refresh()
     }
 
@@ -52,14 +56,14 @@ final class UserSession {
     /// Signs in and adopts the resulting session. Throws if the credentials are
     /// rejected, leaving `account` untouched.
     func signIn(username: String, password: String) async throws {
-        try await HackerNewsAPI.login(username: username, password: password)
+        try await api.login(username: username, password: password)
         refresh()
     }
 
     /// Signs out, clearing the auth cookie and the account together.
     func signOut() {
         if let username = account?.username {
-            HackerNewsAPI.logout(username: username)
+            api.logout(username: username)
         }
         account = nil
     }

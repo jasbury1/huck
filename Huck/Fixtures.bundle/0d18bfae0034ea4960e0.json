@@ -1,0 +1,8 @@
+{
+  "by" : "Escapado",
+  "id" : 50418916,
+  "parent" : 50417407,
+  "text" : "<a href=\"https:&#x2F;&#x2F;www.intelligrade.de&#x2F;en\" rel=\"nofollow\">https:&#x2F;&#x2F;www.intelligrade.de&#x2F;en</a><p>A SaaS for teachers and schools that helps them create, conduct and grade exams and tests (with safe exam browser integration to prevent cheating). Grading happens automatically for almost all segment types, for free form text we have an optional AI integration. I recently added an MCP server so teachers can bring their own LLM with fairly fine grained permission controls for it. It’s hosted in the EU with options for schools to self host with a license.<p>Currently we are in a pilot phase and are yet to make our first sale but we are reaching out to schools and gave out some pro accounts for free for people to try out and feedback has been great.<p>We are just two people, a teacher who was dissatisfied with the tooling in the field and me, who engineered a solution that we believe is genuinely better than what’s out there.",
+  "time" : 1794181049,
+  "type" : "comment"
+}

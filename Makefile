@@ -15,7 +15,7 @@ XCODEBUILD  := xcodebuild -project $(PROJECT) -scheme $(SCHEME) \
 FORMAT_LOG  := $(shell command -v xcbeautify >/dev/null 2>&1 && echo "| xcbeautify" || echo "")
 
 .DEFAULT_GOAL := help
-.PHONY: help bootstrap build test test-ui lint format clean
+.PHONY: help bootstrap build test test-ui record-fixtures lint format clean
 
 help: ## Show this list
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -29,8 +29,11 @@ build: ## Build the app for the simulator
 test: ## Run the unit tests
 	set -o pipefail && $(XCODEBUILD) test -only-testing:HuckTests CODE_SIGNING_ALLOWED=NO $(FORMAT_LOG)
 
-test-ui: ## Run the UI tests (needs network access)
+test-ui: ## Run the UI tests (offline, over the recorded fixtures)
 	set -o pipefail && $(XCODEBUILD) test -only-testing:HuckUITests CODE_SIGNING_ALLOWED=NO $(FORMAT_LOG)
+
+record-fixtures: ## Re-record the UI tests' fixtures from live Hacker News
+	@scripts/record-fixtures.sh
 
 lint: ## Check formatting and lint (what CI runs)
 	swiftformat --lint .

@@ -1,0 +1,12 @@
+{
+  "by" : "l-mdev",
+  "descendants" : 2,
+  "id" : 50380505,
+  "kids" : [ 50385198, 50397254 ],
+  "score" : 6,
+  "text" : "Hi HN! I&#x27;m Liam and I&#x27;m one of the people building Zenith.<p>Most selfhosted apps ship with the best features switched off. OAuth, email and AI need users to provide accounts, API keys, an SMTP server that whoever runs the app (on their own servers!) don&#x27;t have, so developers leave out the best features. And the people most willing to pay for an app usually can&#x27;t run a server at all.<p>Zenith is a place to ship and sell those apps with the features on from day one. We simply extend Docker compose with an x-zenith: object to get a zenith-compose.yml, and inside the block you can set up OpenAI compatible API, SMTP, Sign in with Zenith, secret management, filebrowser, etc all autoconfigured though environment variables.<p>With the cli you can do a `zenith publish` and get a spot on the marketplace and a cut of the revenue. Your users can then deploy a fully managed instance. Want to test emails with SMTP? You can spin up an identical preview deployment with `zenith up` and it just works.<p>On the roadmap is Resend and Twillio compatible email, SMS APIs, Sign in with ChatGPT, Google account connections, GPUs, sitewide notifications (mobile app maybe?)<p>We&#x27;d love to know which integration you&#x27;d want next, and see what apps you publish! Supercharge your project today!<p><pre><code>    npm install -g @zenith-hosting&#x2F;cli</code></pre>",
+  "time" : 1793893262,
+  "title" : "Show HN: Zenith, a developer platform for shipping and selling your app",
+  "type" : "story",
+  "url" : "https://zenith.hosting/developers"
+}

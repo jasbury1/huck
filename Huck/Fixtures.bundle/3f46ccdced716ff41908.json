@@ -1,0 +1,11 @@
+{
+  "by" : "rferraton",
+  "descendants" : 5,
+  "id" : 50380410,
+  "kids" : [ 50381192, 50381855, 50391846, 50380411 ],
+  "score" : 26,
+  "time" : 1793892829,
+  "title" : "Exporting tables from a SQL Server backup (.bak) to Parquet without restoring it",
+  "type" : "story",
+  "url" : "https://blog.arpe.io/fastbcp-1-6-export-sql-server-backup-to-parquet"
+}

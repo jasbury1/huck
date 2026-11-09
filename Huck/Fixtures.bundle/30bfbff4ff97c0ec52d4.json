@@ -1,0 +1,9 @@
+{
+  "by" : "hhhkm",
+  "id" : 50393956,
+  "kids" : [ 50418535 ],
+  "parent" : 50417407,
+  "text" : "For the past two years I&#x27;ve been working on my day planner app Ember.<p>Most planners treat your schedule as fixed, so the moment a meeting runs long or a task takes twice as long, the plan is wrong and you either fix it by hand or give up on it. In Ember, if you move a task or change how long it takes, everything after it shifts later, and it flows around fixed things like meetings. It&#x27;s been super helpful and I have been adding new features ever since.<p>Right now I&#x27;m working on a native Kotlin app to replace the current one is web + Capacitor and exploring full duplex voice models so I can add or move things around the app while having a conversation with an agent.<p>homepage: <a href=\"https:&#x2F;&#x2F;emberflow.space\" rel=\"nofollow\">https:&#x2F;&#x2F;emberflow.space</a>\ndemo: <a href=\"https:&#x2F;&#x2F;demo.emberflow.space&#x2F;?ref=hn\" rel=\"nofollow\">https:&#x2F;&#x2F;demo.emberflow.space&#x2F;?ref=hn</a>",
+  "time" : 1793980579,
+  "type" : "comment"
+}

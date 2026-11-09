@@ -1,0 +1,12 @@
+{
+  "by" : "pg",
+  "descendants" : 93,
+  "id" : 2862067,
+  "kids" : [ 2862946, 2862251, 2862195, 2862283, 2862156, 2862504, 2862173, 2862331, 2862144, 2862357, 2862157, 2862166, 2862242, 2862238, 2862295, 2862823, 2862282, 2864528, 2862162, 2862231, 2862820, 2862155, 2863511, 2862380, 2862375 ],
+  "score" : 428,
+  "text" : "Every cycle we warn startups not to wait\ntill 2 weeks before Demo Day to launch if they can\navoid it, because there's always a glut of startups\nlaunching then.  Every cycle they do anyway.<p>It's now 2 weeks before Demo Day, so there are \ngoing to be a lot of new startups launching in the\ncoming week.<p>Please be nice to them.  For you their launch may be\n\"yet another YC startup,\" but for each individual startup\nthis is their big moment.",
+  "time" : 1312847838,
+  "title" : "Warn HN: Lots of Launches Coming",
+  "type" : "story",
+  "url" : ""
+}

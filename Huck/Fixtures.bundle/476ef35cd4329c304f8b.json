@@ -1,0 +1,12 @@
+{
+  "by" : "agenericname",
+  "descendants" : 3,
+  "id" : 50380277,
+  "kids" : [ 50384392 ],
+  "score" : 6,
+  "text" : "Hi HN, k8sman is a native <i>lighter-weight</i> Kubernetes IDE.<p>It’s a Flutter GUI on top of a Go backend that works with client-go and your existing kubeconfig. Nothing installed in the cluster and no telemetry whatsoever.<p>Just some of the features I think are unique:<p>- Low footprint (~ 50% RSS compared to Lens on the same cluster)<p>- Inspector panels for 30+ kinds that explain what&#x27;s wrong (a crash-looping pod shows its exit code, termination message and a link to the previous instance&#x27;s logs)<p>- Customisable views with a compact query language (status!=Running restarts&gt;3 age&lt;1h), with sortable, resizable and reorderable columns that persist per kind<p>- Streamed logs with searching, pod terminals, alerts, port-forwards that persist across pod restarts, and local shell with kubectl that follows the cluster you look at<p>- Helm history with diffs between revisions, rollbacks and dry-run upgrades<p>- Read-only mode per context (enabled by default for everything that looks like prod)<p>- Integrated with Argo CD, Prometheus, Trivy image scanning (but works just as well without!)<p>Builds for macOS, Windows and Linux. Apache 2.0.",
+  "time" : 1793892351,
+  "title" : "Show HN: K8sman – A Native Kubernetes IDE",
+  "type" : "story",
+  "url" : "https://github.com/matty234/k8sman"
+}

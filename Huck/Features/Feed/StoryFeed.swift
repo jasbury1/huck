@@ -79,8 +79,9 @@ final class StoryFeed {
     /// its already-populated instance instead of flashing a placeholder.
     private var modelsByID: [Int: StoryModel] = [:]
 
-    /// Fetches one page of story ids and reports whether any remain after it.
-    typealias PageLoader = (_ page: Int) async -> (ids: [Int], hasMore: Bool)
+    /// Fetches one page of story ids, from `api` if the source is remote, and
+    /// reports whether any remain after it.
+    typealias PageLoader = (_ api: any HackerNewsService, _ page: Int) async -> (ids: [Int], hasMore: Bool)
     private let loadPage: PageLoader
 
     init(loadPage: @escaping PageLoader) {
@@ -90,31 +91,31 @@ final class StoryFeed {
     /// Loads the next page and appends it. The first call (page 0) is the initial
     /// load, so callers never need a separate first-page path. Re-entrant calls
     /// and calls past the end of the list are no-ops.
-    func loadMore() async {
+    func loadMore(using api: any HackerNewsService) async {
         guard !isLoading, hasMore else { return }
         isLoading = true
         defer { isLoading = false }
 
-        let result = await loadPage(nextPage)
+        let result = await loadPage(api, nextPage)
         stories.append(contentsOf: models(for: result.ids))
         hasMore = result.hasMore
         nextPage += 1
-        await loadMissingTitles()
+        await loadMissingTitles(using: api)
     }
 
     /// Rebuilds the feed from its first page, reusing existing model instances by
     /// id so stories still on screen don't flash placeholders. For pull-to-refresh
     /// and switching a one-page source's parameters (e.g. the main feed's kind).
-    func reload() async {
+    func reload(using api: any HackerNewsService) async {
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
 
-        let result = await loadPage(0)
+        let result = await loadPage(api, 0)
         stories = models(for: result.ids)
         hasMore = result.hasMore
         nextPage = 1
-        await loadMissingTitles()
+        await loadMissingTitles(using: api)
     }
 
     /// Pull-to-refresh for a remote source: `reload()`, except that an empty
@@ -122,26 +123,26 @@ final class StoryFeed {
     /// reports a failed fetch as an empty page, and a dropped connection
     /// shouldn't wipe what's already on screen. Local sources (collections,
     /// hidden stories) can legitimately empty out, so they keep `reload()`.
-    func refresh() async {
+    func refresh(using api: any HackerNewsService) async {
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
 
-        let result = await loadPage(0)
+        let result = await loadPage(api, 0)
         guard !result.ids.isEmpty || stories.isEmpty else { return }
         stories = models(for: result.ids)
         hasMore = result.hasMore
         nextPage = 1
-        await loadMissingTitles()
+        await loadMissingTitles(using: api)
     }
 
     /// Narrows the feed to stories whose titles contain `text`, ignoring case
     /// and diacritics; empty text shows everything again. The search runs
     /// over the stories already loaded, not the whole of Hacker News — the
     /// Search tab is for that.
-    func search(_ text: String) async {
+    func search(_ text: String, using api: any HackerNewsService) async {
         searchText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        await loadMissingTitles()
+        await loadMissingTitles(using: api)
     }
 
     private func matchesSearch(_ story: StoryModel) -> Bool {
@@ -151,13 +152,13 @@ final class StoryFeed {
 
     /// Fetches the titles a search needs that haven't been gathered yet. Only
     /// while searching, so a feed that's never searched costs nothing extra.
-    private func loadMissingTitles() async {
+    private func loadMissingTitles(using api: any HackerNewsService) async {
         guard isSearching else { return }
         let missing = stories.map(\.id).filter { titlesByID[$0] == nil }
         guard !missing.isEmpty else { return }
         titleLoadsInFlight += 1
         defer { titleLoadsInFlight -= 1 }
-        await titlesByID.merge(HackerNewsAPI.storyTitles(ids: missing)) { _, new in new }
+        await titlesByID.merge(api.storyTitles(ids: missing)) { _, new in new }
     }
 
     /// Sets the filters `visibleStories` applies, with a fresh snapshot of what
@@ -179,15 +180,15 @@ final class StoryFeed {
     /// Called as each row appears; already-cached or in-flight work is skipped,
     /// so the overlapping windows from adjacent rows stay cheap. Follows the
     /// visible stories, so the window is the rows actually about to scroll in.
-    func prefetchAhead(after id: Int) async {
+    func prefetchAhead(after id: Int, using api: any HackerNewsService) async {
         let stories = visibleStories
         guard let index = stories.firstIndex(where: { $0.id == id }) else { return }
         let start = index + 1
         guard start < stories.count else { return }
         let end = min(start + HackerNewsAPI.thumbnailPrefetchWindow, stories.count)
         let ids = stories[start..<end].map(\.id)
-        await HackerNewsAPI.prefetchStories(ids: ids)
-        await HackerNewsAPI.prefetchThumbnails(ids: ids)
+        await api.prefetchStories(ids: ids)
+        await api.prefetchThumbnails(ids: ids)
     }
 
     /// Maps ids to retained models, creating one per id that doesn't have an
@@ -208,16 +209,16 @@ extension StoryFeed {
     /// The main feed of a kind (Top/Best/New/…). Firebase returns the whole
     /// ranked list at once, so this is a single page with no more to follow.
     static func topStories(kind: FeedKind) -> StoryFeed {
-        StoryFeed { page in
+        StoryFeed { api, page in
             guard page == 0 else { return ([], false) }
-            return await (HackerNewsAPI.getStoryIds(kind: kind), false)
+            return await (api.getStoryIds(kind: kind), false)
         }
     }
 
     /// Stories submitted by a user, paged via Algolia.
     static func userStories(username: String) -> StoryFeed {
-        StoryFeed { page in
-            await HackerNewsAPI.getUserStories(username: username, page: page)
+        StoryFeed { api, page in
+            await api.getUserStories(username: username, page: page)
         }
     }
 
@@ -227,7 +228,7 @@ extension StoryFeed {
     /// otherwise rows would show an empty heart for anything favorited outside
     /// this install.
     static func favorites(username: String, in store: InteractionStore) -> StoryFeed {
-        StoryFeed { page in
+        StoryFeed { _, page in
             await store.favoriteStories(username: username, page: page)
         }
     }
@@ -237,7 +238,7 @@ extension StoryFeed {
     /// the signed-in user. Routed through `InteractionStore` so each page
     /// reconciles upvote state, as `favorites` does for hearts.
     static func liked(username: String, in store: InteractionStore) -> StoryFeed {
-        StoryFeed { page in
+        StoryFeed { _, page in
             await store.likedStories(username: username, page: page)
         }
     }
@@ -249,7 +250,7 @@ extension StoryFeed {
     /// under the same id, and since the cell's fetch `.task` is keyed to that
     /// (unchanged) identity it wouldn't re-run, leaving placeholder cards.
     static func recentlyViewed(_ store: RecentlyViewedStore) -> StoryFeed {
-        StoryFeed { page in
+        StoryFeed { _, page in
             page == 0 ? (store.viewedIDs, false) : ([], false)
         }
     }
@@ -260,7 +261,7 @@ extension StoryFeed {
     /// keep a single instance and reload it — never rebuild — to preserve its
     /// `StoryModel` cache.
     static func collection(_ collectionID: StoryCollection.ID, in store: CollectionsStore) -> StoryFeed {
-        StoryFeed { page in
+        StoryFeed { _, page in
             guard page == 0 else { return ([], false) }
             let ids = store.collections.first { $0.id == collectionID }?.storyIDs ?? []
             return (ids, false)
@@ -271,7 +272,7 @@ extension StoryFeed {
     /// of its own, and a story's id rises with its age. Like `collection`,
     /// keep a single instance and reload it as stories are unhidden.
     static func hidden(in store: InteractionStore) -> StoryFeed {
-        StoryFeed { page in
+        StoryFeed { _, page in
             page == 0 ? (store.hiddenIDs.sorted(by: >), false) : ([], false)
         }
     }
@@ -285,8 +286,8 @@ extension StoryFeed {
     /// list, and puts the per-story requests on Firebase rather than on
     /// Algolia's hourly allowance.
     static func search(_ query: SearchQuery) -> StoryFeed {
-        StoryFeed { page in
-            await HackerNewsAPI.searchStoryIds(
+        StoryFeed { api, page in
+            await api.searchStoryIds(
                 query: query.text,
                 tags: query.tags,
                 numericFilters: query.numericFilters,
@@ -298,7 +299,7 @@ extension StoryFeed {
     /// A one-page feed over a fixed list of story ids — for curated, static
     /// sources such as a Huck collection.
     static func fixed(_ ids: [Int]) -> StoryFeed {
-        StoryFeed { page in
+        StoryFeed { _, page in
             page == 0 ? (ids, false) : ([], false)
         }
     }

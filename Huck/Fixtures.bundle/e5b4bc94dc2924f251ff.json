@@ -1,0 +1,8 @@
+{
+  "by" : "abound",
+  "id" : 50418700,
+  "parent" : 50418607,
+  "text" : "Haha I&#x27;ll keep you updated! Like I mentioned in another comment, I don&#x27;t have plans to commercialize it, I&#x27;m making it just not-janky enough to not pose a safety hazard&#x2F;burn my house down.<p>In terms of design, I&#x27;m going a different route: Instead of a bunch of smaller LEDs, I&#x27;m doing 12x larger LEDs (6x 2700K, 6x 6500K). I&#x27;m using the Bridgelux V18 Thrives, so the CRI should be quite good (95+), as should the overall efficiency because I&#x27;m running them at pretty low amps relative to the spec sheet.",
+  "time" : 1794179899,
+  "type" : "comment"
+}

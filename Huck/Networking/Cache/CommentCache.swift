@@ -18,14 +18,12 @@ import Foundation
 /// `CommentCache` is an internal detail of the API layer — callers reach it only through
 /// `HackerNewsAPI.streamComments(for:)`, never directly.
 actor CommentCache {
-    static let shared = CommentCache()
-
     /// How long a cached thread is served before it's considered stale and re-fetched.
     private let timeToLive: TimeInterval = 5 * 60
 
     private let cache = LRUCache<Int, Entry>(capacity: 50)
 
-    private init() {}
+    init() {}
 
     private struct Entry {
         let thread: [Comment]

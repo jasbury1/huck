@@ -14,8 +14,6 @@ import Foundation
 /// stories age and climb, so it's kept for a while rather than rebuilt on
 /// every open.
 actor TrendingReposCache {
-    static let shared = TrendingReposCache()
-
     private let timeToLive: TimeInterval = 15 * 60
 
     /// Hits requested from Algolia. A week of GitHub stories with some
@@ -27,7 +25,13 @@ actor TrendingReposCache {
     /// The build in progress, so opens during one share its requests.
     private var inFlight: Task<[Int], Never>?
 
-    private init() {}
+    private let algolia: AlgoliaAPIService
+    private let storyLists: StoryListCache
+
+    init(algolia: AlgoliaAPIService, storyLists: StoryListCache) {
+        self.algolia = algolia
+        self.storyLists = storyLists
+    }
 
     /// The trending repos' story ids, from memory when fresh, otherwise built.
     func storyIDs() async -> [Int] {
@@ -37,7 +41,9 @@ actor TrendingReposCache {
         if let inFlight { return await inFlight.value }
 
         let limit = candidateLimit
-        let task = Task { await Self.build(candidateLimit: limit) }
+        let task = Task { [algolia, storyLists] in
+            await Self.build(candidateLimit: limit, algolia: algolia, storyLists: storyLists)
+        }
         inFlight = task
         let built = await task.value
         inFlight = nil
@@ -49,12 +55,16 @@ actor TrendingReposCache {
         return built
     }
 
-    private static func build(candidateLimit: Int) async -> [Int] {
+    private static func build(
+        candidateLimit: Int,
+        algolia: AlgoliaAPIService,
+        storyLists: StoryListCache
+    ) async -> [Int] {
         let now = Date.now
-        async let top = HackerNewsAPI.getStoryIds(kind: .topStories)
-        async let show = HackerNewsAPI.getStoryIds(kind: .showStories)
-        async let best = HackerNewsAPI.getStoryIds(kind: .bestStories)
-        async let hits = AlgoliaAPIService.getRecentLinkStories(
+        async let top = storyLists.ids(for: .topStories)
+        async let show = storyLists.ids(for: .showStories)
+        async let best = storyLists.ids(for: .bestStories)
+        async let hits = algolia.getRecentLinkStories(
             domain: "github.com",
             since: now.addingTimeInterval(-TrendingRepos.window),
             minPoints: TrendingRepos.minimumPoints,

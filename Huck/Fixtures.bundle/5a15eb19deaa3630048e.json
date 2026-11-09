@@ -1,0 +1,11 @@
+{
+  "by" : "AmSach",
+  "descendants" : 5,
+  "id" : 50410253,
+  "kids" : [ 50411486, 50411866, 50411457, 50411277, 50410661, 50410618 ],
+  "score" : 20,
+  "time" : 1794109684,
+  "title" : "Show HN: Maple – Sub-2-BPW Moe Pruning to Run Gemma 4 26B at 45 TPS on a 6GB GPU",
+  "type" : "story",
+  "url" : "https://github.com/AmSach/maple"
+}

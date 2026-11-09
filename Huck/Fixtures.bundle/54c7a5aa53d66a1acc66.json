@@ -1,0 +1,11 @@
+{
+  "by" : "wsxiaoys",
+  "descendants" : 5,
+  "id" : 50398010,
+  "kids" : [ 50401327, 50401394, 50401513, 50398053, 50398360 ],
+  "score" : 9,
+  "time" : 1793996904,
+  "title" : "SketchAgentBench – evaluate LLMs on 3D spatial reasoning",
+  "type" : "story",
+  "url" : "https://sketchagent.dev/"
+}

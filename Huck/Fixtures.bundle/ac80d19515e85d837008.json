@@ -1,0 +1,11 @@
+{
+  "by" : "ramoz",
+  "descendants" : 0,
+  "id" : 50415476,
+  "score" : 7,
+  "text" : "There is some recent discourse about what a &quot;better&quot; interface for humans managing agents looks like. Email&#x2F;inboxes have come up, and it&#x27;s reinforcing the premise of thing i&#x27;ve been building. e.g.<p><pre><code>  - https:&#x2F;&#x2F;x.com&#x2F;brian_armstrong&#x2F;status&#x2F;2119112609223827547\n  - https:&#x2F;&#x2F;x.com&#x2F;rough__sea&#x2F;status&#x2F;2119288646671155217?a=KRzp4CnuV6SijzvCTUw&amp;s=20\n</code></pre>\nThis isn&#x27;t &#x27;another ADE&#x27;, this is a side-car type of experience and it integrates nearly a year of work around annotating markdown, html, other artifacts since I requested the original Claude Code Hooks feature for better human-control integration.<p>The email inbox model is intuitive, but so could be &quot;forums&quot;, slack-like, or other surfaces feel right.<p>I do not believe we will be working in coding sessions (full transcripts) much longer. I&#x27;ve been hitting flow-state on top of a better surface layer to make decisions and annotate artifacts, view variations, review code, etc all feedback going back to the agents<p>MIT&#x2F;Apache2.0:<p><a href=\"https:&#x2F;&#x2F;github.com&#x2F;backnotprop&#x2F;plannotator\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;backnotprop&#x2F;plannotator</a>",
+  "time" : 1794160621,
+  "title" : "Show HN: Email-like interface to review, decide, and annotate agent work",
+  "type" : "story",
+  "url" : "https://plannotator.ai/inbox/"
+}

@@ -1,0 +1,9 @@
+{
+  "by" : "voatsap",
+  "id" : 50418230,
+  "kids" : [ 50418694, 50418319 ],
+  "parent" : 50417407,
+  "text" : "For the last 3 years, with a small team has been building <a href=\"https:&#x2F;&#x2F;kube-dc.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;kube-dc.com&#x2F;</a> - a platform for building enterprise grade private and public clouds. Its like VMware + OpenShift + Railway in a single product: completely multi-tenant, built entirely on the K8s API (we built over 46 custom controllers in Go, with UI in Radix UI), with managed services like nested K8s, Postgres, Kafka, Valkey, and GitHub runners. Not the charts :) real services. Also we can do vlans BGP, shared GPU and all fancy stuff required.<p>Now we don&#x27;t deploy this to private companies except some gov projects. But we are engaging existing IaaS and dedicated servers providers. Later hope we would fight with Broadcom and IBM :)<p>We previously ran a services company that built over 100 private clouds, then decided to turn that experience into a product with an aggressive level of automation to let DevOps, SRE, and platform teams hit a 1:300 ratio per developer (now dev + AI agent teams).<p>We are currently deployed across 12 datacenters and raising our seed round this month.<p>Regarding been curious, today I have created my first explainable video with Remotion +claude so if you want to see open edit results check <a href=\"https:&#x2F;&#x2F;promo-review-shalb-promo.stage.kube-dc.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;promo-review-shalb-promo.stage.kube-dc.com&#x2F;</a><p>Would be glad if you comment. Thanks!",
+  "time" : 1794177602,
+  "type" : "comment"
+}

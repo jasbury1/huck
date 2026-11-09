@@ -1,0 +1,11 @@
+{
+  "by" : "wildos",
+  "descendants" : 1,
+  "id" : 50418024,
+  "kids" : [ 50418689, 50418025 ],
+  "score" : 2,
+  "time" : 1794176427,
+  "title" : "Wild OS, a hardened Debian desktop that runs Windows apps as windows",
+  "type" : "story",
+  "url" : "https://github.com/wildorigins/wildos"
+}

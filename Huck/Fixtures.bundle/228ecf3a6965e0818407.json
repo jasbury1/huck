@@ -1,0 +1,11 @@
+{
+  "by" : "DroneLedger",
+  "descendants" : 1,
+  "id" : 50379213,
+  "kids" : [ 50379254 ],
+  "score" : 4,
+  "time" : 1793887529,
+  "title" : "Show HN: XSDHub – checks correctness of invoice format and local standards",
+  "type" : "story",
+  "url" : "https://xsdhub.com/e-invoice-validator"
+}

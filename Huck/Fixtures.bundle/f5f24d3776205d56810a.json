@@ -1,0 +1,12 @@
+{
+  "by" : "Z4cki",
+  "descendants" : 5,
+  "id" : 50380154,
+  "kids" : [ 50380248, 50380871, 50414255, 50390220, 50380206, 50384239 ],
+  "score" : 5,
+  "text" : "Hey HN! I&#x27;m an indie hacker, and one thing I&#x27;ve always struggled with is consistently creating content to promote my projects on social media. an of course i found it not fun todo as a developer.<p>Building the product is one thing. Coming up with social media ideas, creating visuals, writing captions, and doing it all consistently is another.<p>So I built Postraid to automate your social media marketing and you just need to generate your monthly batch content and connect your social media accounts and then schedule for whole months.<p>Content types are: Slideshows, Meme videos, Reaction + demo type video",
+  "time" : 1793891799,
+  "title" : "Show HN: I built Postraid to help founders create social media content with AI",
+  "type" : "story",
+  "url" : "https://www.postraid.com"
+}

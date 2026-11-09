@@ -1,0 +1,11 @@
+{
+  "by" : "mshockwave",
+  "descendants" : 13,
+  "id" : 50356722,
+  "kids" : [ 50401285, 50401483, 50401334 ],
+  "score" : 40,
+  "time" : 1793733137,
+  "title" : "Panthera: Ampere's CPU Performance Model",
+  "type" : "story",
+  "url" : "https://github.com/AmpereComputing/panthera"
+}

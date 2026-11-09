@@ -16,8 +16,6 @@ import Foundation
 /// this type only adds the story-specific fetch and the bounded-concurrency prefetch
 /// pass on top.
 actor StoryCache {
-    static let shared = StoryCache()
-
     /// How many stories are kept. Sized to hold the launch warm-up — most of
     /// the Top, Best, New and Show lists at once (see
     /// `HackerNewsAPI.warmLaunchFeeds()`) — with room to browse beyond them.
@@ -28,12 +26,16 @@ actor StoryCache {
     /// Maximum number of concurrent fetches during a prefetch pass.
     private let maxConcurrentPrefetches = 8
 
-    private init() {}
+    private let firebase: FirebaseAPIService
+
+    init(firebase: FirebaseAPIService) {
+        self.firebase = firebase
+    }
 
     /// Returns a story, fetching it if necessary. Concurrent calls for the same id
     /// share one network request.
     func story(id: Int) async -> FirebaseStoryData? {
-        await cache.value(for: id) { await FirebaseAPIService.getStoryAsync(id: id) }
+        await cache.value(for: id) { [firebase] in await firebase.getStoryAsync(id: id) }
     }
 
     /// Drops the cached story for `id`, so the next read re-fetches it.

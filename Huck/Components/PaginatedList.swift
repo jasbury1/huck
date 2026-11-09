@@ -12,6 +12,7 @@ import SwiftUI
 /// loads the next page as it comes into view. Pairs with `PaginatedFeed` to
 /// remove the duplicated list-plumbing that each activity tab used to repeat.
 struct PaginatedList<Element: Identifiable, Row: View>: View where Element.ID: Sendable {
+    @Environment(\.hackerNews) private var api
     /// The feed to render. Owned (as `@State`) by the parent; read here so
     /// SwiftUI observes its `items`/`hasMore` and refreshes as pages arrive.
     let feed: PaginatedFeed<Element>
@@ -40,7 +41,7 @@ struct PaginatedList<Element: Identifiable, Row: View>: View where Element.ID: S
                         .padding()
                         .frame(maxWidth: .infinity)
                         .onAppear {
-                            Task { await feed.loadMore() }
+                            Task { await feed.loadMore(using: api) }
                         }
                 }
             }

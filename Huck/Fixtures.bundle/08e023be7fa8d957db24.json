@@ -1,0 +1,8 @@
+{
+  "by" : "FabCH",
+  "id" : 50418660,
+  "parent" : 50417407,
+  "text" : "<a href=\"https:&#x2F;&#x2F;github.com&#x2F;ivankovic&#x2F;stop-bots\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;ivankovic&#x2F;stop-bots</a><p>Trying to keep my selfhosted server safe with a Rust TUI for managing bot blocking at the nftables and nginx level.<p>AGPL v3",
+  "time" : 1794179657,
+  "type" : "comment"
+}

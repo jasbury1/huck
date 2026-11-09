@@ -1,0 +1,11 @@
+{
+  "by" : "AlexeyBrin",
+  "descendants" : 56,
+  "id" : 50352701,
+  "kids" : [ 50405078, 50412215, 50402031, 50405281, 50401992, 50403192, 50406988, 50404681, 50403336, 50401993 ],
+  "score" : 110,
+  "time" : 1793717382,
+  "title" : "The Flash C Compiler",
+  "type" : "story",
+  "url" : "https://blog.adafruit.com/2026/10/31/flash-c-compiler/"
+}

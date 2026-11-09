@@ -1,0 +1,11 @@
+{
+  "by" : "SerCe",
+  "descendants" : 140,
+  "id" : 50397219,
+  "kids" : [ 50398529, 50397540, 50398007, 50397972, 50398287, 50398382, 50398574, 50403419, 50398378, 50397897, 50405543, 50397924, 50397846, 50397548 ],
+  "score" : 287,
+  "time" : 1793993618,
+  "title" : "Firecracker VM Escape: PwnEscape Part 2",
+  "type" : "story",
+  "url" : "https://pwn.ai/blog/firecracker-escape"
+}

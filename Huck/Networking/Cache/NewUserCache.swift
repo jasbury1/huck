@@ -19,8 +19,6 @@ import Foundation
 /// `NewUserCache` is an internal detail of the API layer — callers reach it
 /// only through `HackerNewsAPI.newUsers(inThread:)`, never directly.
 actor NewUserCache {
-    static let shared = NewUserCache()
-
     private let timeToLive: TimeInterval = 5 * 60
 
     private let cache = LRUCache<Int, Entry>(capacity: 50)
@@ -28,7 +26,11 @@ actor NewUserCache {
     /// Page reads in progress, so concurrent asks for a thread share one.
     private var inFlight: [Int: Task<Set<String>?, Never>] = [:]
 
-    private init() {}
+    private let newsYC: NewsYCService
+
+    init(newsYC: NewsYCService) {
+        self.newsYC = newsYC
+    }
 
     private struct Entry {
         let usernames: Set<String>
@@ -47,7 +49,7 @@ actor NewUserCache {
         if let existing = inFlight[id] {
             return await existing.value ?? []
         }
-        let task = Task { await NewsYCService.newUsers(onItem: id) }
+        let task = Task { [newsYC] in await newsYC.newUsers(onItem: id) }
         inFlight[id] = task
         let usernames = await task.value
         inFlight[id] = nil

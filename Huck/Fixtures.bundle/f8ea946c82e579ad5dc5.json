@@ -1,0 +1,11 @@
+{
+  "by" : "campfireshuffle",
+  "descendants" : 0,
+  "id" : 50414575,
+  "score" : 1,
+  "text" : "I am one of the (dozens!) of users of Stage Manager, but I don&#x27;t like some of its UX choices. For example, it moves newly opened windows into a new stage, which breaks my focus.<p>I spent some time trying to see if I could modify SkyLight and Window Manager to tweak Stage Manager behaviors, but this required me to turn off SIP and the experience was janky.<p>So I built a full replacement that still feels great to use. You can make as many stages as you want, reorder them, and drag windows and apps between them. IMO all the drag-and-drop behaviors work the way you’d expect.<p>Like several recent window managers, emcee hides windows in an invisible Space (I learned this from yabai), and it works with SIP on. There were lots of little edge cases to get right, e.g:<p><pre><code>  - Keeping the strip’s previews fresh without hammering Screen Recording\n  - Cmd-Tab switching to the right stage and putting focus somewhere sensible.\n  - &quot;Save dialogs&quot;, listening for app quit events, etc.\n</code></pre>\nHappy to answer any questions!",
+  "time" : 1794154879,
+  "title" : "Show HN: emcee – macOS Stage Manager alternative",
+  "type" : "story",
+  "url" : "https://fuzzyfoundry.com/emcee"
+}

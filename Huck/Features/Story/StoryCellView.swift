@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct StoryCellView: View {
+    @Environment(\.hackerNews) private var api
     /// The story's model, owned and retained by its feed (`StoryFeed`). Reading its
     /// `@Observable` properties in the body keeps the row in sync, and because
     /// the same instance survives recycling the row never resets to a placeholder.
@@ -117,6 +118,7 @@ struct StoryCellView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("story.comments")
 
                         // Timestamp
                         Image(systemName: "clock")
@@ -151,7 +153,7 @@ struct StoryCellView: View {
             }
         }
         .task {
-            await storyData.fetchData()
+            await storyData.fetchData(using: api)
         }
     }
 

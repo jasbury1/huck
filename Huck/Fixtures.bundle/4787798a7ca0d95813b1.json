@@ -1,0 +1,11 @@
+{
+  "by" : "gb2d_hn",
+  "descendants" : 0,
+  "id" : 50384357,
+  "score" : 3,
+  "text" : "EtherPK (a markdown &#x2F; wikilink based notes app) tasks are plain markdown, but the EtherPK client has built powerful functionality on top of markdown tasks, integrating a Kanban board and MCP server to allow you to manage your work in your notes and easily hand off with instruction and full task context to your AI Agent (e.g. Claude Code).<p>A task in is a markdown checkbox line in your notes, written in any document, wherever and whenever the task or idea comes up. If you nest it under another task and it becomes that task&#x27;s subtask. A Kanban board shows those lines as cards and keeps no copy of them, so moving a card edits the line. The task editor is a form over the same text, so a picture, a comment or a subtask you add there ends up as text in the note.<p>Full post at: <a href=\"https:&#x2F;&#x2F;blog.etherpk.com&#x2F;hand-your-markdown-tasks-to-claude-code-from-a-kanban-board\" rel=\"nofollow\">https:&#x2F;&#x2F;blog.etherpk.com&#x2F;hand-your-markdown-tasks-to-claude-...</a>",
+  "time" : 1793912174,
+  "title" : "Show HN: Hand Your Markdown Tasks to Claude Code from a Kanban Board",
+  "type" : "story",
+  "url" : "https://blog.etherpk.com/hand-your-markdown-tasks-to-claude-code-from-a-kanban-board"
+}

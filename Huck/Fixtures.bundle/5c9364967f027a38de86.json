@@ -1,0 +1,11 @@
+{
+  "by" : "frozenhd",
+  "descendants" : 8,
+  "id" : 50412766,
+  "kids" : [ 50413456, 50415121, 50412813 ],
+  "score" : 45,
+  "time" : 1794141754,
+  "title" : "RAM-Altman: a bash script that emails Sam Altman about your unused RAM",
+  "type" : "story",
+  "url" : "https://ram-altman.lol/"
+}

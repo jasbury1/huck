@@ -7,6 +7,16 @@
 
 import Foundation
 
+/// Why a request's response couldn't be used, below the level of what the
+/// app tells the reader.
+nonisolated enum NetworkError: Error {
+    case badUrl
+    case invalidRequest
+    case badResponse
+    case badStatus
+    case failedToDecodeResponse
+}
+
 public enum APIError: Error, LocalizedError {
     case loginFailed
     /// Hacker News answered the login with its reCAPTCHA challenge instead of

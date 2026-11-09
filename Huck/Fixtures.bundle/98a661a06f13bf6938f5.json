@@ -1,0 +1,11 @@
+{
+  "by" : "atan2",
+  "descendants" : 9,
+  "id" : 50353814,
+  "kids" : [ 50418393, 50418640, 50418363, 50418241, 50417994, 50417876, 50418839 ],
+  "score" : 30,
+  "time" : 1793722237,
+  "title" : "The History of Djgpp (1998)",
+  "type" : "story",
+  "url" : "https://www.delorie.com/djgpp/history.html"
+}

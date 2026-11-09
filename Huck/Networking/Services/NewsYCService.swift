@@ -14,13 +14,15 @@ import Foundation
 ///
 /// Unlike the JSON services, this one scrapes HTML: HN embeds a per-user, per-item
 /// `auth` token inside the vote links on its pages, and that token is required to
-/// cast a vote. Requests are authenticated automatically because `URLSession.shared`
-/// attaches the `user` cookie we store in `HTTPCookieStorage.shared`.
+/// cast a vote. Requests are authenticated automatically because the transport's
+/// standard session attaches the `user` cookie we store in `HTTPCookieStorage.shared`.
 ///
 /// This service is an implementation detail of the API layer — callers reach it only
 /// through `HackerNewsAPI`, never directly. All HTML parsing is localized here so a
 /// markup change upstream is a one-file fix.
-enum NewsYCService {
+struct NewsYCService {
+    let transport: any HTTPTransport
+
     private static let baseUri = "https://news.ycombinator.com"
 
     /// A polite, identifiable User-Agent for our scraping requests.
@@ -37,22 +39,22 @@ enum NewsYCService {
     /// Fetches an item's page and extracts the `auth` token needed to vote on it,
     /// along with whether the current user has already upvoted it. Returns `nil`
     /// if the token can't be found (e.g. not logged in, or markup changed).
-    static func voteAuth(forItem id: Int) async -> (auth: String, alreadyUpvoted: Bool)? {
-        guard let url = URL(string: "\(baseUri)/item?id=\(id)"),
+    func voteAuth(forItem id: Int) async -> (auth: String, alreadyUpvoted: Bool)? {
+        guard let url = URL(string: "\(Self.baseUri)/item?id=\(id)"),
               let html = try? await fetchHTML(from: url) else {
             return nil
         }
         // The story's own vote anchor is `id='up_<ID>'` (or `id='un_<ID>'` once
         // voted); its href carries `auth=<TOKEN>`. Scope the match to that anchor
         // so we don't pick up a comment's token.
-        guard let auth = firstMatch(
+        guard let auth = Self.firstMatch(
             in: html,
             pattern: "id=['\"](?:up|un)_\(id)['\"][^>]*?auth=([0-9a-fA-F]+)"
         ) else {
             return nil
         }
         // When already upvoted, HN swaps the up arrow for an `un_<ID>` unvote link.
-        let alreadyUpvoted = contains(in: html, pattern: "id=['\"]un_\(id)['\"]")
+        let alreadyUpvoted = Self.contains(in: html, pattern: "id=['\"]un_\(id)['\"]")
         return (auth, alreadyUpvoted)
     }
 
@@ -63,26 +65,26 @@ enum NewsYCService {
     /// matched exactly as `voteAuth(forItem:)` matches a story's. An option
     /// missing from the result has no vote link at all — Hacker News removes
     /// them once a poll is archived. `nil` means the page couldn't be fetched.
-    static func pollVotes(pollID: Int, optionIDs: [Int]) async -> [Int: (auth: String, alreadyUpvoted: Bool)]? {
-        guard let url = URL(string: "\(baseUri)/item?id=\(pollID)"),
+    func pollVotes(pollID: Int, optionIDs: [Int]) async -> [Int: (auth: String, alreadyUpvoted: Bool)]? {
+        guard let url = URL(string: "\(Self.baseUri)/item?id=\(pollID)"),
               let html = try? await fetchHTML(from: url) else {
             return nil
         }
         var votes: [Int: (auth: String, alreadyUpvoted: Bool)] = [:]
         for id in optionIDs {
-            guard let auth = firstMatch(
+            guard let auth = Self.firstMatch(
                 in: html,
                 pattern: "id=['\"](?:up|un)_\(id)['\"][^>]*?auth=([0-9a-fA-F]+)"
             ) else { continue }
-            votes[id] = (auth, contains(in: html, pattern: "id=['\"]un_\(id)['\"]"))
+            votes[id] = (auth, Self.contains(in: html, pattern: "id=['\"]un_\(id)['\"]"))
         }
         return votes
     }
 
     /// Casts (or undoes) a vote on an item. Throws `APIError.voteFailed` on a
     /// non-success response.
-    static func castVote(id: Int, how: VoteAction, auth: String) async throws {
-        var components = URLComponents(string: "\(baseUri)/vote")!
+    func castVote(id: Int, how: VoteAction, auth: String) async throws {
+        var components = URLComponents(string: "\(Self.baseUri)/vote")!
         components.queryItems = [
             URLQueryItem(name: "id", value: String(id)),
             URLQueryItem(name: "how", value: how.rawValue),
@@ -91,10 +93,9 @@ enum NewsYCService {
         guard let url = components.url else { throw APIError.voteFailed }
 
         var request = URLRequest(url: url)
-        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        let (_, response) = try await URLSession.shared.countedData(for: request)
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+        let (_, response) = try await transport.data(for: request)
+        guard (200..<300).contains(response.statusCode) else {
             throw APIError.voteFailed
         }
     }
@@ -104,27 +105,27 @@ enum NewsYCService {
     /// Fetches an item's page and extracts the `auth` token needed to favorite it,
     /// along with whether the current user has already favorited it. Returns `nil`
     /// if the token can't be found (e.g. not logged in, or markup changed).
-    static func faveAuth(forItem id: Int) async -> (auth: String, alreadyFavorited: Bool)? {
-        guard let url = URL(string: "\(baseUri)/item?id=\(id)"),
+    func faveAuth(forItem id: Int) async -> (auth: String, alreadyFavorited: Bool)? {
+        guard let url = URL(string: "\(Self.baseUri)/item?id=\(id)"),
               let html = try? await fetchHTML(from: url) else {
             return nil
         }
         // The item's favorite link is `fave?id=<ID>&auth=<TOKEN>` (and gains `un=t`
         // once favorited). Scope to this id so we don't pick up a comment's link.
-        guard let auth = firstMatch(
+        guard let auth = Self.firstMatch(
             in: html,
             pattern: "fave\\?id=\(id)[^'\"]*?auth=([0-9a-fA-F]+)"
         ) else {
             return nil
         }
-        let alreadyFavorited = contains(in: html, pattern: "fave\\?id=\(id)[^'\"]*?un=t")
+        let alreadyFavorited = Self.contains(in: html, pattern: "fave\\?id=\(id)[^'\"]*?un=t")
         return (auth, alreadyFavorited)
     }
 
     /// Favorites (or un-favorites, when `un` is true) an item. Throws
     /// `APIError.favoriteFailed` on a non-success response.
-    static func castFave(id: Int, un: Bool, auth: String) async throws {
-        var components = URLComponents(string: "\(baseUri)/fave")!
+    func castFave(id: Int, un: Bool, auth: String) async throws {
+        var components = URLComponents(string: "\(Self.baseUri)/fave")!
         var items = [URLQueryItem(name: "id", value: String(id))]
         if un { items.append(URLQueryItem(name: "un", value: "t")) }
         items.append(URLQueryItem(name: "auth", value: auth))
@@ -132,10 +133,9 @@ enum NewsYCService {
         guard let url = components.url else { throw APIError.favoriteFailed }
 
         var request = URLRequest(url: url)
-        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        let (_, response) = try await URLSession.shared.countedData(for: request)
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+        let (_, response) = try await transport.data(for: request)
+        guard (200..<300).contains(response.statusCode) else {
             throw APIError.favoriteFailed
         }
     }
@@ -154,18 +154,18 @@ enum NewsYCService {
     /// `parentId` is the item being answered — a story for a new top-level
     /// comment, a comment for a reply — and `storyId` only decides where HN sends
     /// the browser afterwards, matching what the web form does.
-    static func commentForm(parentId: Int, storyId: Int) async -> [(name: String, value: String)]? {
+    func commentForm(parentId: Int, storyId: Int) async -> [(name: String, value: String)]? {
         // `/reply` is tried first for both cases: it serves the same form for any
         // commentable item and weighs a few hundred bytes, where a popular story's
         // `/item` page is the entire rendered thread. The item page is kept as a
         // fallback in case HN ever stops serving `/reply` for stories themselves.
         let candidates = [
-            replyURL(parentId: parentId, storyId: storyId),
-            URL(string: "\(baseUri)/item?id=\(parentId)"),
+            Self.replyURL(parentId: parentId, storyId: storyId),
+            URL(string: "\(Self.baseUri)/item?id=\(parentId)"),
         ]
         for case let url? in candidates {
             guard let html = try? await fetchHTML(from: url) else { continue }
-            let fields = hiddenFields(inFormWithAction: "comment", of: html)
+            let fields = Self.hiddenFields(inFormWithAction: "comment", of: html)
             // Confirm the form we found actually targets the item we mean to
             // answer. A logged-out page (HN serves a login wall instead) or an
             // unexpected form won't carry a matching `parent`, and posting it
@@ -180,18 +180,18 @@ enum NewsYCService {
 
     /// Posts a comment, sending the scraped form fields back alongside the text.
     /// Throws `APIError.commentFailed` if Hacker News doesn't accept it.
-    static func postComment(fields: [(name: String, value: String)], text: String) async throws {
-        guard let url = URL(string: "\(baseUri)/comment") else { throw APIError.commentFailed }
+    func postComment(fields: [(name: String, value: String)], text: String) async throws {
+        guard let url = URL(string: "\(Self.baseUri)/comment") else { throw APIError.commentFailed }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.httpBody = FormBody.encoded(fields + [(name: "text", value: text)])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
 
         let response = try await sendWrite(request)
         // HN redirects on success and re-renders the form (200) on refusal, so
-        // the status code is the whole answer — see `postingSession`.
+        // the status code is the whole answer — see `RequestKind.write`.
         guard let http = response as? HTTPURLResponse, http.statusCode == 302 else {
             throw APIError.commentFailed
         }
@@ -215,15 +215,15 @@ enum NewsYCService {
     /// `fnid` that `/r` checks, and it exists only in the page's HTML. Every
     /// hidden input is forwarded rather than naming them, so a field added or
     /// renamed upstream keeps working.
-    static func submitForm() async -> [(name: String, value: String)]? {
-        guard let url = URL(string: "\(baseUri)/submit"),
+    func submitForm() async -> [(name: String, value: String)]? {
+        guard let url = URL(string: "\(Self.baseUri)/submit"),
               let html = try? await fetchHTML(from: url) else {
             return nil
         }
         // HN has written form actions both with and without a leading slash.
         return ["r", "/r"]
             .lazy
-            .map { hiddenFields(inFormWithAction: $0, of: html) }
+            .map { Self.hiddenFields(inFormWithAction: $0, of: html) }
             .first { !$0.isEmpty }
     }
 
@@ -233,13 +233,13 @@ enum NewsYCService {
     ///
     /// Throws `APIError.notLoggedIn` if HN bounced the request to its login
     /// page, and `APIError.submitFailed` if it refused the post.
-    static func submitStory(
+    func submitStory(
         fields: [(name: String, value: String)],
         title: String,
         url: String,
         text: String
     ) async throws -> SubmitResponse {
-        guard let endpoint = URL(string: "\(baseUri)/r") else { throw APIError.submitFailed }
+        guard let endpoint = URL(string: "\(Self.baseUri)/r") else { throw APIError.submitFailed }
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
@@ -249,7 +249,7 @@ enum NewsYCService {
             (name: "text", value: text),
         ])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
 
         let response = try await sendWrite(request)
         // As with comments, an accepted POST is answered with a redirect and a
@@ -263,7 +263,7 @@ enum NewsYCService {
         if location.hasSuffix("newest") {
             return .posted
         }
-        if let id = firstMatch(in: location, pattern: "item\\?id=(\\d+)").flatMap(Int.init) {
+        if let id = Self.firstMatch(in: location, pattern: "item\\?id=(\\d+)").flatMap(Int.init) {
             return .repost(storyID: id)
         }
         if location.contains("login") {
@@ -286,14 +286,14 @@ enum NewsYCService {
     /// `points` is always null for comments). The comment's own `/item` page is
     /// read rather than its story's, which for a busy thread is the whole
     /// conversation.
-    static func commentScore(id: Int) async -> Int? {
-        guard let url = URL(string: "\(baseUri)/item?id=\(id)"),
+    func commentScore(id: Int) async -> Int? {
+        guard let url = URL(string: "\(Self.baseUri)/item?id=\(id)"),
               let html = try? await fetchHTML(from: url) else {
             return nil
         }
         // `<span class="score" id="score_<ID>">12 points</span>`, scoped to this
         // id so a reply's score on the same page can't be picked up instead.
-        return firstMatch(
+        return Self.firstMatch(
             in: html,
             pattern: "id=['\"]score_\(id)['\"][^>]*>\\s*(\\d+)\\s+points?"
         ).flatMap(Int.init)
@@ -308,11 +308,11 @@ enum NewsYCService {
     /// covers a page of them rather than one each. `oldestID` is the lowest
     /// comment id on the page (ids rise over time, so everything newer than it
     /// has been seen), and `next` is the cursor for the page after it.
-    static func threadScores(
+    func threadScores(
         username: String,
         next: Int? = nil
     ) async -> (scores: [Int: Int], oldestID: Int?, next: Int?)? {
-        var components = URLComponents(string: "\(baseUri)/threads")
+        var components = URLComponents(string: "\(Self.baseUri)/threads")
         components?.queryItems = [URLQueryItem(name: "id", value: username)]
             + (next.map { [URLQueryItem(name: "next", value: String($0))] } ?? [])
         guard let url = components?.url,
@@ -335,15 +335,15 @@ enum NewsYCService {
         }
         // Every comment row, the reader's and the replies alike, bounds what
         // the page covers.
-        let oldestID = allMatches(
+        let oldestID = Self.allMatches(
             in: html,
             pattern: "<tr[^>]*class=['\"]athing[^'\"]*['\"][^>]*id=['\"](\\d+)['\"]"
         ).compactMap(Int.init).min()
         // The More link carries the cursor: `threads?id=<user>&next=<id>`. The
         // tag is found first, so attribute order doesn't matter.
-        let nextCursor = allTags(in: html, pattern: "<a[^>]*morelink[^>]*>")
+        let nextCursor = Self.allTags(in: html, pattern: "<a[^>]*morelink[^>]*>")
             .first
-            .flatMap { firstMatch(in: $0, pattern: "next=(\\d+)") }
+            .flatMap { Self.firstMatch(in: $0, pattern: "next=(\\d+)") }
             .flatMap(Int.init)
         return (scores, oldestID, nextCursor)
     }
@@ -360,13 +360,13 @@ enum NewsYCService {
     /// it, using HN's own rule rather than a guess at its cutoff. The colour
     /// isn't matched: the `<font>` wrapper is the marker, so a change of shade
     /// upstream doesn't break this.
-    static func newUsers(onItem id: Int) async -> Set<String>? {
-        guard let url = URL(string: "\(baseUri)/item?id=\(id)"),
+    func newUsers(onItem id: Int) async -> Set<String>? {
+        guard let url = URL(string: "\(Self.baseUri)/item?id=\(id)"),
               let html = try? await fetchHTML(from: url) else {
             return nil
         }
         // `<a href="user?id=<name>" class="hnuser"><font color="#3c963c"><name></font></a>`
-        let names = allMatches(
+        let names = Self.allMatches(
             in: html,
             pattern: "class=['\"]hnuser['\"][^>]*>\\s*<font[^>]*>([^<]+)</font>"
         )
@@ -382,8 +382,8 @@ enum NewsYCService {
     /// per-user, per-item `hmac` that `/xdelete` checks. HN serves the form only
     /// while the comment can still be deleted — to its author, within the edit
     /// window — so a missing form is the answer "not any more", not a glitch.
-    static func deleteForm(commentId: Int, storyId: Int) async -> [(name: String, value: String)]? {
-        var components = URLComponents(string: "\(baseUri)/delete-confirm")
+    func deleteForm(commentId: Int, storyId: Int) async -> [(name: String, value: String)]? {
+        var components = URLComponents(string: "\(Self.baseUri)/delete-confirm")
         components?.queryItems = [
             URLQueryItem(name: "id", value: String(commentId)),
             URLQueryItem(name: "goto", value: "item?id=\(storyId)"),
@@ -395,7 +395,7 @@ enum NewsYCService {
         // HN has written the action both with and without a leading slash.
         let fields = ["/xdelete", "xdelete"]
             .lazy
-            .map { hiddenFields(inFormWithAction: $0, of: html) }
+            .map { Self.hiddenFields(inFormWithAction: $0, of: html) }
             .first { !$0.isEmpty } ?? []
         // As with replies, confirm the form names the comment we mean, so a
         // stray form can never delete the wrong one.
@@ -407,8 +407,8 @@ enum NewsYCService {
 
     /// Deletes a comment by sending the scraped confirmation form back with its
     /// "Yes" button. Throws `APIError.deleteFailed` if HN doesn't accept it.
-    static func deleteComment(fields: [(name: String, value: String)]) async throws {
-        guard let url = URL(string: "\(baseUri)/xdelete") else { throw APIError.deleteFailed }
+    func deleteComment(fields: [(name: String, value: String)]) async throws {
+        guard let url = URL(string: "\(Self.baseUri)/xdelete") else { throw APIError.deleteFailed }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -416,7 +416,7 @@ enum NewsYCService {
         // hidden field, so it's added here.
         request.httpBody = FormBody.encoded(fields + [(name: "d", value: "Yes")])
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
 
         let response = try await sendWrite(request)
         // Like the comment form, an accepted POST is answered with a redirect.
@@ -429,7 +429,7 @@ enum NewsYCService {
     /// successful post; we never follow it, but it's part of the form HN expects
     /// back, so it's set to the thread the comment belongs to.
     private static func replyURL(parentId: Int, storyId: Int) -> URL? {
-        var components = URLComponents(string: "\(baseUri)/reply")
+        var components = URLComponents(string: "\(Self.baseUri)/reply")
         components?.queryItems = [
             URLQueryItem(name: "id", value: String(parentId)),
             URLQueryItem(name: "goto", value: "item?id=\(storyId)"),
@@ -445,9 +445,9 @@ enum NewsYCService {
     /// redirect to `newest` for an accepted write, and a 200 — HN re-rendering
     /// the form — for a refused one. A short pause stands in for the network,
     /// so in-flight states still show.
-    private static func sendWrite(_ request: URLRequest) async throws -> URLResponse {
+    private func sendWrite(_ request: URLRequest) async throws -> URLResponse {
         guard PostingMode.isDryRun else {
-            return try await postingSession.countedData(for: request).1
+            return try await transport.data(for: request, kind: .write, endpoint: nil).1
         }
 
         let accepts = !PostingMode.simulatesFailure
@@ -466,31 +466,19 @@ enum NewsYCService {
         return response
     }
 
-    /// A session that keeps our `user` cookie — so HN knows who is writing — but
-    /// does not follow redirects, because here the redirect *is* the result: HN
-    /// answers an accepted form POST with a 302 and a refused one with a 200 that
-    /// re-renders the form. Following the redirect would collapse both into a 200
-    /// and leave us unable to tell a posted comment from a dropped one.
-    private static let postingSession: URLSession = {
-        let configuration = URLSessionConfiguration.default
-        configuration.httpCookieStorage = .shared
-        configuration.httpShouldSetCookies = true
-        return URLSession(configuration: configuration, delegate: RedirectBlocker(), delegateQueue: nil)
-    }()
-
     // MARK: - Story-list history
 
     /// Scrapes one page of the user's `/upvoted` history (private to its owner),
     /// returning the story ids on that page and whether a further page exists,
     /// or `nil` if the page couldn't be fetched.
-    static func upvotedStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool)? {
+    func upvotedStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool)? {
         await storyListPage(path: "upvoted", username: username, page: page)
     }
 
     /// Scrapes one page of the user's public `/favorites`, returning the story ids
     /// on that page and whether a further page exists, or `nil` if the page
     /// couldn't be fetched.
-    static func favoriteStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool)? {
+    func favoriteStoryIds(username: String, page: Int = 1) async -> (ids: [Int], hasMore: Bool)? {
         await storyListPage(path: "favorites", username: username, page: page)
     }
 
@@ -499,12 +487,18 @@ enum NewsYCService {
     /// fails, which callers must distinguish from an empty final page: a caller
     /// that treats a failure as "the list ends here" would conclude the user has
     /// no further favorites and wrongly discard them.
-    private static func storyListPage(path: String, username: String, page: Int) async -> (ids: [Int], hasMore: Bool)? {
+    private func storyListPage(path: String, username: String, page: Int) async -> (ids: [Int], hasMore: Bool)? {
         let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? username
-        guard let url = URL(string: "\(baseUri)/\(path)?id=\(encoded)&p=\(page)"),
+        guard let url = URL(string: "\(Self.baseUri)/\(path)?id=\(encoded)&p=\(page)"),
               let html = try? await fetchHTML(from: url) else {
             return nil
         }
+        return Self.storyList(in: html)
+    }
+
+    /// The story ids on a standard HN story-list page, and whether a further
+    /// page exists.
+    static func storyList(in html: String) -> (ids: [Int], hasMore: Bool) {
         // Each story row is `<tr class='athing' id='<ID>'>`.
         let ids = allMatches(in: html, pattern: "class=['\"]athing[^>]*?id=['\"](\\d+)['\"]")
             .compactMap { Int($0) }
@@ -523,23 +517,23 @@ enum NewsYCService {
     /// author, the age, and the story it sits in. So one request per page does
     /// the whole job, where ids alone would mean a fetch per comment — and then
     /// a walk up its parents just to name the story it belongs to.
-    static func upvotedComments(username: String, page: Int = 1) async -> (comments: [UserComment], hasMore: Bool)? {
+    func upvotedComments(username: String, page: Int = 1) async -> (comments: [UserComment], hasMore: Bool)? {
         await commentListPage(path: "upvoted", username: username, page: page)
     }
 
-    private static func commentListPage(
+    private func commentListPage(
         path: String,
         username: String,
         page: Int
     ) async -> (comments: [UserComment], hasMore: Bool)? {
         let encoded = username.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? username
-        guard let url = URL(string: "\(baseUri)/\(path)?id=\(encoded)&comments=t&p=\(page)"),
+        guard let url = URL(string: "\(Self.baseUri)/\(path)?id=\(encoded)&comments=t&p=\(page)"),
               let html = try? await fetchHTML(from: url) else {
             return nil
         }
         // A `morelink` anchor at the bottom means there's another page.
-        let hasMore = contains(in: html, pattern: "class=['\"]morelink['\"]")
-        return (comments(in: html), hasMore)
+        let hasMore = Self.contains(in: html, pattern: "class=['\"]morelink['\"]")
+        return (Self.comments(in: html), hasMore)
     }
 
     /// Every comment on a Hacker News comment-list page, in page order.
@@ -552,7 +546,7 @@ enum NewsYCService {
     /// The class is matched loosely because Hacker News doesn't spell it the
     /// same way on every page: `/upvoted?comments=t` uses a bare `athing`,
     /// while `/threads` adds `comtr`.
-    private static func comments(in html: String) -> [UserComment] {
+    static func comments(in html: String) -> [UserComment] {
         guard let rowRegex = try? NSRegularExpression(
             pattern: "<tr[^>]*class=['\"]athing[^'\"]*['\"][^>]*id=['\"](\\d+)['\"]",
             options: [.caseInsensitive]
@@ -570,7 +564,7 @@ enum NewsYCService {
                 ? Range(matches[index + 1].range, in: html)?.lowerBound
                 : nil
             let row = String(html[matchRange.upperBound..<(nextRowStart ?? html.endIndex)])
-            return comment(id: id, row: row)
+            return Self.comment(id: id, row: row)
         }
     }
 
@@ -586,22 +580,22 @@ enum NewsYCService {
         }
         // The `onstory` span names the story. Its link text is truncated with an
         // ellipsis, so the headline comes from the anchor's `title` instead.
-        let storyId = firstMatch(
+        let storyId = Self.firstMatch(
             in: row,
             pattern: "class=['\"]onstory['\"]>[\\s\\S]*?<a href=['\"]item\\?id=(\\d+)['\"]"
         ).flatMap(Int.init)
-        let storyTitle = firstMatch(
+        let storyTitle = Self.firstMatch(
             in: row,
             pattern: "class=['\"]onstory['\"]>[\\s\\S]*?<a[^>]*title=['\"]([^'\"]*)['\"]"
-        ).map(htmlUnescaped)
+        ).map(Self.htmlUnescaped)
 
         return UserComment(
             id: id,
-            author: firstMatch(in: row, pattern: "class=['\"]hnuser['\"][^>]*>([^<]*)</a>") ?? "",
-            text: htmlUnescaped(text).normalizeHtmlText(),
+            author: Self.firstMatch(in: row, pattern: "class=['\"]hnuser['\"][^>]*>([^<]*)</a>") ?? "",
+            text: Self.htmlUnescaped(text).normalizeHtmlText(),
             storyTitle: storyTitle,
             storyId: storyId,
-            timestamp: commentDate(in: row) ?? .now
+            timestamp: Self.commentDate(in: row) ?? .now
         )
     }
 
@@ -619,7 +613,7 @@ enum NewsYCService {
         if parts.count > 1, let seconds = TimeInterval(parts[1]) {
             return Date(timeIntervalSince1970: seconds)
         }
-        return isoDateFormatter.date(from: String(parts[0]))
+        return Self.isoDateFormatter.date(from: String(parts[0]))
     }
 
     private static let isoDateFormatter: DateFormatter = {
@@ -632,12 +626,11 @@ enum NewsYCService {
 
     // MARK: - HTML fetching
 
-    private static func fetchHTML(from url: URL) async throws -> String {
+    private func fetchHTML(from url: URL) async throws -> String {
         var request = URLRequest(url: url)
-        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        let (data, response) = try await URLSession.shared.countedData(for: request)
-        guard let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+        let (data, response) = try await transport.data(for: request)
+        guard (200..<300).contains(response.statusCode) else {
             throw NetworkError.badStatus
         }
         guard let html = String(data: data, encoding: .utf8) else {
@@ -651,14 +644,14 @@ enum NewsYCService {
     /// Every hidden input of the first form with the given `action`, as
     /// name/value pairs in document order.
     private static func hiddenFields(inFormWithAction action: String, of html: String) -> [(name: String, value: String)] {
-        guard let form = form(withAction: action, in: html) else { return [] }
-        return allTags(in: form, pattern: "<input[^>]*>").compactMap { tag in
-            guard attribute("type", in: tag)?.lowercased() == "hidden",
-                  let name = attribute("name", in: tag),
-                  let value = attribute("value", in: tag) else {
+        guard let form = Self.form(withAction: action, in: html) else { return [] }
+        return Self.allTags(in: form, pattern: "<input[^>]*>").compactMap { tag in
+            guard Self.attribute("type", in: tag)?.lowercased() == "hidden",
+                  let name = Self.attribute("name", in: tag),
+                  let value = Self.attribute("value", in: tag) else {
                 return nil
             }
-            return (name, htmlUnescaped(value))
+            return (name, Self.htmlUnescaped(value))
         }
     }
 
@@ -674,7 +667,7 @@ enum NewsYCService {
         let range = NSRange(html.startIndex..., in: html)
         for match in regex.matches(in: html, range: range) {
             guard let tagRange = Range(match.range, in: html),
-                  attribute("action", in: String(html[tagRange]))?.lowercased() == action.lowercased() else {
+                  Self.attribute("action", in: String(html[tagRange]))?.lowercased() == action.lowercased() else {
                 continue
             }
             let rest = html[tagRange.upperBound...]

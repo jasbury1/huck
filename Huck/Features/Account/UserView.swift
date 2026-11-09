@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct UserView: View {
+    @Environment(\.hackerNews) private var api
     /// The profile being shown, or `nil` for the signed-out account tab. There's
     /// no Hacker News user to fetch in that case, so the page keeps its chrome
     /// but drops to what works without an account: the locally-recorded reading
@@ -285,9 +286,9 @@ struct UserView: View {
 
         // Eagerly warm the profile and both default tabs' first pages in
         // parallel, so switching between Posts and Comments feels instant.
-        async let fetchedUser = HackerNewsAPI.getUser(for: username)
-        async let loadedPosts: Void = posts.loadMore()
-        async let loadedComments: Void = comments.loadMore()
+        async let fetchedUser = api.getUser(for: username)
+        async let loadedPosts: Void = posts.loadMore(using: api)
+        async let loadedComments: Void = comments.loadMore(using: api)
         user = await fetchedUser
         _ = await (loadedPosts, loadedComments)
         // Warm the recently-viewed snapshot too (current user only).
@@ -299,13 +300,13 @@ struct UserView: View {
     /// for, and re-fetching them would spend requests on lists not on screen.
     private func refresh(_ tab: ContentTab) async {
         async let fetchedUser: User? = if let username {
-            await HackerNewsAPI.getUser(for: username)
+            await api.getUser(for: username)
         } else {
             nil
         }
         switch tab {
-        case .posts: await posts?.refresh()
-        case .comments: await comments?.refresh()
+        case .posts: await posts?.refresh(using: api)
+        case .comments: await comments?.refresh(using: api)
         case .recentlyViewed: await refreshRecentlyViewed()
         }
         // A failed fetch keeps the profile already on screen.
@@ -324,7 +325,7 @@ struct UserView: View {
         recentlyViewedStore.adoptGuestHistory()
         let feed = recentlyViewed ?? StoryFeed.recentlyViewed(recentlyViewedStore)
         recentlyViewed = feed
-        await feed.reload()
+        await feed.reload(using: api)
     }
 
     // MARK: - Header

@@ -1,0 +1,12 @@
+{
+  "by" : "regnull",
+  "descendants" : 0,
+  "id" : 50394931,
+  "kids" : [ 50398401 ],
+  "score" : 3,
+  "text" : "Most stock charts work in a similar way - they give you a bunch of tools to draw lines and patterns on a chart. This is fine, and I assume that advanced traders enjoy drawing on the chart. But it&#x27;s also annoying, and seems arbitrary sometimes.<p>So I created stock charts that annotate themselves. The process has two stages:<p>First, the algorithm goes through the daily candles and identifies the structure: support and resistance zones, trendlines, volume spikes, etc.<p>Then, an LLM models understands the relative importance of the structure components, decides which ones to include, and annotates them.<p>Finally, it lays out the possible future moves: base case, bull and bear cases.<p>It&#x27;s included in Portfolio Genius, the AI investment manager I&#x27;m building, and it&#x27;s available free without signup here: <a href=\"https:&#x2F;&#x2F;portfoliogenius.ai&#x2F;features&#x2F;ai-annotated-charts\" rel=\"nofollow\">https:&#x2F;&#x2F;portfoliogenius.ai&#x2F;features&#x2F;ai-annotated-charts</a>",
+  "time" : 1793984170,
+  "title" : "Show HN: Self-Annotating Stock Charts",
+  "type" : "story",
+  "url" : "https://portfoliogenius.ai/features/ai-annotated-charts"
+}

@@ -1,0 +1,8 @@
+{
+  "by" : "thereallex",
+  "id" : 50417915,
+  "parent" : 50417407,
+  "text" : "<a href=\"https:&#x2F;&#x2F;skymap.rulkens.com\" rel=\"nofollow\">https:&#x2F;&#x2F;skymap.rulkens.com</a>\nA browser based open source universe explorer. I&#x27;m in between jobs currently and finally took time to work on my passion project. It started with just visualizing some galaxy surveys, but it got a little out of hand and now includes everything from hi-res tiled earth&#x2F;mars, Gaia star field (16M stars), a milky way renderer and much more.<p>It&#x27;s so amazing to have the ability to gather and parse publicly available scientific data and actually visualize it in real-time. It&#x27;s one of those projects I&#x27;m learning a lot from and can keep going with (the universe is a big place :)). As a software developer for 20+ years, its been mind-blowing and often also frustrating to have Claude generate code that I deem good enough. About half of my time has actually been spent on refactoring, building quite some skills in guiding LLMs in the process. I guess that part still hasn&#x27;t changed in a growing codebase.",
+  "time" : 1794175803,
+  "type" : "comment"
+}

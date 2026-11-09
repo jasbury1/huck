@@ -4,7 +4,7 @@
 
 ## How it was tested
 
-- [ ] `make lint test` passes
+- [ ] `make lint test test-ui` passes
 - [ ] Checked on iPhone and iPad (or split view) where layout changed
 - [ ] Checked light and dark appearance where UI changed
 

@@ -1,6 +1,6 @@
 # API Layer Refactor Proposal
 
-**Status:** Proposed — awaiting approval
+**Status:** Implemented (2026-11-08) — see `Huck/Networking/README.md` for the result. Where it differs from this proposal: the facade is a `final class` on the main actor rather than an `actor` (its state is all in actor caches already); models a view drives receive the service per call (`using:`) rather than holding it, because SwiftUI views often build them before the environment exists; and the mock for tests and previews is the real facade over a `FixtureTransport` replaying recorded responses, rather than a hand-written in-memory fake.
 **Date:** 2026-08-01
 **Goal:** Establish a robust, extensible, clean API architecture before adding new features.
 

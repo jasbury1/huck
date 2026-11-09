@@ -5,8 +5,7 @@
 
 import XCTest
 
-/// A smoke test: the app launches and shows its tab bar. UI tests need the
-/// network, so CI runs only the unit tests; run these with `make test-ui`.
+/// A smoke test: the app launches over its fixtures and shows its tab bar.
 final class LaunchTests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
@@ -14,8 +13,7 @@ final class LaunchTests: XCTestCase {
 
     @MainActor
     func testLaunchShowsTheTabBar() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.launchedWithFixtures()
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
     }
 }

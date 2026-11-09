@@ -1,0 +1,8 @@
+{
+  "by" : "ncaroyannis",
+  "id" : 50391051,
+  "parent" : 50417407,
+  "text" : "A small team and I are working on Sendery [1], a transactional email platform for product teams. We&#x27;re trying to fix some of the headaches that come with managing product emails as companies scale: keeping track of hundreds of templates, maintaining consistent designs, coordinating changes between developers and marketing&#x2F;ops, and managing everything across multiple languages is way more time consuming than it should be.<p>It&#x27;s been a fun project to work on since it&#x27;s been a pain point for myself on many projects, so I&#x27;m mostly just trying to solve my own set of problems and hoping other people find it useful too.<p>[1] <a href=\"https:&#x2F;&#x2F;sendery.co\" rel=\"nofollow\">https:&#x2F;&#x2F;sendery.co</a>",
+  "time" : 1793964521,
+  "type" : "comment"
+}

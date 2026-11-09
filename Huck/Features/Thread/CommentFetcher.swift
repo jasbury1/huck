@@ -40,9 +40,9 @@ class CommentFetcher {
     /// snapshot; a Firebase-walked thread streams in progressively. Each snapshot only
     /// appends to the last, so the list grows downward without reflowing — the animated
     /// assignment simply fades the new rows in.
-    func fetchComments() async {
+    func fetchComments(using api: any HackerNewsService) async {
         isLoading = true
-        for await snapshot in HackerNewsAPI.streamComments(for: id) {
+        for await snapshot in api.streamComments(for: id) {
             withAnimation(.easeIn(duration: 0.2)) {
                 comments = snapshot
             }
@@ -58,11 +58,11 @@ class CommentFetcher {
     /// over a full list would empty the screen and refill it in front of the
     /// reader. Instead the thread is swapped in once, complete. An empty result
     /// — which is also how a failed load arrives — leaves the thread as it was.
-    func refreshComments() async {
+    func refreshComments(using api: any HackerNewsService) async {
         // The first load is still streaming in; let it finish rather than race it.
         guard !isLoading else { return }
         var latest: [Comment] = []
-        for await snapshot in HackerNewsAPI.streamComments(for: id) {
+        for await snapshot in api.streamComments(for: id) {
             latest = snapshot
         }
         guard !latest.isEmpty, !Task.isCancelled else { return }
@@ -78,8 +78,8 @@ class CommentFetcher {
     /// Loads which commenters are new accounts. Separate from `fetchComments()`
     /// so it never holds up the thread — and so it isn't made at all when the
     /// reader has turned the highlight off.
-    func fetchNewUsers() async {
-        newUsers = await HackerNewsAPI.newUsers(inThread: id)
+    func fetchNewUsers(using api: any HackerNewsService) async {
+        newUsers = await api.newUsers(inThread: id)
     }
 
     func isNewUser(_ author: String) -> Bool {
@@ -150,11 +150,11 @@ class CommentFetcher {
     ///
     /// Assigning `itemID` (rather than `id`) keeps the row's identity stable, so
     /// SwiftUI updates the comment in place instead of tearing it down.
-    func resolveItemID(for comment: Comment) async -> Int? {
+    func resolveItemID(for comment: Comment, using api: any HackerNewsService) async -> Int? {
         if let itemID = comment.itemID { return itemID }
         guard let post = unresolvedPosts[comment.id] else { return nil }
 
-        let resolved = await HackerNewsAPI.findPostedCommentId(
+        let resolved = await api.findPostedCommentId(
             username: post.author,
             parentID: post.parentID
         )

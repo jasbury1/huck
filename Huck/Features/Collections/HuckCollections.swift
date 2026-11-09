@@ -46,10 +46,10 @@ struct HuckCollection: Identifiable, Hashable {
     let source: Source
 
     /// The collection's story ids, best first.
-    func storyIDs() async -> [Int] {
+    func storyIDs(using api: any HackerNewsService) async -> [Int] {
         switch source {
         case .trendingRepos:
-            await HackerNewsAPI.getTrendingRepoStoryIds()
+            await api.getTrendingRepoStoryIds()
         }
     }
 }

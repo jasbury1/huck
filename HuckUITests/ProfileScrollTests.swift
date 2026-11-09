@@ -6,8 +6,8 @@
 import XCTest
 
 /// Guards the profile page's scrolling: its pinned tab bar, and the per-tab
-/// scroll positions kept as you switch tabs. Like every UI test these need the
-/// network, so they run with `make test-ui` rather than in CI.
+/// scroll positions kept as you switch tabs. Run over the bundled fixtures, so
+/// they need no network and see the same profile every time.
 final class ProfileScrollTests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
@@ -24,8 +24,7 @@ final class ProfileScrollTests: XCTestCase {
     /// the scroll view's insets don't flip there.
     @MainActor
     func testHoldingAtThePinPointDoesNotFreeze() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = XCUIApplication.launchedWithFixtures()
         app.tabBars.buttons["Account"].tap()
 
         // The signed-out page offers only Recently Viewed; a profile, Posts.
@@ -61,9 +60,8 @@ final class ProfileScrollTests: XCTestCase {
     /// they were left.
     @MainActor
     func testSwitchingTabsKeepsEachTabsScrollPosition() throws {
-        let app = XCUIApplication()
-        app.launch()
-        openProfile(of: "pg", in: app)
+        let app = XCUIApplication.launchedWithFixtures()
+        app.openProfile(of: "pg")
 
         let posts = app.buttons["Posts"]
         let comments = app.buttons["Comments"]
@@ -71,14 +69,14 @@ final class ProfileScrollTests: XCTestCase {
         XCTAssertTrue(app.cells.firstMatch.waitForExistence(timeout: 15) || app.staticTexts.count > 10)
 
         // Pin the bar, with part of the list scrolled under it.
-        scrollUp(app, by: 500)
+        app.scrollUp(by: 500)
         let leftPosts = try firstRow(below: posts, in: app)
 
         comments.tap()
         let pinnedY = posts.frame.minY
         // A tab never scrolled opens at its top, with the bar still pinned.
         XCTAssertEqual(posts.frame.minY, pinnedY, accuracy: 1)
-        scrollUp(app, by: 300)
+        app.scrollUp(by: 300)
         let leftComments = try firstRow(below: posts, in: app)
 
         for _ in 0..<2 {
@@ -95,29 +93,6 @@ final class ProfileScrollTests: XCTestCase {
     private struct Row {
         let label: String
         let minY: CGFloat
-    }
-
-    @MainActor
-    private func openProfile(of username: String, in app: XCUIApplication) {
-        app.tabBars.buttons["Search"].tap()
-        let field = app.searchFields.firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 10))
-        field.tap()
-        field.typeText(username + "\n")
-        let users = app.buttons["Users"]
-        XCTAssertTrue(users.waitForExistence(timeout: 10))
-        users.tap()
-        let result = app.staticTexts[username].firstMatch
-        XCTAssertTrue(result.waitForExistence(timeout: 15))
-        result.tap()
-    }
-
-    @MainActor
-    private func scrollUp(_ app: XCUIApplication, by distance: CGFloat) {
-        let start = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
-        let end = start.withOffset(CGVector(dx: 0, dy: -distance))
-        // Held before lifting, so the list stops where the drag ends.
-        start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.5)
     }
 
     /// The topmost title-length text that sits wholly below the tab bar —

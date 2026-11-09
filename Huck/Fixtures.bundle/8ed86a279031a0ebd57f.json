@@ -1,0 +1,12 @@
+{
+  "by" : "jamesasefa",
+  "descendants" : 6,
+  "id" : 50413968,
+  "kids" : [ 50416275, 50416120, 50414544, 50414043 ],
+  "score" : 2,
+  "text" : "Loop is a mobile-first companion workspace for the coding harnesses you already run. It aggregates results from your harnesses into a continuous feed that is easy to navigate and organize from your phone. I spent several months holding my newborn in one hand and trying to talk to agents one-handed on my phone. Every mobile UI is still based around chat, and it doesn’t scale on mobile, let alone one-handed!<p>So I built Loop: a feed of the work your coding agents do. It’s built around agent results, not chats. You can scroll your history, get notified, save outputs, search and return to conversations later. The goal is to make interacting with agents via your phone feel familiar and intuitive based on the mobile UX we’ve all come to expect.<p>Loop runs on your own computer — no account, no server, no app store — and pairs with your phone with one QR scan. It wraps the agents you already use (Codex, Claude Code, Pi, OpenCode, Antigravity, Muse Code, Grok Build, or any ACP agent), each keeping its own context, tools, sign-in and billing — local models through Pi or OpenCode work too.<p>Apache-2.0, TypeScript, SQLite. I&#x27;d love feedback from anyone else who builds from a phone.",
+  "time" : 1794150703,
+  "title" : "Show HN: Loop – your coding agents, from your phone",
+  "type" : "story",
+  "url" : "https://github.com/j-asefa/loop"
+}

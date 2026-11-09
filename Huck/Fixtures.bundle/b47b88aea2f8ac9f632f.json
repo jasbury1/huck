@@ -1,0 +1,12 @@
+{
+  "by" : "serhatgirgin",
+  "descendants" : 0,
+  "id" : 50380178,
+  "kids" : [ 50389313 ],
+  "score" : 3,
+  "text" : "Hi HN,<p>I run Quanterlab which is a quantitative research platform (can as well be described as backtesting tool for trading and investing ideas) and it‘s purpose is to provide interpretable results for users&#x27; own rule sets, using point-in-time data.<p>I am coming from mechanical engineering domain and I wanted to reflect the concepts of engineering. For example, the “strategies” or more elaborately put “market inefficiency hypothesis” are constructed as block diagrams. And in its own style, QuanterLab is quite a strange thing for a finance software. Instead of looking at candle sticks, this is to construct a logic with these block diagrams. Each one of the boxes have certain contracts with each other’s and it is all about stopping people to make things that does not make sense.<p>Information leakage is something I care a lot and for that purpose everything constructed is placed automatically on a timeline showing you which piece of the block is using which time window which is intended as a visual safety net.<p>And also, the AI is big part of it, which I am personally happy with my decisions on how it is implemented. AI is allowed to use tools in the platform to construct what you describe and deliver the news to you. So, it is definitely NOT something that AI exploiting information uncontrolled (overfit) and adding creativity with what you did not ask for.<p>Similarly, the platform is available as MCP servers and connectors in many AI platforms, and again these AI models only allowed to use the tools that is exposed to them and they are obliged to present the information with certain cards exposing you the blocks to let you inspect or manually change.<p>Lastly, anything constructed can be set as paper trade and you receive a morning brief after every working day.<p>You can try the lab without an account or you can as well connect it to your AI as connector, 10 runs a day for guests and an account gets 30 days of the Practitioner plan, no card needed.<p>Sorry for my awkward mistakes in the text, especially for native English speakers, this text did not pass through AI.<p>Greetings from Germany,<p>Serhat",
+  "time" : 1793891878,
+  "title" : "Show HN: QuanterLab, describe a trading strategy, watch it build in front of you",
+  "type" : "story",
+  "url" : "https://quanterlab.com/"
+}

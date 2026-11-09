@@ -1,0 +1,8 @@
+{
+  "by" : "mamcx",
+  "id" : 50418252,
+  "parent" : 50417407,
+  "text" : "Rebuilding my ERP to work more like the <i>model</i> of <a href=\"https:&#x2F;&#x2F;plaintextaccounting.org\" rel=\"nofollow\">https:&#x2F;&#x2F;plaintextaccounting.org</a>, where I expanded the idea of `double entry accounting` to `double entry trade between parties`, plus several other ideas for what I see a way to collapse a lot of complications that are typically for ERP systems.<p>I make a special `textual DSL` where I model business scenarios like `Make a sale that include 3 invoices : 2 to different cities in country A in currency USD and other in country B in currency EUR` + all the intermediate steps like transportation, manufacturing, etc.<p>I`m now in the woods with a simplification for the price engine, I dislike much how complicated is normally, and I <i>think</i> I have good enough solution for most cases that generate without dynamic calculations.",
+  "time" : 1794177725,
+  "type" : "comment"
+}

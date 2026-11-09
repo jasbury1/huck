@@ -13,7 +13,7 @@ import UIKit
 /// Story cells need a small preview image for the linked page. Rather than using
 /// `LPMetadataProvider` — which spins up a headless WebKit process per URL and
 /// downloads the whole page plus its subresources — we fetch the page's
-/// Open Graph image directly with a plain `URLSession`, falling back to the
+/// Open Graph image directly with a plain request, falling back to the
 /// site's favicon. This is dramatically cheaper and keeps the console free of
 /// WebContent-process and cancellation noise.
 ///
@@ -34,8 +34,6 @@ import UIKit
 ///  - **LRU eviction:** the cache is bounded to `capacity` entries; the least
 ///    recently used image is dropped when it overflows.
 actor ThumbnailCache {
-    static let shared = ThumbnailCache()
-
     /// Completed thumbnail images (already downsampled and decoded).
     private var entries: [URL: UIImage] = [:]
     /// Recency order for `entries`; most-recently-used URL is last.
@@ -46,7 +44,11 @@ actor ThumbnailCache {
     /// Maximum number of completed entries to retain.
     private let capacity = 200
 
-    private init() {}
+    private let transport: any HTTPTransport
+
+    init(transport: any HTTPTransport) {
+        self.transport = transport
+    }
 
     /// Returns a thumbnail for the given page, fetching it if necessary.
     /// Concurrent calls for the same URL share one network request.
@@ -62,7 +64,7 @@ actor ThumbnailCache {
         }
         // Cache miss: start a fetch and record it *before* suspending, so that
         // any request arriving during the await coalesces onto this same task.
-        let task = Task { await Self.fetchThumbnail(for: pageURL) }
+        let task = Task { [transport] in await Self.fetchThumbnail(for: pageURL, via: transport) }
         inFlight[pageURL] = task
         let image = await task.value
         inFlight[pageURL] = nil
@@ -86,18 +88,6 @@ actor ThumbnailCache {
 
     // MARK: - Fetching
 
-    /// A shared session with short timeouts, tuned for fetching small assets.
-    /// Timeouts are intentionally low so dead or slow hosts fail fast rather
-    /// than leaving a cell spinning for tens of seconds.
-    private static let session: URLSession = {
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 8
-        config.timeoutIntervalForResource = 12
-        config.requestCachePolicy = .returnCacheDataElseLoad
-        config.waitsForConnectivity = false
-        return URLSession(configuration: config)
-    }()
-
     /// Caps how many fetches touch the network at once, so realising a whole
     /// list of cells simultaneously doesn't launch dozens of parallel requests.
     private static let gate = AsyncSemaphore(value: 6)
@@ -110,22 +100,22 @@ actor ThumbnailCache {
     private static let userAgent =
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 
-    private static func fetchThumbnail(for pageURL: URL) async -> UIImage? {
+    private static func fetchThumbnail(for pageURL: URL, via transport: any HTTPTransport) async -> UIImage? {
         await gate.wait()
-        let image = await loadThumbnail(for: pageURL)
+        let image = await loadThumbnail(for: pageURL, via: transport)
         await gate.signal()
         return image
     }
 
-    private static func loadThumbnail(for pageURL: URL) async -> UIImage? {
+    private static func loadThumbnail(for pageURL: URL, via transport: any HTTPTransport) async -> UIImage? {
         // 1. Prefer the page's Open Graph / Twitter card image.
-        if let imageURL = await openGraphImageURL(for: pageURL),
-           let image = await downloadImage(from: imageURL, endpoint: "Open Graph image") {
+        if let imageURL = await openGraphImageURL(for: pageURL, via: transport),
+           let image = await downloadImage(from: imageURL, endpoint: "Open Graph image", via: transport) {
             return image
         }
         // 2. Fall back to the site's favicon.
         if let faviconURL = faviconURL(for: pageURL),
-           let image = await downloadImage(from: faviconURL, endpoint: "Favicon") {
+           let image = await downloadImage(from: faviconURL, endpoint: "Favicon", via: transport) {
             return image
         }
         return nil
@@ -133,14 +123,13 @@ actor ThumbnailCache {
 
     /// Downloads the page HTML and extracts the `og:image` (or Twitter card)
     /// URL, resolved against the page URL.
-    private static func openGraphImageURL(for pageURL: URL) async -> URL? {
+    private static func openGraphImageURL(for pageURL: URL, via transport: any HTTPTransport) async -> URL? {
         var request = URLRequest(url: pageURL)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("text/html", forHTTPHeaderField: "Accept")
 
-        guard let (data, response) = try? await session.countedData(for: request, endpoint: "Article page"),
-              let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
+        guard let (data, response) = try? await transport.data(for: request, kind: .thumbnail, endpoint: "Article page"),
+              (200..<300).contains(response.statusCode) else {
             return nil
         }
 
@@ -176,13 +165,12 @@ actor ThumbnailCache {
     }
 
     /// `endpoint` names the kind of image for the debug screen's request counts.
-    private static func downloadImage(from url: URL, endpoint: String) async -> UIImage? {
+    private static func downloadImage(from url: URL, endpoint: String, via transport: any HTTPTransport) async -> UIImage? {
         var request = URLRequest(url: url)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
 
-        guard let (data, response) = try? await session.countedData(for: request, endpoint: endpoint),
-              let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else {
+        guard let (data, response) = try? await transport.data(for: request, kind: .thumbnail, endpoint: endpoint),
+              (200..<300).contains(response.statusCode) else {
             return nil
         }
         // Downsample + decode here, off the main thread.

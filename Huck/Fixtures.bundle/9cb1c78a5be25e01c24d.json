@@ -1,0 +1,9 @@
+{
+  "by" : "abound",
+  "id" : 50418055,
+  "kids" : [ 50418422, 50418607 ],
+  "parent" : 50417407,
+  "text" : "I&#x27;ve been deep in the weeds on two wildly unrelated projects.<p>Project #1: I&#x27;ve been working on migrating an application [1] from GCP (where I pay $200&#x2F;mo to host it) to a physical server (PowerEdge R7625) I&#x27;ve racked in a colo near me, running on my own IPs&#x2F;ASN [2] and all that jazz. I&#x27;ve been dragging my feet on the this as there&#x27;s just a lot of moving pieces, but I got a good chunk of the last few hard bits done today.<p>Project #2: Building a DIY bright-ass lamp, like Brighter [3] or Rhythm [4], but for a few hundred bucks instead of $1-2k. I&#x27;ve specced out the parts, designed the hardware, and built the firmware. Later today I&#x27;ll do my first LED test against a bench supply, to get some hard numbers for if my cooling solution (a chunky aluminum heatsink and some Noctua PC fans) is sufficient for the full 500+ W final version.<p>As far as curiosities go, I&#x27;ve been doing a lot of Go (the board game, not the language) puzzles, and reading about sailing (mostly the book from the Hundredrabbits folk [5])<p>[1] <a href=\"https:&#x2F;&#x2F;abound.art\" rel=\"nofollow\">https:&#x2F;&#x2F;abound.art</a><p>[2] <a href=\"https:&#x2F;&#x2F;bgp.tools&#x2F;as&#x2F;55078\" rel=\"nofollow\">https:&#x2F;&#x2F;bgp.tools&#x2F;as&#x2F;55078</a><p>[3] <a href=\"https:&#x2F;&#x2F;getbrighter.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;getbrighter.com&#x2F;</a><p>[4] <a href=\"https:&#x2F;&#x2F;www.betterwithrhythm.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;www.betterwithrhythm.com&#x2F;</a><p>[5] <a href=\"https:&#x2F;&#x2F;100r.co&#x2F;site&#x2F;busy_doing_nothing.html\" rel=\"nofollow\">https:&#x2F;&#x2F;100r.co&#x2F;site&#x2F;busy_doing_nothing.html</a>",
+  "time" : 1794176621,
+  "type" : "comment"
+}

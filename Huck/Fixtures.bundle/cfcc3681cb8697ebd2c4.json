@@ -1,0 +1,9 @@
+{
+  "by" : "rrook",
+  "id" : 50392170,
+  "kids" : [ 50410712 ],
+  "parent" : 50417407,
+  "text" : "I&#x27;m working on Hale, an abstract distributed systems language.<p>It&#x27;s a traditional systems language in the sense that you have fine control over how resources are used, but it&#x27;s abstract in the sense that you have to come to an agreement with the compiler about your intent around the resources, rather than directly declaring the machinery.<p>It&#x27;s a distributed language in the sense that there is a higher level structural abstraction in the language that situates computations of the program within a recursive graph structure. Part of that structure incorporates message broker semantics. This gives the compiler a unified view of programs across arbitrary process boundaries. The structural abstractions also enable an effects+formal verification syntax within the language, which allows programmers to codify architectural decisions that are then checked by the compiler.<p>The compiler itself is infrastructure aware, and the highest layer of functionality it handles is configuring the environment into which applications deploy. The single language handles everything from individual memory allocations to distributed fleet deployments.<p>The language is close to v1, and I&#x27;m currently building a fully distributed inference-as-a-service application with it. Arbitrary hardware&#x2F;supply matched against arbitrary callers&#x2F;demand in real time.<p><a href=\"https:&#x2F;&#x2F;github.com&#x2F;hale-lang&#x2F;hale\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;hale-lang&#x2F;hale</a>\n<a href=\"https:&#x2F;&#x2F;github.com&#x2F;hale-lang&#x2F;voice\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;hale-lang&#x2F;voice</a>",
+  "time" : 1793972455,
+  "type" : "comment"
+}

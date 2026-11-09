@@ -5,35 +5,58 @@ This directory contains everything Huck uses to talk to Hacker News.
 ## Layers
 
 ```
-HackerNewsAPI  ← the facade: the ONLY type the rest of the app calls
+HackerNewsService  ← the protocol the rest of the app calls, in domain types only
+   │
+HackerNewsAPI      ← its implementation: one instance owns everything below
    │
    ├── Cache/StoryCache              (actor; caches stories behind the facade, 1000 max)
    ├── Cache/StoryListCache          (actor; the main feeds' ranked id lists, short TTL)
    ├── Cache/CommentCache            (actor; caches whole comment threads, short TTL)
    ├── Cache/CommentScoreCache       (actor; the reader's own comment scores, scraped from /threads in bulk, short TTL)
+   ├── Cache/NewUserCache, ThumbnailCache, TrendingReposCache
    ├── Services/AlgoliaAPIService    (historic data, whole comment threads, user search)
    ├── Services/FirebaseAPIService   (realtime story lists and items)
-   │         │
-   │         ├── WebService          (generic URL fetch + JSON decode)
    │         └── FirebaseThreadWalker(streams a comment thread in reading order)
-   └── Services/NewsYCService        (reverse-engineered HTML scraping: voting, favorites,
-                                      commenting)
+   ├── Services/NewsYCService        (reverse-engineered HTML scraping: voting, favorites,
+   │                                  commenting)
+   │
+   └── Transport/HTTPTransport       (the one seam to the network; every service sends
+             │                         through the instance's transport)
+             ├── URLSessionTransport (live: the real network, counted in APIMetrics)
+             ├── FixtureTransport    (debug: replays Fixtures.bundle, never the network)
+             └── RecordingTransport  (debug: live, saving anonymous reads as fixtures)
 
 `StoryCache` and `CommentCache` are both built on the generic `LRUCache` actor in
 `Common/` (alongside other reusable building blocks like `MinHeap`).
 ```
 
-### `HackerNewsAPI` — the facade
-The single entry point for the app. Exposes clean `static` async methods
-(`getStoryIds`, `streamComments`, `getUser`, `getUserStories`, `getUserComments`,
-`login`, `logout`). It picks the appropriate service, and it also owns the
-reverse-engineered cookie-based auth against `news.ycombinator.com`.
+### `HackerNewsService` and `HackerNewsAPI` — the facade
+`HackerNewsService` is everything the app asks of Hacker News (`getStoryIds`,
+`streamComments`, `getUser`, `getUserStories`, `getUserComments`, `login`,
+`logout`, …). `HackerNewsAPI` implements it: an instance is built over one
+`HTTPTransport`, creates its services and caches over that transport, picks the
+appropriate service per call, and owns the reverse-engineered cookie-based auth
+against `news.ycombinator.com`.
 
 **It always returns domain types, never a service's response object.**
 
+Which instance the app runs is chosen once at launch (`LaunchConfiguration`) and
+handed down through the environment as `\.hackerNews`:
+- views read it with `@Environment(\.hackerNews)`;
+- app-wide stores (`UserSession`, `InteractionStore`) are given it when created;
+- models a view drives (`StoryFeed`, `PaginatedFeed`, `StoryModel`,
+  `CommentFetcher`, `PollModel`) take it as a `using:` argument on the calls that
+  need it — they're often built in a view's `init`, before the environment exists.
+
+`HackerNewsAPI.live` is the network-backed instance, and the environment's default.
+
 ### Services (`Services/`)
 `AlgoliaAPIService` and `FirebaseAPIService` each wrap one upstream JSON API. Each
-service file also declares the `Codable` response structs it decodes, named by
+is a value holding the transport it sends through, split into request building
+(static URL builders), parsing (static functions over a decoded response, or over
+HTML for `NewsYCService`) and fetching (instance methods that combine the two).
+The static halves are pure, so they're testable on their own. Each service file
+also declares the `Codable` response structs it decodes, named by
 source: `AlgoliaItemData`, `AlgoliaUserData`, `FirebaseStoryData`,
 `FirebaseCommentData`. These structs are an implementation detail of the
 service — they are not returned above the facade.
@@ -57,9 +80,11 @@ The types the app actually works with, decoupled from any single API:
 - `StoryModel` (`@Observable`) — a story, plus `FeedKind` and `StoryType`
 
 ### Support
-- `WebService` — low-level generic `downloadData<T: Codable>(fromURL:)`.
+- `HTTPTransport` — `data(for:kind:endpoint:)`, plus `json(from:)`, which fetches
+  and decodes off the main actor. `RequestKind` picks the session behaviour a
+  request needs (shared cookies, thumbnail timeouts, no-redirect writes, login).
 - `APIMetrics` — per-source, per-endpoint request counts for the Debug tab.
-  Every request goes through `URLSession.countedData(for:)` rather than
+  `URLSessionTransport` sends through `URLSession.countedData(for:)` rather than
   `data(for:)`, which is where the counting happens.
 - `AsyncSemaphore` (in `Common/`) — LIFO limiter for scroll-driven fetches
   (thumbnails, own-comment scores).
@@ -72,8 +97,10 @@ The types the app actually works with, decoupled from any single API:
 
 ## Conventions
 
-- **Views and models call `HackerNewsAPI` only.** They never touch a service
-  or a `*Data` Codable directly.
+- **Views and models call `HackerNewsService` only**, through the instance they
+  were given. They never touch a service, a cache or a `*Data` Codable directly,
+  and never construct `HackerNewsAPI` themselves — only `LaunchConfiguration`
+  and tests do.
 - **Codables stay next to their service** and carry a source prefix
   (`Algolia…` / `Firebase…`).
 - **Conversion from service data to domain types happens at or below the
@@ -81,8 +108,8 @@ The types the app actually works with, decoupled from any single API:
 
 ## Notes
 
-- Story fetching is cached behind the facade. `StoryModel.fetchData()` calls
-  `HackerNewsAPI.getStory(id:)`, and startup warming goes through
+- Story fetching is cached behind the facade. `StoryModel.fetchData(using:)` calls
+  `getStory(id:)`, which maps Firebase's item to a domain `StoryDetails`, and startup warming goes through
   `HackerNewsAPI.prefetchStories(ids:)`. Both are backed by `Cache/StoryCache`,
   an `actor` that fetches missing stories via `FirebaseAPIService`. The cache
   coalesces concurrent requests for the same id into one fetch, prefetches in
@@ -140,3 +167,24 @@ The types the app actually works with, decoupled from any single API:
   exists is answered from the cookie jar directly (`hasAuthCookie`), so the API
   stays callable from any isolation context; *who* is signed in arrives as a
   `username` parameter from the caller.
+
+## Testing without the network
+
+`FixtureTransport` answers every request from `Huck/Fixtures.bundle`: about 1,400
+real Algolia, Firebase and news.ycombinator.com responses, recorded from the live
+site. Requests are matched by method and URL (query order ignored, time bounds on
+`created_at_i` wildcarded); anything unrecorded gets a 404 and a log line under the
+`Fixtures` category, and writes and logins are refused without being sent.
+
+- **Unit tests** build `HackerNewsAPI(transport: FixtureTransport(store: .bundled!))`
+  directly (see `HackerNewsAPIFixtureTests`), so the real services, parsing and
+  caches run against real responses.
+- **UI tests** launch the app with `-HuckFixtures` (`XCUIApplication.launchedWithFixtures()`).
+- **Re-recording**: `make record-fixtures` runs the `FixtureRecording` UI scenario
+  on a simulator with `-HuckRecordFixtures`, then replaces the bundle. Only
+  anonymous `GET`s to the three Hacker News hosts are kept — never writes, logins,
+  thumbnails, or anything fetched while signed in. When a UI test starts visiting
+  somewhere new, add the trip to `FixtureRecording` and re-record.
+
+All of this is debug-only: the fixture code is compiled out of Release builds, and
+`Release.xcconfig` excludes `Fixtures.bundle`.

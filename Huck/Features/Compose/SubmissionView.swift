@@ -49,6 +49,7 @@ enum SubmissionKind: CaseIterable, Identifiable {
 /// with the same keyboard controls. Once published, the post is handed to
 /// `onPosted` to be opened.
 struct SubmissionView: View {
+    @Environment(\.hackerNews) private var api
     @Environment(\.dismiss) private var dismiss
     /// Names the author in the preview.
     @Environment(UserSession.self) private var session
@@ -327,7 +328,7 @@ struct SubmissionView: View {
         } catch {
             return
         }
-        if let image = await ThumbnailCache.shared.thumbnail(for: validURL) {
+        if let image = await api.thumbnail(for: validURL) {
             thumbnail = .image(Image(uiImage: image))
         } else {
             thumbnail = .failed
@@ -423,7 +424,7 @@ struct SubmissionView: View {
         Task {
             defer { isPosting = false }
             do {
-                switch try await HackerNewsAPI.submitStory(
+                switch try await api.submitStory(
                     title: title, url: url, text: text, username: username
                 ) {
                 case let .posted(id):

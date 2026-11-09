@@ -77,6 +77,22 @@ enum ThumbnailType {
 /// content would silently desync the others (this is what caused the upvote score
 /// drift bug). If a field ever needs to change over time (e.g. a live-refreshing
 /// score), route it through an id-keyed store overlay — do not make it settable.
+/// A story's details, as the API layer returns them.
+nonisolated struct StoryDetails: Sendable {
+    let title: String
+    let by: String
+    let score: Int
+    let timestamp: Date
+    /// The linked page; `nil` for a text post.
+    let url: URL?
+    /// A text post's body, as Markdown; empty for a link.
+    let text: String
+    /// A poll's options, in display order; empty for anything else.
+    let pollOptionIDs: [Int]
+    /// The whole thread's comment count, every nesting level included.
+    let commentCount: Int
+}
+
 @Observable
 class StoryModel: Equatable, Identifiable {
     let id: Int
@@ -114,29 +130,22 @@ class StoryModel: Equatable, Identifiable {
         text = nil
     }
 
-    func fetchData() async {
+    func fetchData(using api: any HackerNewsService) async {
         // Already populated (e.g. a recycled row) — nothing to do, and the
         // existing values stay on screen with no placeholder flash.
-        guard !isLoaded, let story = await HackerNewsAPI.getStory(id: id) else { return }
+        guard !isLoaded, let story = await api.getStory(id: id) else { return }
 
-        if let url = story.url {
-            storyType = .link
-            self.url = URL(string: url)
-        } else {
-            storyType = .text
-            url = nil
-            text = story.text?.normalizeHtmlText() ?? ""
-        }
+        storyType = story.url == nil ? .text : .link
+        url = story.url
+        text = story.text
         title = story.title
         by = story.by
-        timestamp = Date(timeIntervalSince1970: TimeInterval(story.time))
+        timestamp = story.timestamp
         score = story.score
-        pollOptionIDs = story.parts ?? []
-        // `descendants` is the whole-thread comment total; `kids` is only the
-        // top-level replies. Fall back to the top-level count if it's absent.
-        commentCount = story.descendants ?? story.kids?.count ?? 0
+        pollOptionIDs = story.pollOptionIDs
+        commentCount = story.commentCount
 
-        await fetchThumbnail()
+        await fetchThumbnail(using: api)
         isLoaded = true
     }
 
@@ -144,10 +153,10 @@ class StoryModel: Equatable, Identifiable {
     /// comment count. Call after `HackerNewsAPI.invalidateThread(for:)`, or the
     /// cache just serves it back. The current values stay on screen until the
     /// new ones arrive, and stay put if the fetch fails.
-    func reloadData() async {
+    func reloadData(using api: any HackerNewsService) async {
         let wasLoaded = isLoaded
         isLoaded = false
-        await fetchData()
+        await fetchData(using: api)
         // A failed fetch returns before marking the story loaded, but the
         // values from before are still there and still good.
         if wasLoaded { isLoaded = true }
@@ -155,7 +164,7 @@ class StoryModel: Equatable, Identifiable {
 
     /// Resolves the cell's thumbnail from the shared cache. Text posts and
     /// missing-URL posts get their placeholder state directly.
-    private func fetchThumbnail() async {
+    private func fetchThumbnail(using api: any HackerNewsService) async {
         guard storyType == .link else {
             thumbnailStatus = .text
             return
@@ -164,7 +173,7 @@ class StoryModel: Equatable, Identifiable {
             thumbnailStatus = .failed
             return
         }
-        if let image = await ThumbnailCache.shared.thumbnail(for: url) {
+        if let image = await api.thumbnail(for: url) {
             thumbnailStatus = .image(Image(uiImage: image))
         } else {
             thumbnailStatus = .failed

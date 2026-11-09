@@ -1,0 +1,8 @@
+{
+  "by" : "brndnbuilds",
+  "id" : 50330659,
+  "parent" : 50417407,
+  "text" : "I&#x27;ve just released v1.0 of Rouler which is VPN split tunneling for windows. Think IP rules for Linux, but with per-app&#x2F;service connection steering. The whole app is built in Rust, including the kernel driver. Having released v1 I&#x27;m now starting work on adding folder and windows store support. <a href=\"https:&#x2F;&#x2F;rouler.io\" rel=\"nofollow\">https:&#x2F;&#x2F;rouler.io</a>",
+  "time" : 1793572643,
+  "type" : "comment"
+}

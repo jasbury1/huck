@@ -1,0 +1,8 @@
+{
+  "by" : "binsquare",
+  "id" : 50418115,
+  "parent" : 50417407,
+  "text" : "Building a replacement for docker focused on better isolation and more lightweight resource utilization.<p>It&#x27;s a sandbox that you can embed ala the sqlite of VM&#x27;s.<p>Link: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;smol-machines&#x2F;smolvm\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;smol-machines&#x2F;smolvm</a>",
+  "time" : 1794177009,
+  "type" : "comment"
+}

@@ -10,6 +10,7 @@ import SwiftUI
 /// Shows the stories in a Huck-curated collection. Read-only (no add/remove),
 /// unlike the user's own `CollectionView`.
 struct HuckCollectionView: View {
+    @Environment(\.hackerNews) private var api
     let collection: HuckCollection
     @Binding var path: NavigationPath
 
@@ -25,7 +26,7 @@ struct HuckCollectionView: View {
                     ForEach(feed.stories) { story in
                         StoryCellView(model: story, path: $path)
                             .onAppear {
-                                Task { await feed.prefetchAhead(after: story.id) }
+                                Task { await feed.prefetchAhead(after: story.id, using: api) }
                             }
                     }
                 }
@@ -46,11 +47,11 @@ struct HuckCollectionView: View {
         .navigationTitle(collection.name)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            let feed = feed ?? StoryFeed { page in
-                await page == 0 ? (collection.storyIDs(), false) : ([], false)
+            let feed = feed ?? StoryFeed { api, page in
+                await page == 0 ? (collection.storyIDs(using: api), false) : ([], false)
             }
             self.feed = feed
-            await feed.reload()
+            await feed.reload(using: api)
         }
     }
 }

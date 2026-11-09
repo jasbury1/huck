@@ -1,0 +1,11 @@
+{
+  "by" : "nyeki",
+  "descendants" : 1,
+  "id" : 50408372,
+  "kids" : [ 50415445 ],
+  "score" : 4,
+  "time" : 1794088318,
+  "title" : "Write your own Wayland compositor: Rendering windows",
+  "type" : "story",
+  "url" : "https://nekidev.github.io/2026/11/07/1-welcome-to-wlroots-part-3.html"
+}

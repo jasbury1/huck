@@ -1,0 +1,8 @@
+{
+  "by" : "rrrpdx1",
+  "id" : 50418095,
+  "parent" : 50417407,
+  "text" : "I&#x27;m working on an iPhone app called PhotoGather. <a href=\"https:&#x2F;&#x2F;apps.apple.com&#x2F;us&#x2F;app&#x2F;photogather&#x2F;id6738232616\">https:&#x2F;&#x2F;apps.apple.com&#x2F;us&#x2F;app&#x2F;photogather&#x2F;id6738232616</a>\nI&#x27;ve got 40k+ photos on my iphone, and wanted a better way to interact with them. The basic idea I had was to virtually stitch all the photos together into a gigapixel image, and navigate that image with pinch and zoom. On import, the app hierarchically groups photos based on date and similarity. The user can go back and edit the groups, change the layout, and adjust the size of photos if they choose.<p>The interesting I noticed is that in the process of curating and organizing my photos, I stumble across memories and moments that I had completely forgot.<p>Development Challenge: The app does two interesting things underneath the hood... First, given an arbitrary number of thumbnails with different aspect ratios, it finds the best sized rectangle that completely fits all the photos. This allows me to recursively stitch groups together and always output a rectangular thumbnail for the group. Second, the pinch&#x2F;zoom UI uses these nested thumbnails directly without slicing&#x2F;dicing to fixed sized tiles.",
+  "time" : 1794176883,
+  "type" : "comment"
+}

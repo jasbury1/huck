@@ -1,0 +1,12 @@
+{
+  "by" : "BIOcanse",
+  "descendants" : 0,
+  "id" : 50380521,
+  "kids" : [ 50383055, 50380571 ],
+  "score" : 2,
+  "text" : "Hello everyone, I&#x27;m BIOcanse.<p>Windows Task Manager has inaccurate readings and limited monitoring items. Various hardware adjustments are also very separated—CPU, GPU, and fans all require their own individual software. Their interfaces and interactions are primitive, and they often overwrite each other&#x27;s configurations. Moreover, driver management of the CPU and GPU is too clumsy, and the memory usage issue on Windows is also very serious. So I made Resource Manager to view and manage all these resources in one place, making monitoring and scheduling work seamlessly together.<p>Monitoring:<p>This software integrates almost every possible monitoring item, letting you look at your computer from a God&#x27;s-eye view!<p>Scheduling:<p>One of the core features. It uses algorithms I wrote to optimize memory usage and reasonably schedule processes across multiple CPU cores. It also supports GPU scheduling, which means it can switch the GPU a program uses while it is running. For example, after launching a game, if GPU usage is high or VRAM is about to overflow, it will move the remaining software to another GPU (for most personal computers, this is usually the integrated GPU).<p>Reporting:<p>Many times, computer performance problems are actually just caused by a single program or driver—the benefits of 100 programs optimizing themselves cannot make up for a memory leak in just one program. The reporting page reports abnormal resource usage (CPU, GPU, memory, VRAM, disk read&#x2F;write, network traffic, and causing system interruptions).<p>Hardware Adjustment:<p>All the parameters you can think of for hardware like the CPU and GPU can be adjusted here. However, my own setup is an AMD CPU + NVIDIA GPU, so other setups still need to be verified. I do have several computers with Intel CPUs to verify Intel CPU support, but I really do not have a single AMD GPU. Although most of it uses mature open-source dependencies, there may still be risks, so please use it with caution.",
+  "time" : 1793893358,
+  "title" : "Show HN: Resource Manager – Manage all resources on the computer",
+  "type" : "story",
+  "url" : "https://github.com/BIOcanse/Resource-Manager"
+}

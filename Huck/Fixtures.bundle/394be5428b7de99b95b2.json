@@ -1,0 +1,11 @@
+{
+  "by" : "Propelloni",
+  "descendants" : 36,
+  "id" : 50380170,
+  "kids" : [ 50381079, 50381275, 50384251, 50380171, 50380983, 50389376, 50388452, 50387973, 50384059, 50383605, 50383643, 50380884 ],
+  "score" : 60,
+  "time" : 1793891851,
+  "title" : "Nordstjernen, Northstar, Southstar: minimalist webbrowsers in C and Rust",
+  "type" : "story",
+  "url" : "https://nordstjernen.org/"
+}

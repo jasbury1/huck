@@ -1,0 +1,11 @@
+{
+  "by" : "kadharmfn",
+  "descendants" : 45,
+  "id" : 50380658,
+  "kids" : [ 50383659, 50381496, 50381791, 50383531, 50382887, 50388289, 50383359, 50381328, 50394242, 50387694, 50383183, 50380665, 50383506, 50381503 ],
+  "score" : 104,
+  "time" : 1793893917,
+  "title" : "Building a Multi-Agent System from Scratch: Architecture Patterns",
+  "type" : "story",
+  "url" : "https://kadhar.dev/blog/multi-agent-systems-from-scratch"
+}

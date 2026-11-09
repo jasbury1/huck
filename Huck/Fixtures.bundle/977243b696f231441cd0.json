@@ -1,0 +1,9 @@
+{
+  "by" : "alphax314",
+  "id" : 50418119,
+  "kids" : [ 50418214 ],
+  "parent" : 50417407,
+  "text" : "<a href=\"https:&#x2F;&#x2F;trymeli.app\" rel=\"nofollow\">https:&#x2F;&#x2F;trymeli.app</a><p>Meli: A spending tracker for Mac designed with privacy in mind. Turns credit card alert emails into spending insights and budgets. I was in security for 15+ years and I built it because I didn&#x27;t want to use Plaid or other aggregators and wanted my financial data locally on my device and not in the cloud. Spreadsheets required a lot of work to maintain so I wanted some sort of automation. Connects directly to your email (reads only alerts from supported senders) and all parsing happens on your device.<p>Works with seven major US banks (AMEX, Capital One, Chase, Citi, Discover, Bank of America and Wells Fargo) plus PayPal and Venmo.<p>Does this list cover most of your spending? If not, which banks or cards would you need?",
+  "time" : 1794177050,
+  "type" : "comment"
+}

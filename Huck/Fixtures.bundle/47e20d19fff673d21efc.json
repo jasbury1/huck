@@ -1,0 +1,8 @@
+{
+  "by" : "mennanov",
+  "id" : 50345100,
+  "parent" : 50417407,
+  "text" : "I&#x27;m working on a cross-file deterministic drift checker <a href=\"https:&#x2F;&#x2F;github.com&#x2F;mennanov&#x2F;blockwatch\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;mennanov&#x2F;blockwatch</a><p>The idea is that the source code is annotated with special rules which configure how parts of the code (also configs and docs) depend on each other. This can be done either directly in the source code comments or in a config file blockwatch.toml<p>This tool is very useful for large codebases that e.g. share constants across programming languages and configs, have docs that should strictly reflect the current state of the code, etc<p>It uses tree-sitter to parse the source code, 35+ languages are supported.<p>The project is actively developed, your feedback is welcomed! Thanks!",
+  "time" : 1793659481,
+  "type" : "comment"
+}

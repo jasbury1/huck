@@ -1,0 +1,12 @@
+{
+  "by" : "kkoppenhaver",
+  "descendants" : 2,
+  "id" : 50383438,
+  "kids" : [ 50384707 ],
+  "score" : 2,
+  "text" : "Some of you will remember lofiatc.com and I was a huge fan and heavy user until it got shut down. It was streaming LiveATC feeds, and when those got cut off the site went dark and has been ever since.<p>So I decided to bring it back in a way that wouldn&#x27;t fall to the same fate. I&#x27;ve been an ATC nerd for years (ever since you could still listen to the radio on the arm rest of commercial flights) so this summer I rented a Fiat 500, stuck an airband antenna on the roof, and spent a day driving to three Chicago airports with my laptop in the passenger seat to record the audio I needed in person. This took me to the viewing area at Chicago Executive (KPWK), the cell phone lot at O&#x27;Hare (KORD), and the top of a parking garage at Midway (KMDW). The whole chain was a Bingfu mag-mount antenna connected to an airband filter and then to an RTL-SDR, all captured via SDR++.<p>If you&#x27;re interested, you can read a full post on how the recording day came together here: <a href=\"https:&#x2F;&#x2F;finalapproach.fm&#x2F;field-notes&#x2F;chicago-recording-day&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;finalapproach.fm&#x2F;field-notes&#x2F;chicago-recording-day&#x2F;</a><p>Once I had all the audio, I layered it on top of lo-fi tracks and created one &quot;album&quot; per airport, each with its own vibe. Each track is named after something unique to that airport or something we heard on the radio, and I&#x27;ve had it on as background music for work for about two months now, which is why I built it in the first place!<p>Also important to me was putting this out there in the world with no signup required and no ads. Just like on the original site, finalapproach.fm gives you two sliders that let you push the radio up or the music up depending on which you want to hear more of. And there are pre-built mixes on YouTube and all your favorite music streaming services (search for Final Approach Radio).<p>Happy to answer questions about the radio side, the legal side (as much as I can, obviously), or the editing (largely done with Claude Code).",
+  "time" : 1793907542,
+  "title" : "Show HN: Lo-fi layered over air traffic control (recorded myself)",
+  "type" : "story",
+  "url" : "https://finalapproach.fm/"
+}

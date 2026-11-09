@@ -1,0 +1,9 @@
+{
+  "by" : "jzig",
+  "id" : 50418273,
+  "kids" : [ 50418904, 50418901 ],
+  "parent" : 50417407,
+  "text" : "I was laid off a few weeks ago. Then I learned my dad’s carpet cleaning company has been struggling, so I started learning about Google Local Service Ads to help him out. THEN I learned his old Windows desktop CRM was discontinued and one OS update away from no longer working. I wanted a way to track every dollar spent to determine return on ad spend, but the Google LSA dashboard left a lot to be desired. And existing SaaS CRMs didn’t have great integrations to Google Ads API. So I built Crewbird, a Field Service Management and CRM for service based businesses with Google LSA integration where my dad is quickly approaching 3x ROAS!<p>I’m still looking for work in the mean time but I’m proud of what I’ve achieved so far.<p><a href=\"https:&#x2F;&#x2F;getcrewbird.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;getcrewbird.com&#x2F;</a>",
+  "time" : 1794177805,
+  "type" : "comment"
+}

@@ -1,0 +1,12 @@
+{
+  "by" : "protention",
+  "descendants" : 0,
+  "id" : 50417782,
+  "kids" : [ 50417859 ],
+  "score" : 3,
+  "text" : "Hi, this is a package I developed for keeping track of short toy-model development cycles and explaining what changed between runs.<p>The core idea: commands run through the package, and their declared parameters (or injected parameters with --substitute) and outcomes go into a dependency-free ledger stored in the project. Because that ledger lives in the project directory, it has worked well for passing context between different agents. I’ve also found some use for it in CI work.",
+  "time" : 1794175088,
+  "title" : "Show HN: Record, branch, and compare command runs in stdlib-only Python",
+  "type" : "story",
+  "url" : "https://github.com/Protention/ocura-oss"
+}

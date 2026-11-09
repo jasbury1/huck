@@ -1,0 +1,12 @@
+{
+  "by" : "antelocnova",
+  "descendants" : 2,
+  "id" : 50397325,
+  "kids" : [ 50399558, 50397470, 50398831, 50397531, 50400606 ],
+  "score" : 31,
+  "text" : "Hi there :)<p>Around a month ago, I released LDraw Nova, an agentic toolset for assembling LEGO CAD models by generating LDraw source code files.<p>For more details, here&#x27;s the Show HN post:<p><a href=\"https:&#x2F;&#x2F;news.ycombinator.com&#x2F;item?id=49937916\">https:&#x2F;&#x2F;news.ycombinator.com&#x2F;item?id=49937916</a><p>From the comments, I got the impression that there was quite an interest in seeing not only AI-generated LEGO models, but also AI-animated LEGO ones.<p>I took a look at results from past experiments, and found it feasible to use agentic LLMs for:<p>- analyzing the LDraw source code for LEGO models\n- reverse-engineer! the mechanisms present by reading the descriptions and sequence for the parts there\n- and then, animate them via Blender!<p>This new project I&#x27;m presenting, LDraw Mecha, is the end result and proof that can be done:<p>- Read specially annotated LDraw LEGO models .mpd source files\n- Infer the model structure in terms of submodels\n- Select from those the ones that are mechanisms\n- Plan animations\n- Execute them in Blender<p>In summary, from an initial .mpd source file, get a rigged and animated version for the model as a Blender (.blend) file.<p>See the results here:<p>- Repo (v0.5.0): <a href=\"https:&#x2F;&#x2F;github.com&#x2F;anteloc&#x2F;ldraw-mecha&#x2F;tree&#x2F;v0.5.0\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;anteloc&#x2F;ldraw-mecha&#x2F;tree&#x2F;v0.5.0</a>\n- Gallery: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;anteloc&#x2F;ldraw-mecha&#x2F;blob&#x2F;v0.5.0&#x2F;GALLERY.md\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;anteloc&#x2F;ldraw-mecha&#x2F;blob&#x2F;v0.5.0&#x2F;GALLERY.m...</a>\n- Process: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;anteloc&#x2F;ldraw-mecha&#x2F;blob&#x2F;v0.5.0&#x2F;PROCESS.md\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;anteloc&#x2F;ldraw-mecha&#x2F;blob&#x2F;v0.5.0&#x2F;PROCESS.m...</a><p>This project is very unusual, I&#x27;d really appreciate some feedback from the community.<p>Cheers!",
+  "time" : 1793994080,
+  "title" : "Show HN: Agents infer Lego mechanisms from sources, then animate them",
+  "type" : "story",
+  "url" : "https://github.com/anteloc/ldraw-mecha/tree/v0.5.0"
+}

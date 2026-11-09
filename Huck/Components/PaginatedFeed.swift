@@ -31,8 +31,9 @@ final class PaginatedFeed<Element> {
     /// Zero-based index of the next page to request.
     private var nextPage = 0
 
-    /// Fetches one page and reports whether any remain after it.
-    typealias PageLoader = (_ page: Int) async -> (elements: [Element], hasMore: Bool)
+    /// Fetches one page, from `api` if the source is remote, and reports
+    /// whether any remain after it.
+    typealias PageLoader = (_ api: any HackerNewsService, _ page: Int) async -> (elements: [Element], hasMore: Bool)
     private let loadPage: PageLoader
 
     init(loadPage: @escaping PageLoader) {
@@ -42,12 +43,12 @@ final class PaginatedFeed<Element> {
     /// Loads the next page and appends it. The first call (page 0) is the initial
     /// load, so callers never need a separate first-page path. Re-entrant calls
     /// and calls past the end of the list are no-ops.
-    func loadMore() async {
+    func loadMore(using api: any HackerNewsService) async {
         guard !isLoading, hasMore else { return }
         isLoading = true
         defer { isLoading = false }
 
-        let result = await loadPage(nextPage)
+        let result = await loadPage(api, nextPage)
         items.append(contentsOf: result.elements)
         hasMore = result.hasMore
         nextPage += 1
@@ -59,12 +60,12 @@ final class PaginatedFeed<Element> {
     /// The API layer reports a failed fetch as an empty page, so an empty
     /// first page over a populated list leaves the list as it was — a dropped
     /// connection shouldn't wipe what's already on screen.
-    func refresh() async {
+    func refresh(using api: any HackerNewsService) async {
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
 
-        let result = await loadPage(0)
+        let result = await loadPage(api, 0)
         guard !result.elements.isEmpty || items.isEmpty else { return }
         items = result.elements
         hasMore = result.hasMore
@@ -86,8 +87,8 @@ final class PaginatedFeed<Element> {
 extension PaginatedFeed where Element == UserComment {
     /// Comments authored by a user.
     static func userComments(username: String) -> PaginatedFeed {
-        PaginatedFeed { page in
-            let result = await HackerNewsAPI.getUserComments(username: username, page: page)
+        PaginatedFeed { api, page in
+            let result = await api.getUserComments(username: username, page: page)
             return (result.comments, result.hasMore)
         }
     }
@@ -98,7 +99,7 @@ extension PaginatedFeed where Element == UserComment {
     /// the reader has upvoted could show grey arrows, which is absurd on its
     /// face.
     static func likedComments(username: String, in store: InteractionStore) -> PaginatedFeed {
-        PaginatedFeed { page in
+        PaginatedFeed { _, page in
             let result = await store.likedComments(username: username, page: page)
             return (result.comments, result.hasMore)
         }
@@ -108,8 +109,8 @@ extension PaginatedFeed where Element == UserComment {
     /// the search index — text, author, and the story they sit in — so unlike
     /// story results they need no second fetch to render.
     static func searchComments(_ query: SearchQuery) -> PaginatedFeed {
-        PaginatedFeed { page in
-            let result = await HackerNewsAPI.searchComments(
+        PaginatedFeed { api, page in
+            let result = await api.searchComments(
                 query: query.text,
                 tags: query.tags,
                 numericFilters: query.numericFilters,
@@ -131,8 +132,8 @@ extension PaginatedFeed where Element == User {
     /// state, and paging plumbing as every other tab. Capitalisation is
     /// forgiven — see `HackerNewsAPI.findUser(named:)`.
     static func user(named username: String) -> PaginatedFeed {
-        PaginatedFeed { page in
-            guard page == 0, let user = await HackerNewsAPI.findUser(named: username) else {
+        PaginatedFeed { api, page in
+            guard page == 0, let user = await api.findUser(named: username) else {
                 return ([], false)
             }
             return ([user], false)

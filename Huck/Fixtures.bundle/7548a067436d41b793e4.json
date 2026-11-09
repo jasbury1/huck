@@ -1,0 +1,8 @@
+{
+  "by" : "dustinlakin",
+  "id" : 50418311,
+  "parent" : 50417407,
+  "text" : "I have been playing with benchmarking agents in a research loop. The experiment leans on using these models to understand and explore builds&#x2F;gameplay through reasoning game AI over traditional reinforcement learning.<p>Also, creating interactive ways to view the experiment and visualizating the results.<p><a href=\"https:&#x2F;&#x2F;crux.lakin.dev&#x2F;eval\" rel=\"nofollow\">https:&#x2F;&#x2F;crux.lakin.dev&#x2F;eval</a>",
+  "time" : 1794178023,
+  "type" : "comment"
+}

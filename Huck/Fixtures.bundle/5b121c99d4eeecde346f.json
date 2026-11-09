@@ -1,0 +1,8 @@
+{
+  "by" : "busymom0",
+  "id" : 50417936,
+  "parent" : 50417407,
+  "text" : "Currently working on adding support for iPhone Duo to my hacker news app Hack. The app has been around for 9 years and when I made it, the menu bars and navigation buttons were custom views. That doesn&#x27;t seem to work well for iPhone duo due to its vertical stack menu on the right side. So, I&#x27;ve been switching over to iOS native navigation bars and menu bars along with a bunch of other improvements. I was hoping to have it done couple weeks ago but I had to leave country for a family emergency. So I am working on it this week. It&#x27;s mostly done, I&#x27;m just doing some final testing now and will submit to Apple this week:<p><a href=\"https:&#x2F;&#x2F;apps.apple.com&#x2F;app&#x2F;id1464477788\">https:&#x2F;&#x2F;apps.apple.com&#x2F;app&#x2F;id1464477788</a>",
+  "time" : 1794175914,
+  "type" : "comment"
+}

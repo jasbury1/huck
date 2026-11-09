@@ -1,0 +1,11 @@
+{
+  "by" : "u-pump",
+  "descendants" : 2,
+  "id" : 50380134,
+  "kids" : [ 50409846, 50408338, 50380440, 50380160, 50412759 ],
+  "score" : 15,
+  "time" : 1793891732,
+  "title" : "Show HN: Green tests are not proof – verifier for C/C++ and firmware fixes",
+  "type" : "story",
+  "url" : "https://unfix.dev/"
+}

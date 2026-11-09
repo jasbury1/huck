@@ -1,0 +1,12 @@
+{
+  "by" : "grandimam",
+  "descendants" : 2,
+  "id" : 50395134,
+  "kids" : [ 50402975 ],
+  "score" : 6,
+  "text" : "HackerTV and HackerTube inspired me to explore another corner of HN recommendations: places worth visiting and typefaces people enjoy using.<p>I built: <a href=\"https:&#x2F;&#x2F;hacker.living\" rel=\"nofollow\">https:&#x2F;&#x2F;hacker.living</a> - a map and font collections with links back to the original comment.<p>I built this entirely using Codex, including the entire data pipeline and workers: extraction, transformation, and recommendations capture.<p>It&#x27;s still an early stage preview, so some details need verification. Thanks for the inspiration!<p>Code: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;grandimam&#x2F;hacker.living\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;grandimam&#x2F;hacker.living</a>",
+  "time" : 1793984968,
+  "title" : "Show HN: Hacker Living – HN's most recommended places",
+  "type" : "story",
+  "url" : "https://hacker.living"
+}

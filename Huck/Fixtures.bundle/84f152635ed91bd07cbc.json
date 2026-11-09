@@ -1,0 +1,8 @@
+{
+  "by" : "xergic",
+  "id" : 50353674,
+  "parent" : 50417407,
+  "text" : "Building Wishfox [1] for around 6 years. It&#x27;s a wishlist app with price tracking, groups, secret Santa and more. Recently did a major rebranding, and the mobile app is almost ready for testers.<p>Then I&#x27;m working on improving my two open-source apps, Portfox [2] and Localfox [3]. Portfox shows ports for running services and dev servers, Localfox provides them with .localhost domains with TLS and Cloudflare tunnels.<p>[1] <a href=\"https:&#x2F;&#x2F;wishfox.app\" rel=\"nofollow\">https:&#x2F;&#x2F;wishfox.app</a>\n[2] <a href=\"https:&#x2F;&#x2F;github.com&#x2F;xergic&#x2F;portfox\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;xergic&#x2F;portfox</a>\n[3] <a href=\"https:&#x2F;&#x2F;github.com&#x2F;xergic&#x2F;localfox\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;xergic&#x2F;localfox</a>",
+  "time" : 1793721734,
+  "type" : "comment"
+}

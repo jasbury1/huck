@@ -14,6 +14,7 @@ import SwiftUI
 /// the tap responds immediately; a comment then opens as the thread it's
 /// part of, scrolled to it.
 struct LinkedItemView: View {
+    @Environment(\.hackerNews) private var api
     let itemID: Int
     @Binding var path: NavigationPath
 
@@ -42,7 +43,7 @@ struct LinkedItemView: View {
         }
         .task(id: itemID) {
             guard case .loading = resolution else { return }
-            if let location = await HackerNewsAPI.threadLocation(ofItem: itemID) {
+            if let location = await api.threadLocation(ofItem: itemID) {
                 resolution = .found(location)
             } else if !Task.isCancelled {
                 resolution = .missing

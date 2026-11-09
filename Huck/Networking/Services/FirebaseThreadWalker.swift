@@ -29,6 +29,9 @@ struct FirebaseThreadWalker {
     /// The story's top-level comment ids, in display order.
     let rootKids: [Int]
 
+    /// Where the thread's comments are fetched from.
+    let firebase: FirebaseAPIService
+
     /// Upper bound on concurrent Firebase `item` requests, so a large thread never
     /// fans out into hundreds of simultaneous requests.
     var maxConcurrentFetches = 16
@@ -97,7 +100,7 @@ struct FirebaseThreadWalker {
             // Seed the concurrency budget with the highest-priority pending nodes.
             while inFlight < maxConcurrentFetches, let node = frontier.popMin() {
                 group.addTask {
-                    await FetchedNode(path: node.path, id: node.id, data: FirebaseAPIService.getCommentAsync(id: node.id))
+                    await FetchedNode(path: node.path, id: node.id, data: firebase.getCommentAsync(id: node.id))
                 }
                 inFlight += 1
             }
@@ -129,7 +132,7 @@ struct FirebaseThreadWalker {
                 // Backfill the freed slot(s) with the next pending nodes.
                 while inFlight < maxConcurrentFetches, let node = frontier.popMin() {
                     group.addTask {
-                        await FetchedNode(path: node.path, id: node.id, data: FirebaseAPIService.getCommentAsync(id: node.id))
+                        await FetchedNode(path: node.path, id: node.id, data: firebase.getCommentAsync(id: node.id))
                     }
                     inFlight += 1
                 }

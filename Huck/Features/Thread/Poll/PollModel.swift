@@ -67,14 +67,14 @@ final class PollModel {
 
     // MARK: - Loading
 
-    func loadOptions() async {
+    func loadOptions(using api: any HackerNewsService) async {
         guard options.isEmpty else { return }
-        options = await HackerNewsAPI.getPollOptions(ids: optionIDs)
+        options = await api.getPollOptions(ids: optionIDs)
     }
 
     /// Reads the reader's votes, or clears them when no one is signed in.
-    func loadBallot() async {
-        ballot = await HackerNewsAPI.pollBallot(pollID: pollID, optionIDs: optionIDs)
+    func loadBallot(using api: any HackerNewsService) async {
+        ballot = await api.pollBallot(pollID: pollID, optionIDs: optionIDs)
     }
 
     // MARK: - Voting
@@ -82,20 +82,20 @@ final class PollModel {
     /// Votes for an option, or withdraws the vote if it has one: updated
     /// optimistically, and rolled back if Hacker News refuses. Callers gate
     /// this behind login.
-    func toggleVote(on option: PollOption) async {
+    func toggleVote(on option: PollOption, using api: any HackerNewsService) async {
         let id = option.id
         guard !votesInFlight.contains(id) else { return }
         votesInFlight.insert(id)
         defer { votesInFlight.remove(id) }
 
         // Tapped before the ballot arrived — straight after signing in, say.
-        if ballot == nil { await loadBallot() }
+        if ballot == nil { await loadBallot(using: api) }
         guard let ballot, ballot.tokens[id] != nil else { return }
 
         let wasVoted = ballot.voted.contains(id)
         setVoted(!wasVoted, on: id)
         do {
-            try await HackerNewsAPI.setPollVote(optionID: id, voted: !wasVoted, ballot: ballot)
+            try await api.setPollVote(optionID: id, voted: !wasVoted, ballot: ballot)
         } catch {
             setVoted(wasVoted, on: id)
             print("Poll vote failed for \(id): \(error)")

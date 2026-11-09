@@ -1,0 +1,11 @@
+{
+  "by" : "cscheid",
+  "descendants" : 11,
+  "id" : 50380051,
+  "kids" : [ 50415107, 50380079 ],
+  "score" : 69,
+  "time" : 1793891344,
+  "title" : "Mizu – zero-copy parallel R and Python over shared memory",
+  "type" : "story",
+  "url" : "https://github.com/shikokuchuo/pymizu"
+}

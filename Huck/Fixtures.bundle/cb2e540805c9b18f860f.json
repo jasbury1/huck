@@ -1,0 +1,11 @@
+{
+  "by" : "lucrbvi",
+  "descendants" : 193,
+  "id" : 50376313,
+  "kids" : [ 50379426, 50380534, 50379586, 50379301, 50378513, 50381889, 50380269, 50379734, 50382470, 50381159, 50378957, 50379042, 50379644, 50376680, 50383653, 50382901, 50387173, 50378501, 50384913, 50385568, 50379115, 50384761, 50382842, 50379189, 50385883, 50379869, 50383110, 50379533, 50382169, 50380187, 50378738, 50378219, 50379571 ],
+  "score" : 341,
+  "time" : 1793864670,
+  "title" : "GPT-6 Astra covertly underperforms on safety research",
+  "type" : "story",
+  "url" : "https://alignment.openai.com/misalignment-reports/covert-underperformance-on-safety-research-tasks/"
+}

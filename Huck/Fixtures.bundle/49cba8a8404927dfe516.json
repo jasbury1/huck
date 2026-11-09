@@ -1,0 +1,8 @@
+{
+  "by" : "benoau",
+  "id" : 50417830,
+  "parent" : 50417407,
+  "text" : "Getting <a href=\"https:&#x2F;&#x2F;streamish.github.io&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;streamish.github.io&#x2F;</a> ready to launch, a music server compatible with multiple 3rd party mobile apps and particularly Synology and QNAP.  Want to do Plex next but I suspect that&#x27;s a dead-end since I think you can&#x27;t directly sign in you have to do it through their website.<p>Now putting it to personal use and keeping an eye out for issues and rough bits to smooth over.<p>Built with -<p>NestJS, Sequelize + SQLite, OpenAPI, and Jest<p>React, TanStack, Shadcn, and Playwright",
+  "time" : 1794175329,
+  "type" : "comment"
+}

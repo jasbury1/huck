@@ -1,0 +1,9 @@
+{
+  "by" : "rahimnathwani",
+  "id" : 50389775,
+  "kids" : [ 50390627 ],
+  "parent" : 50417407,
+  "text" : "Outside of my day job, I&#x27;ve been working on:<p>- hermitator, a tool to run multiple isolated AI agents for WhatsApp on a single machine, with idle agents using no RAM: <a href=\"https:&#x2F;&#x2F;www.encona.com&#x2F;posts&#x2F;hermitator&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;www.encona.com&#x2F;posts&#x2F;hermitator&#x2F;</a><p>- showntell, which allows your coding agent to explain things to you with a video that starts playing within a few seconds of you asking: <a href=\"https:&#x2F;&#x2F;www.encona.com&#x2F;posts&#x2F;showntell&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;www.encona.com&#x2F;posts&#x2F;showntell&#x2F;</a><p>- a philosophy tutor (testing in private for now) that does 2:1 live philosophy lessons, each exploring a single topic (aimed at ~10yo kids). I&#x27;ve tested this successfully (i.e. two kids did an hour and they want to do it again), and am trying to make improvements.<p>- some other education-related things<p>- a jmail-style mailbox viewer: <a href=\"https:&#x2F;&#x2F;www.encona.com&#x2F;posts&#x2F;mailbox-viewer&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;www.encona.com&#x2F;posts&#x2F;mailbox-viewer&#x2F;</a>",
+  "time" : 1793954867,
+  "type" : "comment"
+}

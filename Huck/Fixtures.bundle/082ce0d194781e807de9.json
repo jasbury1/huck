@@ -1,0 +1,11 @@
+{
+  "by" : "dmit",
+  "descendants" : 17,
+  "id" : 50412072,
+  "kids" : [ 50412705, 50418281, 50414720, 50412869, 50416046, 50415813, 50415816, 50412911, 50412997, 50414882, 50413821 ],
+  "score" : 91,
+  "time" : 1794134535,
+  "title" : "JIT bitmap text rendering for microcontrollers",
+  "type" : "story",
+  "url" : "https://linebender.org/blog/jit-bitmap-text/"
+}

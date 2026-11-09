@@ -1,0 +1,8 @@
+{
+  "by" : "monster2control",
+  "id" : 50418886,
+  "parent" : 50417407,
+  "text" : "A few Apple container plugins.<p><a href=\"https:&#x2F;&#x2F;robertderose.github.io&#x2F;container-krun-runtime&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;robertderose.github.io&#x2F;container-krun-runtime&#x2F;</a><p>It’s an alternative VM engine that uses libkrun. The main purpose is that libkrun supports returning memory back to macOS when the VM releases it. It also has better performance in some areas, but it’s only been tested on my M1 laptop and I haven’t added nested support yet because I only have an M1<p>And <a href=\"https:&#x2F;&#x2F;robertderose.github.io&#x2F;container-compose-plugin&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;robertderose.github.io&#x2F;container-compose-plugin&#x2F;</a><p>It’s a full docker system running inside Apple Container’s machines with automatic localhost port forwarding, automatic shutdown if nothing is running, and exposes a tcp socket so you can use most tools by just exporting your DOCKER_HOST environment variable.<p>I have a few other projects but they are still in earlier stages",
+  "time" : 1794180856,
+  "type" : "comment"
+}

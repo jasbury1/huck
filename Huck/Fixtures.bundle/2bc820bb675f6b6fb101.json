@@ -1,0 +1,12 @@
+{
+  "by" : "jclardy",
+  "descendants" : 9,
+  "id" : 50367367,
+  "kids" : [ 50367924, 50367678, 50367787, 50367572, 50367624, 50377158 ],
+  "score" : 8,
+  "text" : "Hey all, I just released my latest iOS app, Scroll Hope. It is a tiktok like scrolling feed, but the content is Bible verses with fun dynamic backgrounds. It also tracks your reading progress and keeps stats over time.<p>You can try it out on the website, or on iOS if you want the app lockout feature which lets you block your social apps. Completely free, with the option to support the app with a tip and unlock some additional icon and sharing options.<p>Coming soon is audio and auto-scroll, so you can set the phone down and read&#x2F;listen hands free.<p>Android is on the way, the lockout feature is taking some additional review time.",
+  "time" : 1793807608,
+  "title" : "Show HN: I built a Bible verse feed to replace doomscrolling",
+  "type" : "story",
+  "url" : "https://scrollhope.com/"
+}

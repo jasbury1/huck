@@ -1,0 +1,11 @@
+{
+  "by" : "ForHackernews",
+  "descendants" : 96,
+  "id" : 44580257,
+  "kids" : [ 44584654, 44582426, 44584435, 44586474, 44582706, 44586138, 44585000, 44583569, 44590801, 44594779, 44584201 ],
+  "score" : 355,
+  "time" : 1752657328,
+  "title" : "Pgactive: Postgres active-active replication extension",
+  "type" : "story",
+  "url" : "https://github.com/aws/pgactive"
+}

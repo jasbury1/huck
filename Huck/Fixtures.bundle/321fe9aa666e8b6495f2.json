@@ -1,0 +1,8 @@
+{
+  "by" : "dzhiurgis",
+  "id" : 50335476,
+  "parent" : 50417407,
+  "text" : "Built an app to suggest best local beach for given weather for my town. My partner shared with local moms and they seem to be loving it - <a href=\"https:&#x2F;&#x2F;beach.metacursion.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;beach.metacursion.com&#x2F;</a><p>Also revived old project - <a href=\"https:&#x2F;&#x2F;aminosplore.metacursion.com\" rel=\"nofollow\">https:&#x2F;&#x2F;aminosplore.metacursion.com</a> - the idea was to compare what essential amino acids each food contains using spider web chart. It’s been dead for a while due to USDA API changes so I revived, added macros and enabled to build foods into actual recipes.<p>Finally have been improving elsrc.com - an easy and scalable way to use ai image generators. If you need hundreds of images you can just request them by url. Supports versioning, batching, regional and national styling based on viewers IP and few other neat features!",
+  "time" : 1793618793,
+  "type" : "comment"
+}

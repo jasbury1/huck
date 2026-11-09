@@ -1,0 +1,8 @@
+{
+  "by" : "alopia",
+  "id" : 50328945,
+  "parent" : 50417407,
+  "text" : "I &quot;accidentally&quot; created one of the fastest modern JavaScript frameworks out there: <a href=\"https:&#x2F;&#x2F;signy.dev&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;signy.dev&#x2F;</a><p>...according to my own benchmarks (yeah, I know how that sounds).<p>Next, I&#x27;m planning to submit it to independent third party benchmarks, hoping to find out whether my results are accurate... or not :)<p>I&#x27;ve also just finished a CSS framework: <a href=\"https:&#x2F;&#x2F;iriscss.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;iriscss.com&#x2F;</a><p>Now I&#x27;m working on a new backend programming language that runs on the Erlang BEAM, along with a few web applications built using this tech stack.",
+  "time" : 1793561995,
+  "type" : "comment"
+}

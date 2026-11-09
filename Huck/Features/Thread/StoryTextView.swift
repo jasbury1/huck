@@ -171,6 +171,7 @@ struct CommentCellView: View {
 }
 
 struct StoryTextView: View {
+    @Environment(\.hackerNews) private var api
     let storyId: Int
 
     @State private var storyData: StoryModel
@@ -434,14 +435,14 @@ struct StoryTextView: View {
             // Throwing keeps the draft, so "try again" is real advice.
             let parentId: Int
             if let parent {
-                guard let resolved = await commentFetcher.resolveItemID(for: parent) else {
+                guard let resolved = await commentFetcher.resolveItemID(for: parent, using: api) else {
                     throw APIError.unknownReplyTarget
                 }
                 parentId = resolved
             } else {
                 parentId = storyId
             }
-            try await HackerNewsAPI.postComment(
+            try await api.postComment(
                 parentId: parentId,
                 storyId: storyId,
                 text: text
@@ -461,15 +462,15 @@ struct StoryTextView: View {
         // and comment count) past the caches, which would otherwise serve
         // back what's already on screen.
         .refreshable {
-            await HackerNewsAPI.invalidateThread(for: storyId)
-            async let story: Void = storyData.reloadData()
-            async let thread: Void = commentFetcher.refreshComments()
+            await api.invalidateThread(for: storyId)
+            async let story: Void = storyData.reloadData(using: api)
+            async let thread: Void = commentFetcher.refreshComments(using: api)
             _ = await (story, thread)
         }
         .task {
             recentlyViewedStore.recordView(storyId)
-            await storyData.fetchData()
-            await commentFetcher.fetchComments()
+            await storyData.fetchData(using: api)
+            await commentFetcher.fetchComments(using: api)
         }
         // Runs alongside the thread rather than after it, so the names tint in
         // as soon as the page is read without ever delaying the comments.
@@ -477,7 +478,7 @@ struct StoryTextView: View {
         // users for a signed-in reader, so signing in mid-thread fetches then.
         .task(id: highlightsNewUsers ? session.username : nil) {
             guard highlightsNewUsers else { return }
-            await commentFetcher.fetchNewUsers()
+            await commentFetcher.fetchNewUsers(using: api)
         }
         // The thread streams in, so a comment we were asked to scroll to may
         // only just have arrived. Retry on every snapshot until it has.
@@ -494,10 +495,10 @@ struct StoryTextView: View {
     private func delete(_ comment: Comment) async throws {
         // Not found yet means the mirror hasn't caught up; "try again in a
         // moment" is the right advice for that too.
-        guard let itemID = await commentFetcher.resolveItemID(for: comment) else {
+        guard let itemID = await commentFetcher.resolveItemID(for: comment, using: api) else {
             throw APIError.deleteFailed
         }
-        try await HackerNewsAPI.deleteComment(id: itemID, storyId: storyId)
+        try await api.deleteComment(id: itemID, storyId: storyId)
         commentFetcher.removeDeletedComment(comment)
     }
 
@@ -683,16 +684,6 @@ struct StoryTextView: View {
         .padding(.vertical, 8)
         // Opaque background so scrolled comments don't show through when pinned.
         .background(Color(UIColor.systemBackground))
-    }
-}
-
-@Observable
-class CommentSectionData {
-    var storyIds: [Int] = []
-
-    func fetchStoryIds(kind: FeedKind) async {
-        let ids = await HackerNewsAPI.getStoryIds(kind: kind)
-        storyIds = ids
     }
 }
 

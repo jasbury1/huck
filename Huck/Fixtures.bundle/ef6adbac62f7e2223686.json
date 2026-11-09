@@ -1,0 +1,8 @@
+{
+  "by" : "cmdrk",
+  "id" : 50418389,
+  "parent" : 50417407,
+  "text" : "Working on a tool to provide a thin OIDC auth layer for self-hosted LLM engines. Users log in with your Org&#x27;s identity provider, generate an API key for themselves, point their harnesses at your instance of the relay, and then they&#x27;re off to the races.<p>No web chat interface, no call-us-for-pricing feature gating, just a tight Erlang program for people who want to get shit done!",
+  "time" : 1794178411,
+  "type" : "comment"
+}

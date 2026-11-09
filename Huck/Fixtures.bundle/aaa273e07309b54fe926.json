@@ -1,0 +1,8 @@
+{
+  "by" : "mock-possum",
+  "id" : 50390231,
+  "parent" : 50417407,
+  "text" : "For years, I struggled to make any headway with Linux - I get so frustrated at how obscure, inscrutable, and unintuitive TUIs are! God I don’t want to waste my life typing esoteric strings of commands into the terminal. When I started with computers that was all there was, and once GUIs happened I never looked back.<p>Good news though, these days Claude will just do it for me!<p>I’ve been working on setting up a home media server, using headless Debian on a pi - I’ve got it set up to stream music and videos, hold all my ROMs, I’ve got it automatically standardizing file names and handling tagging and subtitles - all attached to a big 6-drive enclosure that I just stuffed all my random old HDDs into.<p>Even though I haven’t written more than a dozen lines of code or commands for the whole thing, I am pretty fuckin pleased that now I can just wave a magic wand and say “I want all my video game soundtracks filed under the game name rather than the artist” and Claude uh finds a way to grant my wish. I spend about an hour each night tweaking it and it’s so easy to customize to be exactly what I need.",
+  "time" : 1793957957,
+  "type" : "comment"
+}

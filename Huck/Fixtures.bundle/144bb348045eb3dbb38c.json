@@ -1,0 +1,8 @@
+{
+  "by" : "sandeepkd",
+  "id" : 50418247,
+  "parent" : 50417407,
+  "text" : "I have been in enterprise for couple decades now, learnt and experienced the challenges&#x2F;gaps between the specs vs implementation, the asks vs the real needs in the space of identity, security and access<p>Product:  webfrolic.com<p>Demo: demo.webfrolic.com<p>What it is?<p>Consider Okta (Workforce identity)+ Auth0 (Customer Identity), Authzed (authorization) + ServiceNow (IT service Desk) + Zendesk (Customer Support Desk) architected together<p>Being an engineer there is this inherent habit of prioritizing correctness over marketing so I would not oversell it, though its probably the most secure and complete thing that could be built from identity perspective<p>Status (WIP):<p>1. I am still debating&#x2F;settling on how to incorporate the AI Agents needs into the architecture, big focus on avoiding the creation of security or performance foot guns where administrators leave room open for abuse with configuration despite all this attempt to build secure system<p>2. Feature stress testing and performance testing",
+  "time" : 1794177691,
+  "type" : "comment"
+}

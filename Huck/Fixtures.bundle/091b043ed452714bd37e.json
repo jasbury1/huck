@@ -1,0 +1,8 @@
+{
+  "by" : "eimrine",
+  "id" : 50328458,
+  "parent" : 50417407,
+  "text" : "How to make data storage on multiple storage devices unbreakable and consistent? The former means for me that back-ups should be automatical and serverless, the latter means that no matter how much of that HDD&#x2F;SDD devices are connected, I want always to know all metadata of all files I have. I want this software under GPLv3 if to consider GPL still protects me from anything because permissive licenses are no better than WTFPL by any single case.<p>My first idea is to require the user to have more than one disk for the system needs and the system should know all of the rest data devices user owns. My second idea is to treat different files as having different priority which impose multiple copies. My third idea is to make the software accessible, and the last idea is to make encrypting of all the devices easy and with no ties to any commertial entities. I would like to have a discussion about how to not lose anything digital.",
+  "time" : 1793559064,
+  "type" : "comment"
+}

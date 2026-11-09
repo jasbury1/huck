@@ -19,8 +19,6 @@ import Foundation
 /// Firebase — rankings move by the minute. Pull-to-refresh bypasses it
 /// (see `refresh(_:)`).
 actor StoryListCache {
-    static let shared = StoryListCache()
-
     private let timeToLive: TimeInterval = 2 * 60
 
     private struct Entry {
@@ -32,7 +30,11 @@ actor StoryListCache {
     /// Fetches in progress, so a feed opened mid-warm-up shares its request.
     private var inFlight: [FeedKind: Task<[Int], Never>] = [:]
 
-    private init() {}
+    private let firebase: FirebaseAPIService
+
+    init(firebase: FirebaseAPIService) {
+        self.firebase = firebase
+    }
 
     /// The feed's ids, from memory when fresh, otherwise fetched.
     func ids(for kind: FeedKind) async -> [Int] {
@@ -53,7 +55,7 @@ actor StoryListCache {
     private func fetch(_ kind: FeedKind) async -> [Int] {
         if let existing = inFlight[kind] { return await existing.value }
 
-        let task = Task { await FirebaseAPIService.getStoryIdsAsync(kind: kind) }
+        let task = Task { [firebase] in await firebase.getStoryIdsAsync(kind: kind) }
         inFlight[kind] = task
         let ids = await task.value
         inFlight[kind] = nil

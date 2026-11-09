@@ -1,0 +1,8 @@
+{
+  "by" : "delf",
+  "id" : 50418392,
+  "parent" : 50417407,
+  "text" : "I&#x27;ve been working on <a href=\"https:&#x2F;&#x2F;gitsocial.org&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;gitsocial.org&#x2F;</a> for a year and a half now. The approach is to keep it all in git: issues, PRs, comments, releases, etc.<p>Hoping it becomes a viable self-hosted alternative to GitHub, GitLab, and Codeberg!",
+  "time" : 1794178419,
+  "type" : "comment"
+}

@@ -1,0 +1,9 @@
+{
+  "by" : "aaronbrethorst",
+  "id" : 50418058,
+  "kids" : [ 50418228 ],
+  "parent" : 50417407,
+  "text" : "I work on a suite of open source public transit software projects, collectively called OneBusAway (or OBA). The software is used by millions of transit riders every day around the world, including in New York City, the Seattle area, San Diego, and Washington, D.C.<p>University of California San Diego has deployed our Wayfinder and Waystation web apps for their 35,000+ students!<p>We&#x27;re getting ready to launch our Vehicle Positions software, which replaces expensive, proprietary vehicle location systems with free, open source software that runs on commodity smartphones.<p>Our next-generation server software, Maglev, is adding support for newer transit data formats, like GTFS-Flex so that we can show demand responsive transit systems on the map.<p>We are always looking for more developers, biz dev, ux designers, product managers, and more to help out!<p>Open volunteer positions: <a href=\"https:&#x2F;&#x2F;ossvolunteers.com&#x2F;organizations&#x2F;open-transit-software-foundation\" rel=\"nofollow\">https:&#x2F;&#x2F;ossvolunteers.com&#x2F;organizations&#x2F;open-transit-softwar...</a><p>Our software: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;OneBusAway&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;OneBusAway&#x2F;</a><p>More about us: <a href=\"https:&#x2F;&#x2F;opentransitsoftwarefoundation.org\" rel=\"nofollow\">https:&#x2F;&#x2F;opentransitsoftwarefoundation.org</a>",
+  "time" : 1794176646,
+  "type" : "comment"
+}

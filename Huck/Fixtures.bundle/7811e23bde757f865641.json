@@ -1,0 +1,12 @@
+{
+  "by" : "zkiihne",
+  "descendants" : 18,
+  "id" : 50408082,
+  "kids" : [ 50408446, 50408975, 50408456, 50415660, 50408636, 50410634, 50409887, 50412197, 50410323, 50408744, 50414554, 50410095, 50408313, 50408105 ],
+  "score" : 53,
+  "text" : "A little web game I made as an anniversary present for my wife.<p>Upload vacation photos and make them into a game.<p>WWW uses EXIF to determine where and when the photo was taken. This is then turned into a game you can send to anyone.",
+  "time" : 1794085715,
+  "title" : "Show HN: Where Were We",
+  "type" : "story",
+  "url" : "https://wherewerewe.app/"
+}

@@ -1,0 +1,12 @@
+{
+  "by" : "benjushi",
+  "descendants" : 2,
+  "id" : 50377851,
+  "kids" : [ 50377985, 50387631 ],
+  "score" : 7,
+  "text" : "Hi HN. I&#x27;m Brian, I make Xmind, the most popular mind mapping app, since 2006. This is my new project Nico, a personal agent for the Mac.<p>Every huge companies are building personal agents right now. The part I think matters most is the two-agent structure, so that&#x27;s what Nico is built around.<p>The front agent talks to you. Always available, only one session, one memory, continuously compaction, and it carries almost no tools, so it can answer fast.<p>The worker agent does the job. It picks up tasks the front agent puts in an inbox and reports back when they&#x27;re done. It almost never talks to you; anything it needs goes through the front agent.<p>I think this is the real step forward, but the attention goes to the cloud computer. I get why: you can hand the agent a task from your phone. But, it also makes everything more complicated. People need to upload the entire environment while<p>So I built one with the cloud computer taken out. Nico is a native Mac app. You hold the right ⌘ key (or fn) and talk; the front agent answers by voice; the worker agent is pi (github.com&#x2F;earendil-works&#x2F;pi) runs by your own AI subscription, in a sandbox.<p>With computer-use (via cua-driver), browser-use (via a browser extension), and a built-in browser, she can clean up your desktop, or answer &quot;why is my Mac so hot&quot;. If you say &quot;this&quot;, she looks at the screenshot of the active window. Most tasks run without you; sending an email waits for your click.<p>The downside: when you&#x27;re not at your Mac, you can&#x27;t use it. I haven&#x27;t figured out what to do about that.<p>Would you want a personal agent that only lives on your Mac?",
+  "time" : 1793877660,
+  "title" : "Show HN: Nico – a two-agent type personal agent on your Mac",
+  "type" : "story",
+  "url" : "https://nico.app/"
+}
