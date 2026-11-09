@@ -340,6 +340,9 @@
     "Hide" : {
 
     },
+    "Hide password" : {
+
+    },
     "Hide Read" : {
 
     },
@@ -599,6 +602,9 @@
     "Show HN" : {
 
     },
+    "Show password" : {
+
+    },
     "Shrink composer" : {
 
     },
@@ -609,6 +615,9 @@
 
     },
     "Sign in to see your posts, comments, and favorites." : {
+
+    },
+    "Signing in" : {
 
     },
     "Simulate Failure" : {
