@@ -1,0 +1,11 @@
+{
+  "by" : "ColinWright",
+  "descendants" : 117,
+  "id" : 40369119,
+  "kids" : [ 40374510, 40376371, 40370015, 40376277, 40375829, 40369187, 40369407, 40370467, 40380785, 40369195, 40375772, 40370315, 40369429, 40369369, 40370088, 40369551, 40369900, 40369949 ],
+  "score" : 321,
+  "time" : 1715790728,
+  "title" : "Starting emails with \"BEGIN PGP MESSAGE\" will fool the filter",
+  "type" : "story",
+  "url" : "https://nondeterministic.computer/@martin/112444389342113780"
+}

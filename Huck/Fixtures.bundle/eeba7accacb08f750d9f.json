@@ -1,0 +1,8 @@
+{
+  "by" : "pontes",
+  "id" : 50418342,
+  "parent" : 50417407,
+  "text" : "An MCP server to act as lore persistent record and tools to orient an open world text adventure game played through AI agents.<p>The theme is an empty Earth. All natural Earth with no human constructions (until the players start playing and occupying it).<p>Using Rust and RocksDB.<p>eremoterra.com",
+  "time" : 1794178202,
+  "type" : "comment"
+}

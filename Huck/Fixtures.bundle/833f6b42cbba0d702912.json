@@ -1,0 +1,11 @@
+{
+  "by" : "ceplin",
+  "descendants" : 0,
+  "id" : 50391790,
+  "score" : 2,
+  "text" : "I built it to replace the repetitive workflows of moving tabs and copying indicators across many tools and tabs for every investigation. You use your own API keys, and functions like decoding, identifying commands, and man pages all run locally with no LLM.<p>Please let me know what you think, you can try it here right now. More information about it can be found here: ceplang.org&#x2F;start.html<p>As well as a short demo here: <a href=\"https:&#x2F;&#x2F;youtu.be&#x2F;bzGGigpeiXg\" rel=\"nofollow\">https:&#x2F;&#x2F;youtu.be&#x2F;bzGGigpeiXg</a>",
+  "time" : 1793969866,
+  "title" : "Show HN: CLI for Cybersecurity Triage",
+  "type" : "story",
+  "url" : "https://ceplang.org/start.html"
+}

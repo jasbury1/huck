@@ -1,0 +1,8 @@
+{
+  "by" : "hsx",
+  "id" : 50390265,
+  "parent" : 50417407,
+  "text" : "I’m still working on <a href=\"https:&#x2F;&#x2F;feedsync.net\" rel=\"nofollow\">https:&#x2F;&#x2F;feedsync.net</a>, a tool to push RSS feed updates to Discord.<p>It’s been getting a decent number of sign ups despite me not really posting it anywhere or doing any marketing.<p>Ultimately a fun project, and useful for myself and a few friends, so I’m happy others are even interested in trying it.<p>I’ve started to regret using Phoenix LiveView, as it’s only deployed in one region, so high latency far from there. I’m exploring a SPA as a better alternative.<p>Otherwise, I’ve been playing around with a Lua engine to build feeds for websites that don’t support them, using AI to build the Lua as a once-off. It works reasonably well, but isn’t ready for prime time just yet.",
+  "time" : 1793958283,
+  "type" : "comment"
+}

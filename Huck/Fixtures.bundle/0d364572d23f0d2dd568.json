@@ -1,0 +1,8 @@
+{
+  "by" : "mikewarot",
+  "id" : 50332029,
+  "parent" : 50417407,
+  "text" : "Repair of a Collins 651S-1 receiver. The 65-95 mhz vco module is bad, but if you over damp the pll loop filter it does eventually lock and receive properly. I found a similar but not identical replacement from a different model receiver. It lacks one of the two DC tracking signal outputs but I added an op amp based circuit to simulate the missing signal.<p>The loop is stable and responsive when receiving from 17 to 29.9999 Mhz, but not much below that... Almost got it",
+  "time" : 1793583606,
+  "type" : "comment"
+}

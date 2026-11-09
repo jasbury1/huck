@@ -1,0 +1,12 @@
+{
+  "by" : "jnx11",
+  "descendants" : 0,
+  "id" : 50413601,
+  "kids" : [ 50413715 ],
+  "score" : 3,
+  "text" : "Nino is a source-generated binary serializer for C#, and as far as we know the fastest one. In the same BenchmarkDotNet run on GitHub runners against MemoryPack 1.21.4, it serializes classes and polymorphic types 3.5–7.2x faster and deserializes them 1.7–2.1x faster (arrays of unmanaged structs are on par). Deserializing into existing objects allocates nothing. Reproduce: <a href=\"https:&#x2F;&#x2F;nino.xgamedev.net&#x2F;en&#x2F;docs&#x2F;v4&#x2F;benchmarks\" rel=\"nofollow\">https:&#x2F;&#x2F;nino.xgamedev.net&#x2F;en&#x2F;docs&#x2F;v4&#x2F;benchmarks</a><p>It is built to read bytes you do not trust: lengths are checked before allocating, depth is bounded, hash flooding is limited, and the read paths are fuzzed in CI.<p>The bytes are a spec, not a memory dump, so CoreCLR, Mono, IL2CPP and 32-bit hosts write the same bytes, and runtimes for TypeScript, Go and Rust pass the same conformance corpus.<p>Trade-offs: positional by default (VersionTolerant or Keyed for stored data), a 4-byte type id on polymorphic values, no System.Type, needs C# 9 and Roslyn 4.3+.<p>Docs: <a href=\"https:&#x2F;&#x2F;nino.xgamedev.net\" rel=\"nofollow\">https:&#x2F;&#x2F;nino.xgamedev.net</a>",
+  "time" : 1794147643,
+  "title" : "Show HN: Nino – Fastest C# serializer, safe on untrusted input, also TS/Go/Rust",
+  "type" : "story",
+  "url" : "https://github.com/JasonXuDeveloper/Nino"
+}

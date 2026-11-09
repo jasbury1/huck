@@ -1,0 +1,9 @@
+{
+  "by" : "lylejantzi3rd",
+  "id" : 50418407,
+  "kids" : [ 50418822 ],
+  "parent" : 50417407,
+  "text" : "I&#x27;m reverse engineering the streaming protocol for three different brands of cheap surveillance video cameras. Each brand has its own app. They&#x27;re all awful. None of them have a native desktop MacOS app. I&#x27;ve successfully created a native app for MacOS and Android for one of the brands. They&#x27;re faster and work better than the ones they&#x27;re replacing. One down, two to go.",
+  "time" : 1794178503,
+  "type" : "comment"
+}

@@ -1,0 +1,8 @@
+{
+  "by" : "JKCalhoun",
+  "id" : 50332938,
+  "parent" : 50417407,
+  "text" : "Playing with 6502 assembly.<p>I have a PAL-2 [1] (a modern KIM-1 re-creation) and started learning 6502 by entering programs from <i>The First Book of KIM</i> [2].<p>I wanted to be able to <i>compile&#x2F;link</i> the assembly from the book so leaned on Claude to set up a 6502 dev environment for my Mac. I put everything needed (and instructions) on GitHub [3].<p>(Claude also has been helpful in re-formatting the 6502 code from <i>The First Book of KIM</i> into a more modern style compatible with modern assemblers. A few of these modernized programs I added to the GitHub repo above.)<p>As it happens, I am also fixing&#x2F;formatting <i>The First Book of KIM</i> by recreating it in a modern page-layout app (Affinity Publisher). The PDF scans that are out there are not pretty, have OCR errors (and the book itself has mistakes). Hopefully I&#x27;ll have a new version of the book&#x2F;PDF out on the internet by the year&#x27;s end.<p>[1] <a href=\"https:&#x2F;&#x2F;www.tindie.com&#x2F;products&#x2F;kim1&#x2F;pal-2-a-mos-6502-powered-computer-kit&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;www.tindie.com&#x2F;products&#x2F;kim1&#x2F;pal-2-a-mos-6502-powere...</a><p>[2] <a href=\"https:&#x2F;&#x2F;archive.org&#x2F;details&#x2F;The_First_Book_of_KIM&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;archive.org&#x2F;details&#x2F;The_First_Book_of_KIM&#x2F;</a><p>[3] <a href=\"https:&#x2F;&#x2F;github.com&#x2F;EngineersNeedArt&#x2F;KIM-1_Development\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;EngineersNeedArt&#x2F;KIM-1_Development</a>",
+  "time" : 1793591597,
+  "type" : "comment"
+}

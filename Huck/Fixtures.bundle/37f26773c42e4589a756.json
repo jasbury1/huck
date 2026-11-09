@@ -1,0 +1,8 @@
+{
+  "by" : "m007850",
+  "id" : 50333492,
+  "parent" : 50417407,
+  "text" : "I&#x27;m working on Eigakan Guide (<a href=\"https:&#x2F;&#x2F;eigakanguide.jp&#x2F;en\" rel=\"nofollow\">https:&#x2F;&#x2F;eigakanguide.jp&#x2F;en</a>), a cinema showtime aggregator for Japan. Every popular cinema site in Japan only allows for very few filters, making it hard to find exactly what I was looking for. So instead I built a site where it&#x27;s possible to filter by area, cinema, date, time, features like IMAX, English audio, English subtitles, and more. This allows for searching for stuff like IMAX showtimes with English audio on Friday after 7PM.<p>Since the last time I posted on HN I&#x27;ve added 100s of cinemas, user features like being able to save search filters, movies, and specific showtimes. Also a ChatGPT plugin which allows for searching for movie showtimes using natural language directly inside of ChatGPT (<a href=\"https:&#x2F;&#x2F;chatgpt.com&#x2F;plugins&#x2F;plugin_asdk_app_6abfdc298c20819192a2d44302a6e7a8\" rel=\"nofollow\">https:&#x2F;&#x2F;chatgpt.com&#x2F;plugins&#x2F;plugin_asdk_app_6abfdc298c208191...</a>).<p>Finally I&#x27;ve added AI search to the site as well, allowing for natural language search with queries like &quot;English audio showtimes near Shinjuku tomorrow&quot; and so on.<p>I would really appreciate feedback for things to add, things that are hard to understand, and anything else!",
+  "time" : 1793598035,
+  "type" : "comment"
+}

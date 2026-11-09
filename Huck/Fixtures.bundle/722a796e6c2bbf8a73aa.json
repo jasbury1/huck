@@ -1,0 +1,8 @@
+{
+  "by" : "Frotag",
+  "id" : 50418887,
+  "parent" : 50417407,
+  "text" : "&gt;Making a simple game<p>&gt;Want player scripts to be possible (And dogfood it for enemy ai too)<p>&gt;Behavior tree dep looks too easy, let&#x27;s make a dsl + interpreter<p>&gt;Typed builders are annoying (because stateful), lets separate into builders -&gt; untyped ast -&gt; typed ir<p>&gt;Hm, typed ir is super repetitive, now I have a schema (ts) -&gt; codegen (ts) -&gt; .ts &#x2F; .rs build step<p>Fun waste of 2 weeks, not even counting the time spent on parsing literature",
+  "time" : 1794180856,
+  "type" : "comment"
+}

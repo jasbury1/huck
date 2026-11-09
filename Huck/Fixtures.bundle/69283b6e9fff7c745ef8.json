@@ -1,0 +1,8 @@
+{
+  "by" : "wallneradam",
+  "id" : 50329798,
+  "parent" : 50417407,
+  "text" : "I&#x27;m working on a TradingView Pine Script compatible Python framework: <a href=\"https:&#x2F;&#x2F;pynecore.org\" rel=\"nofollow\">https:&#x2F;&#x2F;pynecore.org</a> . And a Pine Script compiler for it + a full IDE for Pine Script with syntax highlight, language server, full featured debugger, charting, data downloads: <a href=\"https:&#x2F;&#x2F;pynesys.io\" rel=\"nofollow\">https:&#x2F;&#x2F;pynesys.io</a> . \nIt is 99.771% bit exact on the top 1000 Pine Scripts and 100% trade match.\nI&#x27;m doing it solo.",
+  "time" : 1793566689,
+  "type" : "comment"
+}

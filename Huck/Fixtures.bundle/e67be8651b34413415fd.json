@@ -1,0 +1,11 @@
+{
+  "by" : "0xthearchitect",
+  "descendants" : 0,
+  "id" : 50381016,
+  "kids" : [ 50381026 ],
+  "score" : 2,
+  "time" : 1793895625,
+  "title" : "Show HN: BeatBox – a cybersecurity lab on your own computer (QEMU, Rust)",
+  "type" : "story",
+  "url" : "https://github.com/0xthearchitect/beatbox"
+}

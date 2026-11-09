@@ -1,0 +1,8 @@
+{
+  "by" : "daugasauron",
+  "id" : 50418231,
+  "parent" : 50417407,
+  "text" : "<a href=\"https:&#x2F;&#x2F;slopshare.dev\" rel=\"nofollow\">https:&#x2F;&#x2F;slopshare.dev</a><p>Not really sure what to call it, Linux kernel ish implemented in JS so you can run it in the browser. Each program runs in WASM. Everything bootstrapped from a C&#x2F;Cpp compiler compiled from source with a new target. Also kinda turned into Docker for WASM.<p>Recommended for people that feel a strong urge to run a browser inside a browser.<p><a href=\"https:&#x2F;&#x2F;slopshare.dev&#x2F;v0.1.5&#x2F;wine&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;slopshare.dev&#x2F;v0.1.5&#x2F;wine&#x2F;</a><p>Also quite useful to run coding agents sandboxed inside the browser, with HTTP policies and &quot;backend managed skills&#x2F;extensions&quot;. Compiles Codex from source (has a rust compiler), runs pi agent and CC (the old node one) on a custom javascript runtime on top of quickjs compiled inside the environment.<p>Everything is static JS (or the robots are lying to me)",
+  "time" : 1794177607,
+  "type" : "comment"
+}

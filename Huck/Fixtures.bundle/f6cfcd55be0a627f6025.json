@@ -1,0 +1,11 @@
+{
+  "by" : "iamdan",
+  "descendants" : 0,
+  "id" : 50416992,
+  "score" : 1,
+  "text" : "I built a 4-channel music tracker modeled on the original Game Boy&#x27;s sound hardware: two pulse channels, a wave channel, and noise. It runs entirely in the browser using the Web Audio API, with no account or backend.<p>Songs save to localStorage, and share links compress the whole song into the URL hash, so sharing never touches a server. You can also export WAV, M4A, or a square MP4 of the rows playing.<p>It ships with 3 demo songs to show what it can do. I’m a developer, not a composer, so I made the song format LLM-friendly: use “Import from text” on the home page, and see <a href=\"https:&#x2F;&#x2F;chiptunes.studio&#x2F;llms.txt\" rel=\"nofollow\">https:&#x2F;&#x2F;chiptunes.studio&#x2F;llms.txt</a> for the format.<p>To hear it first, here&#x27;s a demo song. It opens on a playback page with a Remix button that drops you into the editor: <a href=\"https:&#x2F;&#x2F;chiptunes.studio&#x2F;share#v1.7Z3BjqJAEIbfpfZKJ40gCjcV9LCHeQDjAQUSMjNgGJxkYnj3DWbX1d0dlykzvd29_9Gky6b5_fyprq5wpCp9zimir3VTb_OyKh9Lcmiftm3eVC8UHSnzCrkbp4FwC5kJ3w0KEY6yVLi7aZ5N3dxzg7AfV2YUDRvs_Jh0Rg5laZtStF4f6bGs-q_YH55e8n5M3fZjEjEmh17rp0MfMnEoO7RvFNFYUue8FzQT3kWQdw5yRzeDRgNmquryFNSkpyB5dXXdxnl3IUKIi6F0-vR9BiFuXBY37voe3Ij7ZUW_TafXokb3L0rqtSIFMs2Fz7q4BTOOK5O8vBfBfyfT4uq_DjRpKlPMlClRTRO8CTRpLxP3Tw_eZMQjBGj6cNw9Ms3YVAz8DcGb4E1_muFhubRPJi5N8CYjHiH0pclKmRLkTSbIZJ83WSkTdxcC3gRvMoomJXkTN71dfeHlTYl13pTY6E1cmfSlSWuZ5sxdCDZN2nqTEplUexNoMqLeBG-CN9krE3cXAt4EmoyiSUnexH2EQL0Je3pG0YR6kxHeBJpYNKF6i3oTaII3fcKi4E1GyASaPiFv2nQOTQrPDwPpClkEvvAn250IvSwVvvTdIgi9qZz87J8aNPjcPzWnv_dPxcr6p2K7-qdiG2mNraNVa5lipvdxZdLX-5TItFRczwJNzLyMJ9NSNU3wJtCkvUwrJk3wJniTUTQpqWdxq8MrZj1rYZ03LWz0Jq5M-tKktUzcPUM2Tdp6kxKZVJ8DBE1G9E_Bm-BN9sqkun8K3gRvsjdvQv_UvXE4VcuiSfXJJSUycWnCGXWlMqF_ygiZ0D9lhEz2eZOVMqF_ygiZQJMReRP6p-6Nw6laI2jSuuMDZ9RBk1G7EFrThP4p0ARv-tdnIeBNoMn0vGnTdeeXUT00Wd5QtB76jqmBwwZ2XA0atnFou3-myB3L7hs\" rel=\"nofollow\">https:&#x2F;&#x2F;chiptunes.studio&#x2F;share#v1.7Z3BjqJAEIbfpfZKJ40gCjcV9L...</a><p>I’d love feedback from anyone with tracker or DAW experience, and I’d love to hear what you make. Share your song links!",
+  "time" : 1794170589,
+  "title" : "Show HN: A free Gameboy–style music tracker in the browser with shareable URLs",
+  "type" : "story",
+  "url" : "https://chiptunes.studio/"
+}

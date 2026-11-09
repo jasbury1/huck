@@ -1,0 +1,11 @@
+{
+  "by" : "antonoo",
+  "descendants" : 2,
+  "id" : 50414445,
+  "kids" : [ 50414620, 50414510 ],
+  "score" : 13,
+  "time" : 1794154177,
+  "title" : "We deleted almost all our agent code, and other lessons from 100k PRs",
+  "type" : "story",
+  "url" : "https://lovable.dev/blog/how-we-built-lovable-and-why-we-keep-rebuilding-it"
+}

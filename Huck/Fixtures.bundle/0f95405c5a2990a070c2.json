@@ -1,0 +1,12 @@
+{
+  "by" : "juliie",
+  "descendants" : 2,
+  "id" : 50379504,
+  "kids" : [ 50379892, 50381230 ],
+  "score" : 4,
+  "text" : "GeoGuessr is really fun, and NASA publishes about 14k panoramas taken from the surface of Mars, so I wanted to see if it works in space.<p>Half the rounds are these panoramas. Most come from the navigation cameras of NASA’s Mars rovers (Spirit, Opportunity, Curiosity, Perseverance), but many other probes are also in.\nThe other half are orbital views from my map of the solar system, <a href=\"https:&#x2F;&#x2F;spacemap.co\" rel=\"nofollow\">https:&#x2F;&#x2F;spacemap.co</a> (Svelte + Three.js). The maps are all available as an npm package (spacemap).\nI’ve got a few game modes up, including a tutorial and multiplayer. No accounts required, just share the game link.<p>I got Opus 5.5 to play today’s daily challenge with the Claude chrome extension, and it got 14.8k points out of 25k. Let me know if you beat its score! Mine was 22,7k.",
+  "time" : 1793888957,
+  "title" : "Show HN: Spaceguesser – GeoGuessr for the Solar System",
+  "type" : "story",
+  "url" : "https://spaceguesser.com/"
+}

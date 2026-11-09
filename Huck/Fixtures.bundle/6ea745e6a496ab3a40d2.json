@@ -1,0 +1,8 @@
+{
+  "by" : "Lars147",
+  "id" : 50418577,
+  "parent" : 50417407,
+  "text" : "<a href=\"https:&#x2F;&#x2F;lars147.github.io&#x2F;foldroute&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;lars147.github.io&#x2F;foldroute&#x2F;</a><p>FoldRoute - a PWA route planer for folding bikes &amp; public transport<p>I bought a Brompton a few months ago and realized there is no good planer for combining biking and public transport.\nI one-shotted the first approach with codex. It was so decent that I wanted to elaborate on the idea. Still not perfect and needs a lot of testing in the wild (especially the navigation).\nCurrently, only in German. If there is demand, I will translate to English.\nFor now only a PWA. Therefore, it has some limitations. Maybe I will make it an Android &#x2F; iOS app one day.",
+  "time" : 1794179316,
+  "type" : "comment"
+}

@@ -1,0 +1,11 @@
+{
+  "by" : "tantanel",
+  "descendants" : 0,
+  "id" : 50392224,
+  "score" : 2,
+  "text" : "I travel with friends a lot and we used to always use Splitwise to settle our group&#x27;s expenses, but over the years I&#x27;ve grown so frustrated with its user experience how bad it is for entering anything more complex than an evenly split bill.<p>So I though I could surely do better. I mean, how hard could it be?<p>That was 4 years ago and it&#x27;s been my pet project for quite some time. It never felt close to done, but recently - admittedly with lots of AI help - I&#x27;ve managed to polish it enough to call it ready. We&#x27;ve already used it with our group and now I&#x27;m putting it out here hoping some of you will find it useful too.<p>You can try it on web (no sign-up needed), or download an iOS or Android app:\n<a href=\"https:&#x2F;&#x2F;app.splitsetter.com\" rel=\"nofollow\">https:&#x2F;&#x2F;app.splitsetter.com</a>\n<a href=\"https:&#x2F;&#x2F;apps.apple.com&#x2F;us&#x2F;app&#x2F;splitsetter&#x2F;id6822295139\">https:&#x2F;&#x2F;apps.apple.com&#x2F;us&#x2F;app&#x2F;splitsetter&#x2F;id6822295139</a>\n<a href=\"https:&#x2F;&#x2F;play.google.com&#x2F;store&#x2F;apps&#x2F;details?id=com.splitsetter\">https:&#x2F;&#x2F;play.google.com&#x2F;store&#x2F;apps&#x2F;details?id=com.splitsette...</a><p>It&#x27;s free to use, except for the optional AI based receipt scans (because tokens cost me money), and I plan to keep it that way.<p>It&#x27;s local-first and event sourced, should work well offline and syncs when it can. I probably spent way too much time and effort on the sync architecture, but I really tried to make it bulletproof.<p>Let me know what you think.",
+  "time" : 1793972737,
+  "title" : "Show HN: Splitsetter – my attempt at a bill splitting app",
+  "type" : "story",
+  "url" : "https://app.splitsetter.com/"
+}

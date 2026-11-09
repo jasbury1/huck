@@ -1,0 +1,9 @@
+{
+  "by" : "zaterka",
+  "id" : 50417938,
+  "kids" : [ 50418451 ],
+  "parent" : 50417407,
+  "text" : "As a heavy LLM user in my daily work, I&#x27;ve been working on optimizing agent memory on complex projects. That resulted in  this simple Rust-based tool called Wayfinder: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;zaterka&#x2F;wayfinder\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;zaterka&#x2F;wayfinder</a><p>I&#x27;ve been trying to improve agent knowledge over a codebase, and existing approaches weren&#x27;t giving the result I wanted, and I wanted to keep it simple. In the end, I added a semantic layer on top of an LLM Wiki and it saved 30% of token usage in multiple benchmarks I ran. It also adds some nice features to deal with concurring agents updating the shared memory, to ensure all information there is reliable and fresh.<p>It&#x27;s published to PyPi, so an &quot;uv tool install wayfinder-memory&quot; already does all the work, and it&#x27;s compatible with almost all Harnesses.",
+  "time" : 1794175936,
+  "type" : "comment"
+}

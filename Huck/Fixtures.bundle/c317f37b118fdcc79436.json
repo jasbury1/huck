@@ -1,0 +1,11 @@
+{
+  "by" : "pg",
+  "descendants" : 55,
+  "id" : 1862616,
+  "kids" : [ 1862648, 1862734, 1862657, 1863799, 1862627, 1862901, 1863000, 1864876, 1862762, 1863131, 1863173, 1863537, 1865764, 1862903 ],
+  "score" : 221,
+  "text" : "A significant number of applicants seem to have overlooked this part of the application instructions:<p><pre><code>    1. Please put your email address in the email field of your profile.\n</code></pre>\nIf you applied this cycle, please do that, or we'll have no way to notify you later today.",
+  "time" : 1288736001,
+  "title" : "If you applied to YC this cycle, please put your email in your profile",
+  "type" : "story"
+}

@@ -1,0 +1,8 @@
+{
+  "by" : "jfrei",
+  "id" : 50341961,
+  "parent" : 50417407,
+  "text" : "I am working on a Rust-based ext4 driver. The idea is that it can be re-used as a FUSE-based driver as well as (Windows) kernel driver (eventually).<p>Most of the essential features are implemented so far, but some (mandatory) features are lacking (xattrs support). My goal is to get to a full ext4 implementation that also supports ext2 and ext3 read&#x2F;write.<p>The initial motivation was to have a pet project with a use-case for Rust, as I wanted to improve my Rust coding skills, after I did some work on a game server implementation in Rust earlier [1].\nMy goal is to have an implementation where I have digested every line mentally, which is something that pretty much excludes slop-like use of AI for large scale code generation. And of course I want to really trust the code that touches my files via  raw hard disk access.\nHence, I use AI mainly for unit tests and (scoped) code rewriting when my code gets too verbose and cumbersome.<p>In the long run I&#x27;d want to add fuzzing to the implementation, so if anyone has experience on this, I&#x27;d be interested in getting some pointers.<p>[1] <a href=\"https:&#x2F;&#x2F;github.com&#x2F;MordorWide&#x2F;EANation\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;MordorWide&#x2F;EANation</a>",
+  "time" : 1793646499,
+  "type" : "comment"
+}

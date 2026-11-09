@@ -1,0 +1,8 @@
+{
+  "by" : "vtjeng",
+  "id" : 50418570,
+  "parent" : 50417407,
+  "text" : "I live in San Francisco and we get some beautiful sunsets here! Over the past few weeks, I cobbled together a system of alerts for when the sunset is predicted [1] to be particularly outstanding, resulting in this page that displays the prediction and also shows the current view from several cameras around the city.<p><a href=\"https:&#x2F;&#x2F;sunset.vtjeng.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;sunset.vtjeng.com&#x2F;</a><p>[1]: Predictions are LLM-powered largely to more reliably consume the free-text descriptions in traditional (e.g., NWS) weather forecasts of predicted high and low cloud cover around sunset.",
+  "time" : 1794179290,
+  "type" : "comment"
+}

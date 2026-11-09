@@ -1,0 +1,11 @@
+{
+  "by" : "handfuloflight",
+  "descendants" : 86,
+  "id" : 50409855,
+  "kids" : [ 50411077, 50412607, 50410527, 50412596, 50410495, 50410589, 50410443, 50410564, 50410949, 50410385, 50410467, 50412539, 50410818, 50411078, 50411006 ],
+  "score" : 99,
+  "time" : 1794103347,
+  "title" : "ZapFast: A fast, native WhatsApp client in Rust and egui",
+  "type" : "story",
+  "url" : "https://github.com/crmne/zapfast"
+}

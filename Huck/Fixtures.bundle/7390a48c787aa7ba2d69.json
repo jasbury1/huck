@@ -1,0 +1,9 @@
+{
+  "by" : "dummoria",
+  "id" : 50391077,
+  "kids" : [ 50391154 ],
+  "parent" : 50417407,
+  "text" : "I’ve been working since the start of the year on a minimalist web reader (<a href=\"https:&#x2F;&#x2F;papercove.app\" rel=\"nofollow\">https:&#x2F;&#x2F;papercove.app</a>) that I use every day to follow RSS feeds, newsletters and read-later, and that helps keep things from piling up.<p>I thought I’d get where I wanted much faster, but it turns out I ran into quite a few challenges: it’s quick to build something simple, but it takes much longer to get a reader that’s robust and pleasant to use (extraction, parsing, security, infrastructure, etc.).<p>On the tech side, I’m using my usual stack, Laravel and Livewire, with some Python for extraction and Go for the email infrastructure. This month I’m working on the beta release, since several people around me were already using it, so I’d like to gather more feedback.",
+  "time" : 1793964771,
+  "type" : "comment"
+}

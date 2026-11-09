@@ -1,0 +1,116 @@
+//
+//  AccountView.swift
+//  Huck
+//
+//  Created by James Asbury on 12/23/25.
+//
+
+import Foundation
+import SwiftUI
+
+struct AccountView: View {
+    @Environment(UserSession.self) private var session
+    /// Set where Settings is a tab of its own, making the gear redundant.
+    @Environment(\.showsSettingsTab) private var showsSettingsTab
+    @State private var path = NavigationPath()
+
+    /// Whether the Settings sheet is presented. Settings lives here rather than
+    /// in its own tab, so this is the app's only way in.
+    @State private var showingSettings = false
+
+    /// Whether the login sheet is presented. Owned here rather than in
+    /// `UserView` because both the signed-out profile's "Sign In" card and the
+    /// account menu open the same sheet.
+    @State private var showingLogin = false
+
+    var body: some View {
+        // Reading `session.username` here is what ties this tab to the auth
+        // state: it's observable, so signing in or out re-evaluates the view.
+        // The profile is shown either way — signed out it drops to the tabs and
+        // actions that work without an account, and offers its own login sheet.
+        // Side by side when there's room: the profile on the left, the thread of
+        // a post or comment opened from it on the right.
+        ThreadSplitNavigation(path: $path) {
+            UserView(
+                username: session.username,
+                path: $path,
+                onSignIn: { showingLogin = true }
+            )
+            .navigationDestination(for: ItemNavigation.self) { navigation in
+                StoryDetailsView(from: navigation, path: $path)
+            }
+            // The gear goes only where Settings has no tab of its own.
+            .toolbar {
+                if !showsSettingsTab {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Label("Settings", systemImage: "gearshape")
+                        }
+                    }
+                }
+            }
+            // Present signed in or out, so the overflow button never
+            // shifts position underneath a tap.
+            .toolbarOverflowMenu {
+                accountMenu
+            }
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
+        .sheet(isPresented: $showingLogin) {
+            LoginView()
+                .presentationDragIndicator(.visible)
+        }
+        // Signing in is the login sheet's whole purpose, so it's done the moment
+        // an account appears; the page behind it fills in on its own.
+        .onChange(of: session.isSignedIn) { _, signedIn in
+            if signedIn { showingLogin = false }
+        }
+        .storyActionsEnabled()
+    }
+
+    /// The account tab's overflow menu: the options for your profile, then the
+    /// session action that applies right now.
+    @ViewBuilder
+    private var accountMenu: some View {
+        if let username = session.username {
+            ProfileOptions(username: username)
+                // Icons match their text, not the app's orange tint.
+                .tint(.primary)
+            Divider()
+        }
+        sessionAction
+    }
+
+    /// Log Out when signed in, Sign In when signed out. A menu icon takes the
+    /// tint even on a destructive row (the role only colors the text), so Log
+    /// Out is tinted red to keep its icon matching.
+    @ViewBuilder
+    private var sessionAction: some View {
+        if session.isSignedIn {
+            Button(role: .destructive) {
+                // Clearing the session cascades: `ContentView` observes the
+                // account and re-points every per-user store, and the
+                // profile below falls back to its signed-out state.
+                session.signOut()
+            } label: {
+                Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+            }
+            .tint(.red)
+        } else {
+            Button {
+                showingLogin = true
+            } label: {
+                Label("Sign In", systemImage: "person.crop.circle")
+            }
+            .tint(.primary)
+        }
+    }
+}
+
+#Preview {
+    // AccountView(authenticatedUser: "jasbury")
+}

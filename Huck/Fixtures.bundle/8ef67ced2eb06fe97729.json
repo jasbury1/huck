@@ -1,0 +1,8 @@
+{
+  "by" : "pianopatrick",
+  "id" : 50417984,
+  "parent" : 50417407,
+  "text" : "I&#x27;m still working on my own shell based AI tool. This month I am testing and reworking it to try and get useful results with really small models, like 2B level.  Goal is to get help debugging Linux issues when offline with these small models that can run anywhere. Then also being able to access cloud based models to do harder stuff once online. all while feeling like a CLI tool.<p>github.com&#x2F;patrickjh&#x2F;ssa",
+  "time" : 1794176263,
+  "type" : "comment"
+}

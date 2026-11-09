@@ -1,0 +1,11 @@
+{
+  "by" : "lukeqsee",
+  "descendants" : 132,
+  "id" : 7015133,
+  "kids" : [ 7015865, 7015160, 7015250, 7015412, 7015309, 7015697, 7015196, 7015955, 7015755, 7015359, 7016572, 7016811, 7015371, 7015186, 7016944, 7015780, 7016023, 7015738, 7015221, 7016780, 7017476, 7015184 ],
+  "score" : 330,
+  "text" : "Clarification: This is not meant with any ill-will towards PG or any of the other individuals who help run HN. It is a simple request for a postmortem <i>eventually</i>. Perhaps it&#x27;s an unneeded request, but I think a lot of HNers echo the sentiment.",
+  "time" : 1389064809,
+  "title" : "Ask PG: Postmortem of the outage?",
+  "type" : "story"
+}

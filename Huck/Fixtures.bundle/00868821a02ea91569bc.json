@@ -1,0 +1,11 @@
+{
+  "by" : "pg",
+  "descendants" : 122,
+  "id" : 512145,
+  "kids" : [ 512280, 512279, 512241, 512332, 512225, 512271, 512170, 512161, 512158, 512181, 512288, 512690, 512514, 512292, 512338, 512302, 512234, 512933, 512364, 512633, 512316, 512465, 512914, 513168, 513243, 512743, 512380, 512739, 556660, 512236, 512799, 512305, 512256, 512373, 512869, 512853, 513253, 512162, 513380, 513673, 512781 ],
+  "score" : 270,
+  "text" : "We've had a huge spike in traffic lately, from roughly 24k daily uniques to 33k.  This is a result of being mentioned on more mainstream sites. I hope this spike will subside, like past ones have.  In the meantime I may temporarily hack a few things to make the site faster, like putting fewer results on threads pages.<p>You can help the spike subside by making HN look extra boring. For the next couple days it would be better to have posts about the innards of Erlang than women who create sites to get hired by Twitter.",
+  "time" : 1236795093,
+  "title" : "Why HN is slow lately",
+  "type" : "story"
+}

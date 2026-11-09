@@ -1,0 +1,8 @@
+{
+  "by" : "rzy",
+  "id" : 50418059,
+  "parent" : 50417407,
+  "text" : "I&#x27;ve been working on a project to reduce attack surface of Linux document readers, starting with Okular: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;l4rzy&#x2F;okular-mupdf-ng\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;l4rzy&#x2F;okular-mupdf-ng</a><p>The idea is to sandbox the most dangerous parts of it: The Document parser and renderer.",
+  "time" : 1794176647,
+  "type" : "comment"
+}

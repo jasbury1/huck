@@ -1,0 +1,11 @@
+{
+  "by" : "npguy",
+  "descendants" : 11,
+  "id" : 50406993,
+  "kids" : [ 50407385, 50407746, 50407290, 50407224, 50407545, 50408378, 50407163, 50407107, 50407094 ],
+  "score" : 10,
+  "text" : "Here is a quick Show HN story.<p>Inspired by Alex Karpathy&#x27;s HackerTube, i spent time, effort and tokens on analyzing Show HN posts - 200K plus posts, and a million plus comments, identifying trends, patterns, reactions etc.<p>I spent some time on designing the app too, and it felt very good because it was a &#x27;HN community only&#x27;  thing.<p>Then I submitted it to HN, and got zero upvotes. https:&#x2F;&#x2F;news.ycombinator.com&#x2F;item?id=50396822. I was so sure there is some value here, that I submitted it again (from a different userid and from the same userid)  but looks like the URL is banned now.<p>What do I do now? I have a tool that is built only for HN, it is a free tool and imo gives a set of insights based on Show HN posts, I don&#x27;t have any audience anywhere so I cannot &#x27;show&#x27; anywhere else.<p>The irony is this: I found the most value in the tool I built, in the &#x27;HN is wrong&#x27; area. I find myself there now!<p>you can check out the tool at hackershow dot org. If you see this that is. And if someone chooses to resubmit this tool as a Show HN, please submit the &#x27;HN is wrong&#x27; part of the tool, lets make it exciting!",
+  "time" : 1794077829,
+  "title" : "Tell HN: HN Is Wrong",
+  "type" : "story"
+}

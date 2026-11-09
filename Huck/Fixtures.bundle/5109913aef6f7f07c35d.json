@@ -1,0 +1,8 @@
+{
+  "by" : "rgbrenner",
+  "id" : 50418175,
+  "parent" : 50417407,
+  "text" : "Serverless Wordpress + MariaDB without requiring plugins or any modifications to customer code: <a href=\"https:&#x2F;&#x2F;www.agiler.io\" rel=\"nofollow\">https:&#x2F;&#x2F;www.agiler.io</a><p>The serverless MariaDB is important because it can scale to zero, so you have dev sites that cost less than $0.50&#x2F;mo.<p>Also added MCP and CLI tooling that exposes all of the infrastructure + WP CLI + DB so agents can develop WP sites... which is nice because you can still use the WP admin interface, while using AI to develop the site, debug it, change pages and posts, etc.",
+  "time" : 1794177334,
+  "type" : "comment"
+}

@@ -1,0 +1,11 @@
+{
+  "by" : "vasylsmutok",
+  "descendants" : 12,
+  "id" : 50415078,
+  "kids" : [ 50415896, 50416680, 50416919, 50416796, 50415586, 50415776, 50415783 ],
+  "score" : 43,
+  "time" : 1794157795,
+  "title" : "A field guide to CAPTCHA types and how they break",
+  "type" : "story",
+  "url" : "https://github.com/vsmutok/FuckCaptcha"
+}

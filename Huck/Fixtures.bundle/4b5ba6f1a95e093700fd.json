@@ -1,0 +1,11 @@
+{
+  "by" : "pg",
+  "descendants" : 313,
+  "id" : 844979,
+  "kids" : [ 845056, 845704, 844990, 845191, 845927, 845012, 845015, 845040, 844988, 845089, 845119, 846203, 845067, 844980, 845920, 845088, 845200, 845131, 845057, 845953, 845024, 845049, 845145, 845027, 845296, 845076, 845908, 845106, 845368, 845244, 845255, 845114, 845059, 845072, 846199, 845146, 845160, 845361, 845063, 845039, 845601, 847063, 844989, 845607, 845064, 844993, 845388, 844994, 845000, 845032, 845091, 845785, 845458, 845299, 845444, 845017, 846213, 844992, 845047, 863623, 845234, 845162, 845210, 845129, 845987, 845262, 845822, 845197, 845134, 845189, 845825, 844984, 845287, 845691 ],
+  "score" : 289,
+  "text" : "Over the years several people have suggested not displaying comment scores.  I finally decided to try it.  There are so many users now that voting is starting to have a bit of a mob feel to it. We'll see if this makes the site feel better.<p>Voting still has all the same effects (on karma, and on position on the page), so I encourage users to keep doing it.  The only difference is that comment scores aren't displayed in threads.",
+  "time" : 1253939096,
+  "title" : "Experiment: No Comment Scores",
+  "type" : "story"
+}

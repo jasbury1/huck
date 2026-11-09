@@ -1,0 +1,11 @@
+{
+  "by" : "dougcalobrisi",
+  "descendants" : 0,
+  "id" : 50418366,
+  "kids" : [ 50418576 ],
+  "score" : 2,
+  "time" : 1794178327,
+  "title" : "Six GPUs on One X16 Slot: R9700s and RTX 3090s Behind a PCIe Switch",
+  "type" : "story",
+  "url" : "https://doug.sh/posts/six-gpus-one-x16-slot/"
+}

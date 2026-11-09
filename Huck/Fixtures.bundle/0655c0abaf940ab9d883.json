@@ -1,0 +1,8 @@
+{
+  "by" : "skor",
+  "id" : 50418237,
+  "parent" : 50417407,
+  "text" : "Audion\n<a href=\"https:&#x2F;&#x2F;github.com&#x2F;audion-lang&#x2F;audion\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;audion-lang&#x2F;audion</a><p>I needed a code-first approach for making installations and interactive art. MaxMsp gets messy with very big projects. Python didn&#x27;t really work well for music making and Tidal&#x2F;Pi&#x2F;Sclang are only meant for sound. So I needed something that has bpm synchronized threads, but can draw and do anything else like file IO, networking, hardware control etc. It works quite well now.",
+  "time" : 1794177632,
+  "type" : "comment"
+}

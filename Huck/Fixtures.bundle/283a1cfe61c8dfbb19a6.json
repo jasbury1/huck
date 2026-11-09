@@ -1,0 +1,11 @@
+{
+  "by" : "attilathehoon",
+  "descendants" : 4,
+  "id" : 50405649,
+  "kids" : [ 50405800, 50406914, 50405953, 50406144 ],
+  "score" : 10,
+  "time" : 1794067300,
+  "title" : "Google Described Its Agent Sandbox. I Built One with Firecracker and Measured It",
+  "type" : "story",
+  "url" : "https://antonau.tech/posts/2026/11/agents-microvm-firecracker/"
+}

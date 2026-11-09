@@ -1,0 +1,11 @@
+{
+  "by" : "dcoulmbe",
+  "descendants" : 4,
+  "id" : 50418176,
+  "kids" : [ 50418852, 50418793 ],
+  "score" : 37,
+  "time" : 1794177335,
+  "title" : "KetchUp – Open-source SketchUp alternative built with Rust and WebGPU",
+  "type" : "story",
+  "url" : "https://ketchup3d.github.io/app/"
+}

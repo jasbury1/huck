@@ -1,0 +1,11 @@
+{
+  "by" : "srossross",
+  "descendants" : 0,
+  "id" : 50418179,
+  "kids" : [ 50418199 ],
+  "score" : 2,
+  "time" : 1794177346,
+  "title" : "N6k – Let users and agents run untrusted SQL on production databases",
+  "type" : "story",
+  "url" : "https://github.com/n6k-io/n6kd"
+}

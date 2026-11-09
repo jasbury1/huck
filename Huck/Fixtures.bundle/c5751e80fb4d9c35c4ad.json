@@ -1,0 +1,11 @@
+{
+  "by" : "pg",
+  "descendants" : 76,
+  "id" : 4761102,
+  "kids" : [ 4761210, 4761851, 4761157, 4761166, 4761358, 4761377, 4761655, 4764005, 4761781, 4761808, 4763784, 4761175, 4761564, 4761152, 4761772 ],
+  "score" : 220,
+  "text" : "HN has a hair trigger about banning IPs that request too fast (sorry about that; we don't have a lot of spare performance), so I wrote something people can use to get their IP unbanned once if it gets banned by accident.<p>http://news.ycombinator.com/unban?ip=&#60;ip address&#62;<p>Obviously you have to use it from another IP address, like your phone.",
+  "time" : 1352431489,
+  "title" : "How to get your IP unbanned on HN",
+  "type" : "story"
+}

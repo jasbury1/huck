@@ -1,0 +1,11 @@
+{
+  "by" : "0x04am",
+  "descendants" : 0,
+  "id" : 50379109,
+  "score" : 2,
+  "text" : "Waddup gangsters.<p>I was browsing reddit, and I saw anthropic add a rule to claude code preventing people from making their own games. Users don&#x27;t even have an option to turn that off. It&#x27;s nuts if you ask me. You should be able to control 100% of what get&#x27;s sent to the LLM. I also didn&#x27;t like the slow and bloated harnesses written in typescript, so I decided to build a better claude code. For the past 6 months, I&#x27;ve been working on it and making it better, to the point where it absolutely smokes cc out the gate, here&#x27;s why:<p>1. Written Rust. (so all the good stuff that comes with it)<p>2. 7ms to attach to a running daemon (yes, milli seconds)<p>3. 40 ms to start a daemon<p>4. Extensions, Plugins, Skills, Subagents, MCP (Yep, the whole cake and more)<p>5. 99%+ median cache hitrate (numbers in repo)<p>6. Heavily customisable: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;HaseebKhalid1507&#x2F;synaps-overclocked\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;HaseebKhalid1507&#x2F;synaps-overclocked</a><p>7. Works with local AI or any subscription&#x2F; API key<p>8. Sessions live in the daemon and survive reboots<p>9. A session can have multiple clients. (ur browser, terminal, ur phone)<p>10. number of synaps sessions to memory: 1 - 36MB, 10 - 73MB, 20 - 117MB, 200 - 890MB, 500 - 2.27GB<p>A bunch of sleepless nights have gone into the creation of this project. It&#x27;d mean a lot to me if y&#x27;all could test drive it for a bit and share your feedback. (positive or negative)",
+  "time" : 1793887033,
+  "title" : "Show HN: Synaps – Turn your agents into autonomous daemons",
+  "type" : "story",
+  "url" : "https://github.com/HaseebKhalid1507/SynapsCLI"
+}

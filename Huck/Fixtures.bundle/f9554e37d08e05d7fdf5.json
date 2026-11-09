@@ -1,0 +1,11 @@
+{
+  "by" : "Tepix",
+  "descendants" : 3,
+  "id" : 50394278,
+  "kids" : [ 50396422, 50394279, 50397112 ],
+  "score" : 24,
+  "time" : 1793981626,
+  "title" : "WebAssembly Specification Release 3.0 (2026-11-04)",
+  "type" : "story",
+  "url" : "https://webassembly.github.io/spec/core/"
+}

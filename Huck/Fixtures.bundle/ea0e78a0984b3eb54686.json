@@ -1,0 +1,8 @@
+{
+  "by" : "jkantola",
+  "id" : 50402587,
+  "parent" : 50417407,
+  "text" : "Few apps I have originally mainly done for myself; Vaava (<a href=\"https:&#x2F;&#x2F;vaava.app\" rel=\"nofollow\">https:&#x2F;&#x2F;vaava.app</a>) , been tweaking the e2ee data sync between connected apps, and the webrtc based baby monitor feature stability. Crazy how easily Astra &#x2F; opus 55 level models create quite complex ad-hoc reproducible (almost automatable) test scenarios with 2 phones, laptop and other tools &#x2F; peripherals they know they can use, for example for the baby monitor feature Astra did a setup for me which i can reproduce to test that the video + audio works fine between 2 phones for x time.<p>Also trying to replace own Duolingo usage with Fika Lingo (<a href=\"https:&#x2F;&#x2F;fikalingo.com\" rel=\"nofollow\">https:&#x2F;&#x2F;fikalingo.com</a>) basic idea was to first repro the practice of matching words. There is now few other types of language &#x2F; vocabulary practices. The practice generation works on-device with local LLM, you can give the topic yourself like &quot;Words that relate to Hacker News&quot;. Downside at the moment is that English needs to be the counterpart of the practices. Cant guarantee good enough quality with something like germany &lt;-&gt; italy practices. I&#x27;m trying to do finetuning with LFM models to see if it would be feasible to improve the local practice generation.",
+  "time" : 1794038373,
+  "type" : "comment"
+}

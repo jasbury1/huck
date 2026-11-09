@@ -1,0 +1,12 @@
+{
+  "by" : "cochne",
+  "descendants" : 13,
+  "id" : 50368709,
+  "kids" : [ 50381307, 50369820, 50381317, 50381253, 50381500, 50387459 ],
+  "score" : 11,
+  "text" : "Sometimes I get tired of seeing sarcastic, uncurious, low effort, snark on HN. But sometimes those comments do have some insight. I made this site which rewrites and filters with Claude to amplify the curiosity and attenuate the snark.",
+  "time" : 1793813129,
+  "title" : "Show HN: Curious HN – Hacker News without the snark",
+  "type" : "story",
+  "url" : "https://curioushn.com/about.html"
+}

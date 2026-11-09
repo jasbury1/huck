@@ -1,0 +1,8 @@
+{
+  "by" : "philajan",
+  "id" : 50337193,
+  "parent" : 50417407,
+  "text" : "Working on &#x2F; dog fooding my graph based recipe app[0].<p>There are more things I&#x27;d like to do with the graph concept, like linking two user&#x27;s recipe trees if they were imported via the same URL. Really trying to to avoid features that I think would be cool that don&#x27;t provide any functionality.<p>There are still a few features I&#x27;d like to implement that are more in the vein of nice to have in any recipe application, like nested recipes, temperature conversions, volumetric ingredients amounts to mass conversions, etc.<p>But I&#x27;ve been using it for new recipes and converting my old recipes I have written down in the margins to this format and I&#x27;ve been happy with how usable its been in these early stages.<p>[0] <a href=\"https:&#x2F;&#x2F;grainofsalt.app\" rel=\"nofollow\">https:&#x2F;&#x2F;grainofsalt.app</a>",
+  "time" : 1793629301,
+  "type" : "comment"
+}

@@ -1,0 +1,34 @@
+# SwiftFormat configuration — https://github.com/nicklockwood/SwiftFormat
+#
+# Run `make format` to apply, `make lint` to check (CI runs the check).
+# Options follow the codebase's existing style; disabled rules are ones whose
+# output fights a deliberate convention here, noted alongside each.
+
+--swiftversion 6.2
+--exclude DerivedData,build,.build
+
+# MARK: - Options
+
+--indent 4
+--ifdef no-indent               # #if bodies sit at the surrounding indent
+--ranges no-space               # a..<b, not a ..< b
+--trailing-commas collections-only
+--self remove
+--stripunusedargs closure-only
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+--header ignore
+
+# MARK: - Disabled rules
+
+# One-line bodies are used on purpose for short computed properties,
+# functions, and guards/ifs; wrapping them adds noise.
+--disable wrapPropertyBodies,wrapFunctionBodies,wrapIfStatementBodies,wrapIfExpressionBodies,wrapLoopBodies
+# Opening braces stay on the statement's last line.
+--disable wrapMultilineStatementBraces
+# Comment style (/// vs //) is chosen per comment, not by rule.
+--disable docComments
+# Test names stay camelCase functions, not raw identifiers.
+--disable swiftTestingTestCaseNames

@@ -1,0 +1,11 @@
+{
+  "by" : "VC067",
+  "descendants" : 0,
+  "id" : 50377718,
+  "score" : 3,
+  "text" : "I&#x27;ve built a small Windows utility called Win Stats that shows live system stats directly in the taskbar.<p>I used to open Task Manager multiple times just to check RAM usage, CPU&#x2F;GPU usage, temperatures and other system stats. I wanted something that could show all of this at a glance.<p>It&#x27;s Similar to the popular macOS app called Stats<p>It supports CPU, RAM, GPU, disk speeds, network usage, CPU&#x2F;GPU temperatures and customizable layouts.<p>It&#x27;s completely free and open source, with no paywalls or monetization :)<p>GitHub: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;VC067&#x2F;win-stats\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;VC067&#x2F;win-stats</a>\nWebsite: <a href=\"https:&#x2F;&#x2F;vc067.github.io&#x2F;win-stats&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;vc067.github.io&#x2F;win-stats&#x2F;</a>",
+  "time" : 1793876428,
+  "title" : "Show HN: Win Stats – open-source system monitoring in the Windows taskbar",
+  "type" : "story",
+  "url" : "https://vc067.github.io/win-stats/"
+}

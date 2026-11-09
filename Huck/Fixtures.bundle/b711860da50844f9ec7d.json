@@ -1,0 +1,11 @@
+{
+  "by" : "marcusbasant",
+  "descendants" : 34,
+  "id" : 50386789,
+  "kids" : [ 50387426, 50388094, 50391814, 50387516, 50396123, 50397163, 50391867, 50392697, 50387269, 50387481 ],
+  "score" : 66,
+  "time" : 1793926455,
+  "title" : "MoofTCP – A modern replacement for MacTCP on 68k Macs",
+  "type" : "story",
+  "url" : "https://github.com/matthewmrichter/mooftcp"
+}

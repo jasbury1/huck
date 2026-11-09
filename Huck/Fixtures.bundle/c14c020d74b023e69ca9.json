@@ -1,0 +1,11 @@
+{
+  "by" : "manavm12",
+  "descendants" : 1,
+  "id" : 50389479,
+  "kids" : [ 50404459, 50389480, 50394274 ],
+  "score" : 22,
+  "time" : 1793952298,
+  "title" : "Stop running everything through LLMs: How I fixed my research agent",
+  "type" : "story",
+  "url" : "https://www.tinyfish.ai/blog/inside-tinyresearch"
+}

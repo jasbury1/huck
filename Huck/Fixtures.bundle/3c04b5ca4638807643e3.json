@@ -1,0 +1,11 @@
+{
+  "by" : "piyushkhemka",
+  "descendants" : 0,
+  "id" : 50415745,
+  "score" : 1,
+  "text" : "Karpathy recently built Hackertube.<p>I watch a lot of Youtube on my TV and wanted to replace that with hackertube, so I built a roku app for this.<p>I have not published it to Roku store yet, but it is available for sideload.",
+  "time" : 1794162814,
+  "title" : "Show HN: Hackertube for Roku TV",
+  "type" : "story",
+  "url" : "https://github.com/piyushkhemka/hackertube-roku-app"
+}

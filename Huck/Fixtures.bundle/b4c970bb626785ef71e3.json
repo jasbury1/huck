@@ -1,0 +1,8 @@
+{
+  "by" : "kidnoodle",
+  "id" : 50349354,
+  "parent" : 50343031,
+  "text" : "Been a fun opportunity to play around with ai in various ways - mixed but definitely powerful experience in using it for data research (finding libraries and their locations), very impressive on reverse engineering apis to get book availability. And then a lot of interesting stuff around getting good behaviour from LLMs as chat partners, for example using jev to improve results from using openrouter by getting it to check for common failure modes and ban providers based on their output.",
+  "time" : 1793693416,
+  "type" : "comment"
+}

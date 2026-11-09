@@ -1,0 +1,12 @@
+{
+  "by" : "vishvananda",
+  "descendants" : 3,
+  "id" : 50381741,
+  "kids" : [ 50382013 ],
+  "score" : 8,
+  "text" : "I&#x27;ve been working on a scaffold to teach an agent how to build a self-hosting C++ Compiler from scratch for the past 6 months. One of my recent agent-runs recently achieved self-hosting for less than $500 in API tokens, but the most interesting part is that the reference implementation (which takes the best ideas from every run) can now compile C++ code 4x faster than GCC and Clang.",
+  "time" : 1793899331,
+  "title" : "Show HN: A C++ Compiler That Is Faster Than GCC and Clang",
+  "type" : "story",
+  "url" : "https://github.com/vishvananda/cppgm-extended"
+}

@@ -1,0 +1,11 @@
+{
+  "by" : "samaysharma",
+  "descendants" : 82,
+  "id" : 40417347,
+  "kids" : [ 40420415, 40426999, 40444004, 40421736, 40421733, 40420746, 40421693, 40420316, 40421238, 40426837, 40426582, 40423521, 40420326, 40427001, 40420931, 40424793, 40424468, 40443950 ],
+  "score" : 331,
+  "time" : 1716223453,
+  "title" : "pg_timeseries: Open-source time-series extension for PostgreSQL",
+  "type" : "story",
+  "url" : "https://tembo.io/blog/pg-timeseries"
+}

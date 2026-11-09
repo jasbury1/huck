@@ -1,0 +1,11 @@
+{
+  "by" : "matt_d",
+  "descendants" : 4,
+  "id" : 50362187,
+  "kids" : [ 50417384, 50366552 ],
+  "score" : 12,
+  "time" : 1793774761,
+  "title" : "Multi-Token Prediction Done Right",
+  "type" : "story",
+  "url" : "https://arxiv.org/abs/2610.38331"
+}

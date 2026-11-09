@@ -1,0 +1,8 @@
+{
+  "by" : "leobuskin",
+  "id" : 50418955,
+  "parent" : 50417407,
+  "text" : "I’m reverse engineering and replacing the entire stack on Samsung A54 (Exynos 1380, Mali-G68), started with booting to a customized linux kernel (7.3) w&#x2F;o Android layer at all (Wayland and WPE WebKit only), built a custom WLBT thin firmware to replace the original fat blob (using mac80211 as the foundation), figured out how to exploit USB control transfer and got ACE in the PBL, reconstructed (with byte-identical verification) their LK-based S-Boot, uH and harx, patched mali&#x2F;panfrost, optimized kernels for this device (finally got STT&#x2F;TTS running on GPU faster than on CPU), figured out how to utilize NPU, built a custom toolchain for it. I’m trying to properly own this device (and giving it to Claude on the lowest possible level, but still running pKVM and getting rid of original hypervisors), it’s the goal number one at this point, no binary blobs, ability to change sw and control hw on-the-fly. Obviously with AI usage (Opus 5.5&#x2F;4.8, GLM 5.3, Kimi 3.1), there’s a lot of work.",
+  "time" : 1794181332,
+  "type" : "comment"
+}

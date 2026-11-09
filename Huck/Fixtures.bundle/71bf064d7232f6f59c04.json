@@ -1,0 +1,12 @@
+{
+  "by" : "kagen",
+  "descendants" : 2,
+  "id" : 50391995,
+  "kids" : [ 50392384, 50397928 ],
+  "score" : 2,
+  "text" : "My code is written by agents now. Git blame shows me the commit and my own name, but the reason for the code is in a session I closed weeks ago.<p>KeepPlain saves your agent sessions. It uses git blame to find the session that corresponds to a file, line, or commit. Then it shows the original request and the reasoning behind the change. It also finds commits made by the user after the agent session and links them to the session.<p>I also try to use the mistakes the agent makes over and over to turn them into rules for new sessions. It works with Claude Code, Codex, Cursor, Pi and Antigravity.<p>Your sessions are uploaded to my server and are kept private to you. All secrets are redacted on your machine before the upload. I’m sure there will be lots of questions about this. The plugin is MIT licensed and open source. The server is not. Teams can run their own Postgres database to store their data.<p>KeepPlain is free for personal use and teams will pay for it. I am a solo developer and this is early on in development so please let me know where it breaks.",
+  "time" : 1793971354,
+  "title" : "Show HN: KeepPlain – ask your coding agent why a line of code exists",
+  "type" : "story",
+  "url" : "https://keepplain.com"
+}

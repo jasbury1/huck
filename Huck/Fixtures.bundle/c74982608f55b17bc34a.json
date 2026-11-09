@@ -1,0 +1,11 @@
+{
+  "by" : "moritzme_",
+  "descendants" : 0,
+  "id" : 50380157,
+  "score" : 4,
+  "text" : "Hey HN!<p>Last September I moved to Barcelona for a university exchange and thought it was the perfect moment to finally learn Spanish. I prepared with Duolingo, but as soon as I arrived, it didn&#x27;t feel right anymore. Here&#x27;s what I was missing:<p>I wanted to actually use the language, but in a safe environment. For example, practising ordering in a restaurant in an app before trying it in real life.<p>When I noticed words I didn&#x27;t know, I wanted to practise them like in Anki. But copying them over, looking them up in a dictionary and making my own flashcards? I was too lazy. So I built a full dictionary into the app, with native speaker pronunciation and verified example sentences from PONS and wiktionary, so you can save a word the moment you don&#x27;t understand it, or when you&#x27;re missing one in a conversation.<p>That let me practise situations like sending a package at the post office beforehand. Butt to be honest, it worked in some situations, and in others I failed completely. People speak too fast, use different words, and you can&#x27;t practise every situation. I really needed to train my general listening comprehension, and YouTube seemed like the best place for that. So I added a YouTube integration: you watch videos, get a comprehension question from time to time, and can add any word to your vocabulary with one click.<p>It&#x27;s free, with no ads and no premium tier.<p>You can check it out here: <a href=\"https:&#x2F;&#x2F;noentiendo.app\" rel=\"nofollow\">https:&#x2F;&#x2F;noentiendo.app</a><p>I&#x27;m happy about any feedback and ideas. Maybe you&#x27;re learning a language right now and think &quot;it would be cool to practise it that way&quot;. Let me know! I&#x27;ve already added German, so if you want a specific language supported, just comment.",
+  "time" : 1793891819,
+  "title" : "Show HN: I moved to Barcelona and outgrew Duolingo, so I built this",
+  "type" : "story",
+  "url" : "https://noentiendo.app"
+}

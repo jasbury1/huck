@@ -1,0 +1,11 @@
+{
+  "by" : "ndrean",
+  "descendants" : 9,
+  "id" : 50354763,
+  "kids" : [ 50410412, 50354764 ],
+  "score" : 30,
+  "time" : 1793725892,
+  "title" : "ZeBridge – PostgreSQL replicas on devices, synchronized over NATS",
+  "type" : "story",
+  "url" : "https://github.com/ndrean/ZeBridge"
+}

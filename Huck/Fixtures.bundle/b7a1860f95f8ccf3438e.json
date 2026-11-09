@@ -1,0 +1,10 @@
+{
+  "by" : "wondersky",
+  "descendants" : 0,
+  "id" : 50404680,
+  "score" : 3,
+  "time" : 1794060590,
+  "title" : "Microsoft open-sources DACS: stalled data loads fell from 14% to 0.1%",
+  "type" : "story",
+  "url" : "https://opensource.microsoft.com/blog/2026/11/05/accelerate-data-access-for-inference-and-training-with-the-open-source-distributed-accelerator-for-cloud-storage/"
+}

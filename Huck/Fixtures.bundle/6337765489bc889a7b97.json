@@ -1,0 +1,11 @@
+{
+  "by" : "peter_retief",
+  "descendants" : 23,
+  "id" : 50366811,
+  "kids" : [ 50367431, 50368028, 50368226, 50372039, 50367813, 50367859, 50368209, 50369138, 50369120, 50369071 ],
+  "score" : 45,
+  "time" : 1793805504,
+  "title" : "Show HN: Codemap – one-page interactive map of any Go repository",
+  "type" : "story",
+  "url" : "https://github.com/peterretief/codemap"
+}

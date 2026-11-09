@@ -1,0 +1,11 @@
+{
+  "by" : "based2",
+  "descendants" : 2,
+  "id" : 50416397,
+  "kids" : [ 50416746, 50417050 ],
+  "score" : 3,
+  "time" : 1794166892,
+  "title" : "NCM: Next-Concept Modeling: Fast, Parallel Coarse-to-Fine Text Generation",
+  "type" : "story",
+  "url" : "https://arxiv.org/abs/2610.14162"
+}

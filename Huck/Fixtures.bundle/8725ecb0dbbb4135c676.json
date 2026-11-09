@@ -1,0 +1,8 @@
+{
+  "by" : "skwee357",
+  "id" : 50391148,
+  "parent" : 50417407,
+  "text" : "I&#x27;m still working on making JustFax Online[1] more profitable. Added a bunch of features recently, as well as invisible improvements in fax routing, and admin stuff for myself to better analyze the traffic and patterns.<p>Other than this, I&#x27;m playing with vibe-coding stuff I always wanted to do but never had the time&#x2F;skills to do. For example, I built a TUI on top of beancount that is tailored to my needs and my business[2]. I also completely got rid of self-hosted plausible and umami analytics, and replaced them with vibe-coded built-in-rust (c) analytics tool that relies on both js-beacon and streaming of caddy access.log. Will probably publish about it in my blog soon, so subscribe to the RSS if you want.<p>Lastly, I&#x27;m messing with self-hosting. I completely ditched Github and Gitlab for self hosted forgejo + actions runner. I set up proper backup plan for everything I care (documents, immich library, my SaaS DB, and the forgejo repositories).<p>[1] <a href=\"https:&#x2F;&#x2F;justfaxonline.com\" rel=\"nofollow\">https:&#x2F;&#x2F;justfaxonline.com</a><p>[2] <a href=\"https:&#x2F;&#x2F;kudmitry.com&#x2F;articles&#x2F;after-14-years-i-finally-built-my-dream-app&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;kudmitry.com&#x2F;articles&#x2F;after-14-years-i-finally-built...</a>",
+  "time" : 1793965224,
+  "type" : "comment"
+}

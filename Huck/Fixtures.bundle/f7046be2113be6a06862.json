@@ -1,0 +1,8 @@
+{
+  "by" : "mike_pol",
+  "id" : 50350801,
+  "parent" : 50417407,
+  "text" : "working on AudioWeave, an ad free, offline first Android podcast player.<p>switching from iOS, I wasn&#x27;t happy with the existing podcast apps, so I built this mostly for myself. I&#x27;ve been using it for the last six months and finally pushed a public beta.<p>My day to day is BE so I used the project to learn Kotlin and Jetpack Compose. Everything is strictly native using Room and Media3&#x2F;ExoPlayer. I wanted a nice looking (subjective), privacy-focused app without any tracking or ads.<p>I&#x27;m considering open sourcing it soon.<p><a href=\"https:&#x2F;&#x2F;play.google.com&#x2F;store&#x2F;apps&#x2F;details?id=com.enyodigital.audioweave\">https:&#x2F;&#x2F;play.google.com&#x2F;store&#x2F;apps&#x2F;details?id=com.enyodigita...</a>",
+  "time" : 1793706421,
+  "type" : "comment"
+}

@@ -1,0 +1,12 @@
+{
+  "by" : "nkotov",
+  "descendants" : 1,
+  "id" : 50394379,
+  "kids" : [ 50400258, 50400877, 50397498 ],
+  "score" : 4,
+  "text" : "Hello HN, I&#x27;m Nik. I built Infinity for myself because I tend to love to rabbit-hole on various subjects.<p>I usually have 3-4 windows open for ChatGPT desktop + Claude + Ollama. Typically, I&#x27;d ask a question, see something interesting in the answer, and then keep expanding on it. The mental chain of thought eventually gets lost and I would start from scratch again. Second, I also wanted to compare answers across multiple models. From there, pick and use the best one and continue.<p>So I built Infinity for myself. Multiple windows, multiple chats. Projects all aligned in one place. But the best part is when you start highlighting any part of the response - you can branch off and fork into new chat sessions from there without losing your original chain of thought.<p>It&#x27;s a native Mac app written in Swift. You can use all the popular cloud models that you already pay for but on top of that, you can use local models as well. You can even set out what each model&#x27;s job is and assign certain models for certain jobs.<p>It&#x27;s free, there&#x27;s no account, no analytics on the actual app. Everything is stored locally. Just download, connect up, and get going.<p>Still extremely early but if there is interest, would love to hear what works and what doesn&#x27;t!",
+  "time" : 1793981982,
+  "title" : "Show HN: Infinity – Git-style branching for AI chats",
+  "type" : "story",
+  "url" : "https://infinitychat.app/"
+}

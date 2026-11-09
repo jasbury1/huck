@@ -1,0 +1,11 @@
+{
+  "by" : "wondersky",
+  "descendants" : 196,
+  "id" : 50354308,
+  "kids" : [ 50399311, 50360278, 50360204, 50400696, 50399538, 50399325, 50415801, 50401857, 50399433, 50399806, 50400174, 50400002, 50401076, 50362768, 50399930, 50402537, 50400313, 50400435, 50401758, 50400047, 50400377, 50403748, 50400380, 50399370, 50400328, 50399313 ],
+  "score" : 207,
+  "time" : 1793724234,
+  "title" : "The Ubuntu 26.04 Rust sudo is not compatible with standard sudo",
+  "type" : "story",
+  "url" : "https://utcc.utoronto.ca/~cks/space/blog/linux/Ubuntu2604RustSudoNotCompatible"
+}

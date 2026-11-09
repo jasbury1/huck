@@ -1,0 +1,11 @@
+{
+  "by" : "saidsef",
+  "descendants" : 0,
+  "id" : 50414894,
+  "kids" : [ 50414895 ],
+  "score" : 1,
+  "time" : 1794156780,
+  "title" : "Show HN: Kinesis API for Tests and CI",
+  "type" : "story",
+  "url" : "https://github.com/saidsef/aws-kinesis-local"
+}

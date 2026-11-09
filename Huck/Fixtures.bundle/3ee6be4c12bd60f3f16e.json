@@ -1,0 +1,8 @@
+{
+  "by" : "herculeswarrior",
+  "id" : 50333797,
+  "parent" : 50417407,
+  "text" : "Lipik, a free open-source dictation app for Mac (<a href=\"https:&#x2F;&#x2F;github.com&#x2F;Gourav2609&#x2F;lipik\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;Gourav2609&#x2F;lipik</a>). Hold fn, talk, let go, and clean text lands in any app: ums and self-corrections removed, spoken punctuation turned into real punctuation. Speech-to-text and clean-up both run on the Mac. On my 106 English test clips, lines that came out fully right went from 28% to 76% with clean-up on. Right now I&#x27;m working on Hinglish (Hindi + English in Roman letters). It gets 7 of 20 test lines fully right, so there&#x27;s a long way to go.",
+  "time" : 1793601833,
+  "type" : "comment"
+}

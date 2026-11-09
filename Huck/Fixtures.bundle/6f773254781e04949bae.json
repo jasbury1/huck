@@ -1,0 +1,8 @@
+{
+  "by" : "mlaux",
+  "id" : 50418085,
+  "parent" : 50417407,
+  "text" : "I&#x27;m making a replacement motherboard for the Nokia 1100 that runs Linux and supports LTE. I have the software working well on a MangoPi dev board and I&#x27;ve designed two PCBs: one &quot;test fit&quot; board that just breaks out the phone keypad&#x2F;LCD to pin headers, and the actual board with everything on it. Now I just need to order the PCBA which is super expensive :)<p>It uses an allwinner T113-S3 SoC and the Quectel EC25 LTE module, and I&#x27;ve made sure voice calling works over LTE, at least on T-Mobile in the US. (this is tricky bc of carrier rules)<p>video and photos of MangoPi test setup and my board layout here: <a href=\"https:&#x2F;&#x2F;constcast.org&#x2F;n1100c&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;constcast.org&#x2F;n1100c&#x2F;</a>",
+  "time" : 1794176834,
+  "type" : "comment"
+}

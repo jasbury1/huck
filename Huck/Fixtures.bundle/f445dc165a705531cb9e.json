@@ -1,0 +1,8 @@
+{
+  "by" : "ktimespi",
+  "id" : 50389844,
+  "parent" : 50417407,
+  "text" : "I&#x27;ve been working on an Obsidian plugin to quickly enter caloric and nutritional data (<a href=\"https:&#x2F;&#x2F;www.github.com&#x2F;Krishna-Sivakumar&#x2F;joule\" rel=\"nofollow\">https:&#x2F;&#x2F;www.github.com&#x2F;Krishna-Sivakumar&#x2F;joule</a>). The core features are done (A DSL and a runtime for finding and resolving formulae recursively), and I need to work on documentation and some convenience features. Hoping to finish it this month!",
+  "time" : 1793955383,
+  "type" : "comment"
+}

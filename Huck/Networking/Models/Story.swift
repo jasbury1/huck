@@ -1,0 +1,207 @@
+//
+//  Story.swift
+//  Huck
+//
+//  Created by James Asbury on 12/28/25.
+//
+
+import SwiftUI
+
+nonisolated enum FeedKind {
+    case topStories
+    case bestStories
+    case newStories
+    case askStories
+    case showStories
+    case jobStories
+
+    func displayName() -> String {
+        switch self {
+        case .topStories:
+            "Top Stories"
+        case .bestStories:
+            "Best Stories"
+        case .newStories:
+            "New Stories"
+        case .askStories:
+            "Ask Hacker News"
+        case .showStories:
+            "Show Hacker News"
+        case .jobStories:
+            "Job Listings"
+        }
+    }
+
+    /// Short name used in the feed's search field prompt, e.g. "Search Jobs".
+    var searchName: String {
+        switch self {
+        case .topStories:
+            "Top Stories"
+        case .bestStories:
+            "Best Stories"
+        case .newStories:
+            "New Stories"
+        case .askStories:
+            "Ask HN"
+        case .showStories:
+            "Show HN"
+        case .jobStories:
+            "Jobs"
+        }
+    }
+}
+
+enum StoryType {
+    case link
+    case text
+    case unknown
+}
+
+enum ThumbnailType {
+    case loading
+    case image(Image)
+    case failed
+    case text
+}
+
+/// An immutable, write-once snapshot of a story's server-fetched content.
+///
+/// A `StoryModel` is populated exactly once by `fetchData()` and never mutated
+/// afterward, so the same story shown by multiple instances (feed row, comments
+/// view, profile) always reads identically. All *mutable*, user-derived state —
+/// upvotes and their optimistic effect on the score, saves, hides — lives in
+/// `InteractionStore`, keyed by story id, rather than on these per-view instances.
+///
+/// This is a deliberate design rule; see `docs/story-state-ownership.md`. The
+/// fetched properties are `private(set)` to enforce it: mutating one instance's
+/// content would silently desync the others (this is what caused the upvote score
+/// drift bug). If a field ever needs to change over time (e.g. a live-refreshing
+/// score), route it through an id-keyed store overlay — do not make it settable.
+/// A story's details, as the API layer returns them.
+nonisolated struct StoryDetails: Sendable {
+    let title: String
+    let by: String
+    let score: Int
+    let timestamp: Date
+    /// The linked page; `nil` for a text post.
+    let url: URL?
+    /// A text post's body, as Markdown; empty for a link.
+    let text: String
+    /// A poll's options, in display order; empty for anything else.
+    let pollOptionIDs: [Int]
+    /// The whole thread's comment count, every nesting level included.
+    let commentCount: Int
+}
+
+@Observable
+class StoryModel: Equatable, Identifiable {
+    let id: Int
+    private(set) var storyType: StoryType
+    private(set) var title: String
+    private(set) var by: String
+    private(set) var timestamp: Date
+    private(set) var score: Int
+    private(set) var url: URL?
+    private(set) var commentCount: Int
+    private(set) var thumbnailStatus: ThumbnailType
+    private(set) var text: String?
+    /// A poll's option ids, in order; empty for anything else. A poll is
+    /// otherwise a text post — its question is the title and its body the text.
+    private(set) var pollOptionIDs: [Int] = []
+
+    var isPoll: Bool { !pollOptionIDs.isEmpty }
+
+    /// Whether `fetchData()` has fully populated this model (story + thumbnail).
+    /// A `StoryModel` instance is retained by its `StoryFeed` across cell
+    /// recycling, so this guard keeps a row that scrolls back into view from
+    /// re-fetching and, crucially, from briefly rendering as an empty placeholder.
+    private var isLoaded = false
+
+    init(id: Int) {
+        self.id = id
+        storyType = .unknown
+        title = ""
+        by = ""
+        timestamp = Date()
+        score = 0
+        commentCount = 0
+        url = nil
+        thumbnailStatus = .loading
+        text = nil
+    }
+
+    func fetchData(using api: any HackerNewsService) async {
+        // Already populated (e.g. a recycled row) — nothing to do, and the
+        // existing values stay on screen with no placeholder flash.
+        guard !isLoaded, let story = await api.getStory(id: id) else { return }
+
+        storyType = story.url == nil ? .text : .link
+        url = story.url
+        text = story.text
+        title = story.title
+        by = story.by
+        timestamp = story.timestamp
+        score = story.score
+        pollOptionIDs = story.pollOptionIDs
+        commentCount = story.commentCount
+
+        await fetchThumbnail(using: api)
+        isLoaded = true
+    }
+
+    /// Re-reads the story for pull-to-refresh, picking up a new score and
+    /// comment count. Call after `HackerNewsAPI.invalidateThread(for:)`, or the
+    /// cache just serves it back. The current values stay on screen until the
+    /// new ones arrive, and stay put if the fetch fails.
+    func reloadData(using api: any HackerNewsService) async {
+        let wasLoaded = isLoaded
+        isLoaded = false
+        await fetchData(using: api)
+        // A failed fetch returns before marking the story loaded, but the
+        // values from before are still there and still good.
+        if wasLoaded { isLoaded = true }
+    }
+
+    /// Resolves the cell's thumbnail from the shared cache. Text posts and
+    /// missing-URL posts get their placeholder state directly.
+    private func fetchThumbnail(using api: any HackerNewsService) async {
+        guard storyType == .link else {
+            thumbnailStatus = .text
+            return
+        }
+        guard let url else {
+            thumbnailStatus = .failed
+            return
+        }
+        if let image = await api.thumbnail(for: url) {
+            thumbnailStatus = .image(Image(uiImage: image))
+        } else {
+            thumbnailStatus = .failed
+        }
+    }
+
+    /// The link's host with a leading "www." stripped, e.g. "github.com". Nil for
+    /// text posts or links without a host. Shown after the title in the feed when
+    /// the "Display story domain" setting is on.
+    var displayDomain: String? {
+        guard let host = url?.host() else { return nil }
+        return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+    }
+
+    /// The story's Hacker News discussion page — the canonical permalink to the
+    /// post itself, valid for every post type. Used as the Share target and the
+    /// "Copy Hacker News Link" action. The string is a fixed, always-valid URL.
+    var hackerNewsURL: URL {
+        URL(string: "https://news.ycombinator.com/item?id=\(id)")!
+    }
+
+    /// The linked article's URL for link posts; `nil` for text posts (Ask/Show
+    /// HN and self-posts), whose only link is the Hacker News page.
+    var contentURL: URL? {
+        url
+    }
+
+    static func == (lhs: StoryModel, rhs: StoryModel) -> Bool {
+        lhs.title == rhs.title && lhs.id == rhs.id
+    }
+}

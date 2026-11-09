@@ -1,0 +1,9 @@
+{
+  "by" : "bengold14",
+  "id" : 50417905,
+  "kids" : [ 50418376 ],
+  "parent" : 50417407,
+  "text" : "I built a new abstraction layer for code (https:&#x2F;&#x2F; www.archme.io), as I believe it&#x27;s no longer the right medium for understanding and collaboration in the era of AI and 10k LOC PRs.<p>It scans your codebase, turns it into permanent c4 &amp; sequence diagrams and keeps them up to date on each commit. Then, instead of reviewing a 10k line coding PR, you review a 30 line change to sequence and C4 diagrams.<p>npm i -g @archme&#x2F;cli &amp;&amp; archme init to run it on your own computer, code never leaves your machine.",
+  "time" : 1794175740,
+  "type" : "comment"
+}

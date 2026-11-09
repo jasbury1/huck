@@ -1,0 +1,11 @@
+{
+  "by" : "pg",
+  "descendants" : 118,
+  "id" : 5229364,
+  "kids" : [ 5229929, 5229904, 5229559, 5229516, 5229395, 5229488, 5229597, 5229522, 5229486, 5230317, 5229634, 5229685, 5230539, 5230194, 5230458, 5230814, 5229857, 5229891, 5230515, 5230899, 5230399, 5230434, 5230406, 5231105, 5229596 ],
+  "score" : 225,
+  "text" : "Rtm has lined up a new, faster server for us.  He currently plans to switch over to it at 6 am EST on Saturday.  He says the site will be down for around 10 minutes, but you know how these things go...",
+  "time" : 1360970650,
+  "title" : "HN will be down Saturday morning while we switch servers",
+  "type" : "story"
+}

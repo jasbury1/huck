@@ -1,0 +1,11 @@
+{
+  "by" : "jdefr89",
+  "descendants" : 0,
+  "id" : 50380536,
+  "score" : 3,
+  "text" : "I spend a lot of time diving deep into C&#x2F;C++ code bases for various reasons. Normally for Vulnerability Research. I like to get a good feel for the software, it&#x27;s data structures, control flow, etc. Are all usually important.<p>In the past we have SourceTrail, this is now defunct and its abilities were somewhat limited. If you have thousands to spend you can grab a Understand license... Wait maybe thats SourceNavigator. Either way I wrote SrcWranglr. Its my very first Rust project (congrats to the insufferable Rusteans, I finally cracked and learned Rust).<p>Anyhow SrcWranglr is wicked free, wicked fast, has a modern UI, and features that assist in finding bugs&#x2F;vulns. You can run semgrep rules over the codebase, or have a fuzz harness generated for you by the program with ease.. Its still super early in development but it already helped me discover a 0day :-).. Give it a shot if you want. I am open to any suggestions and if it is in your heart to contribute let me know. I only get to work on personal projects here and there on account of work... But yea enough babbling.<p><a href=\"https:&#x2F;&#x2F;github.com&#x2F;jdefrancesco&#x2F;SrcWranglr\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;jdefrancesco&#x2F;SrcWranglr</a>",
+  "time" : 1793893437,
+  "title" : "Show HN: SrcWranglr",
+  "type" : "story",
+  "url" : "https://github.com/jdefrancesco/SrcWranglr"
+}

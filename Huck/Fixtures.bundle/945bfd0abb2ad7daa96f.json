@@ -1,0 +1,11 @@
+{
+  "by" : "ipotapov",
+  "descendants" : 125,
+  "id" : 47258801,
+  "kids" : [ 47259510, 47259137, 47261380, 47261240, 47259190, 47259350, 47262588, 47263331, 47260601, 47259210, 47259276, 47281220, 47260311, 47264499, 47259103, 47259192, 47259153, 47261199, 47259600, 47260818, 47269903, 47263533, 47260432, 47259099, 47259992, 47259540, 47299120, 47286090, 47259840, 47261685, 47261872, 47261993, 47259201, 47260821 ],
+  "score" : 374,
+  "time" : 1772696621,
+  "title" : "Nvidia PersonaPlex 7B on Apple Silicon: Full-Duplex Speech-to-Speech in Swift",
+  "type" : "story",
+  "url" : "https://blog.ivan.digital/nvidia-personaplex-7b-on-apple-silicon-full-duplex-speech-to-speech-in-native-swift-with-mlx-0aa5276f2e23"
+}

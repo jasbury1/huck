@@ -1,0 +1,12 @@
+{
+  "by" : "passkey1510",
+  "descendants" : 69,
+  "id" : 50358352,
+  "kids" : [ 50362987, 50362962, 50361234, 50361965, 50362802, 50362706, 50368613, 50364089, 50362082, 50362692, 50374027, 50368771, 50378999, 50362035, 50379166, 50362633, 50363443, 50361178, 50370360, 50362765, 50365812, 50369354, 50362830, 50370792, 50363074, 50364583, 50365835, 50372521, 50367542, 50393071, 50363075, 50363046, 50362383 ],
+  "score" : 127,
+  "text" : "To give you some context on the project. I&#x27;m a solo founder and I use AI heavily in my work. The idea came from wanting players to discover cities. Each city has its own history, so every case is set in a real city with real public places. The crime and the people are on other hand invented. The part that I care most is the playable aspect of the game, a model plays the detective and must solve the case before it goes live.<p>As of today: it&#x27;s free on Android, the iOS version is still waiting to be reviewed by Apple. It&#x27;s available in six popular languages, but adding more languages is just a matter of time and demand.My long term vision if it takes off: weekly cases, private parties like a team-building escape game, an MCP so a game master can build their own scenario from ChatGPT or Claude, and maybe tourism offices since players travel the world.",
+  "time" : 1793740803,
+  "title" : "Show HN: Uncracked City, detective game where you question LLM suspects that lie",
+  "type" : "story",
+  "url" : "https://uncracked.city"
+}

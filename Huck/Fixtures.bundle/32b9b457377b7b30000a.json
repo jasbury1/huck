@@ -1,0 +1,11 @@
+{
+  "by" : "birdculture",
+  "descendants" : 2,
+  "id" : 50416386,
+  "kids" : [ 50417594, 50418039, 50416727 ],
+  "score" : 9,
+  "time" : 1794166803,
+  "title" : "Systemd Loves Rust",
+  "type" : "story",
+  "url" : "https://amutable.com/blog/systemd-loves-rust"
+}

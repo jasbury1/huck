@@ -1,0 +1,12 @@
+{
+  "by" : "jeeybee",
+  "descendants" : 122,
+  "id" : 41284703,
+  "kids" : [ 41285614, 41286459, 41285186, 41286669, 41288745, 41286219, 41285896, 41285740, 41289553, 41286200, 41289283, 41289626, 41288868, 41299610, 41298940, 41287979, 41287419, 41285205, 41285037, 41285713, 41288493, 41286456, 41285787, 41286659, 41291666, 41292650, 41285422, 41288126 ],
+  "score" : 376,
+  "text" : "PgQueuer is a minimalist, high-performance job queue library for Python, leveraging the robustness of PostgreSQL. Designed for simplicity and efficiency, PgQueuer uses PostgreSQL&#x27;s LISTEN&#x2F;NOTIFY to manage job queues effortlessly.",
+  "time" : 1724008951,
+  "title" : "Show HN: PgQueuer – Transform PostgreSQL into a Job Queue",
+  "type" : "story",
+  "url" : "https://github.com/janbjorge/PgQueuer"
+}

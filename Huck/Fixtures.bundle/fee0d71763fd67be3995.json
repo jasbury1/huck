@@ -1,0 +1,8 @@
+{
+  "by" : "Shorel",
+  "id" : 50418022,
+  "parent" : 50417407,
+  "text" : "APIKulture. An alternative to Postman&#x2F;Insomnia&#x2F;Bruno.<p>To be honest, I started this because Postman and Insomnia became forced-corporate-cloud not usable for me anymore, and Bruno lacked a feature I considered fundamental for my workflow.<p>The feature is to remember the JSONPath expressions between requests, a feature that Bruno has implemented already.<p>But I created this thing and I&#x27;m using it daily since then. C++ and wxWidgets, it uses 40MB of RAM, and it is super fast, instead of the 400MB used by the above mentioned programs.<p><a href=\"https:&#x2F;&#x2F;www.apikulture.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;www.apikulture.com&#x2F;</a>",
+  "time" : 1794176423,
+  "type" : "comment"
+}

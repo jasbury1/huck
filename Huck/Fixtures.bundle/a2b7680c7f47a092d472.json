@@ -1,0 +1,8 @@
+{
+  "by" : "alphax314",
+  "id" : 50418313,
+  "parent" : 50418214,
+  "text" : "Unfortunately it&#x27;s not easy. In the US specifically banks don&#x27;t generally offer APIs or keys to access them to individuals and you have to go through an aggregator like Plaid (which is what I want to avoid).<p>However, most banks do send alert emails when something is charged to a credit&#x2F;debit card. Meli connects to your inbox read-only via OAuth (Google and Microsoft) or IMAP for other providers and reads those emails on your Mac.<p>Of course there are limitations to this approach, you only get access to the data that is available in those emails like merchant, amount, date and account.<p>Which banks are you interested in? Are you based in the US?",
+  "time" : 1794178028,
+  "type" : "comment"
+}

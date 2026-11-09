@@ -1,0 +1,8 @@
+{
+  "by" : "gherkinlabs",
+  "id" : 50417953,
+  "parent" : 50417407,
+  "text" : "We&#x27;ve been reverse engineering the tensor core on TPU v5: <a href=\"https:&#x2F;&#x2F;gherkinlabs.com&#x2F;v5e-tensorcore-instructions\" rel=\"nofollow\">https:&#x2F;&#x2F;gherkinlabs.com&#x2F;v5e-tensorcore-instructions</a><p>The work mainly stems from a belief that Nvidia gpus&#x27; architecture are a bit subpar for machine learning and that tpu could be a viable alternative but are still rather undocumented.",
+  "time" : 1794176017,
+  "type" : "comment"
+}

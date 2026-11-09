@@ -1,0 +1,8 @@
+{
+  "by" : "Wicher",
+  "id" : 50330035,
+  "parent" : 50417407,
+  "text" : "A networking-over-DNS client and server, in Go. <a href=\"https:&#x2F;&#x2F;sr.ht&#x2F;~nullenenenen&#x2F;ShrewDNS&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;sr.ht&#x2F;~nullenenenen&#x2F;ShrewDNS&#x2F;</a><p>A bit like iodine in the basic idea, but the execution and network topologies you build with it are different. It&#x27;s more of a building block; you get your DNS channels represented as UDP endpoints, and take it from there, ie you can run Wireguard over it, or SSH or a SOCKS5 proxy (using quicmux, so over QUIC), or run Mosh straight over DNS if you&#x27;re crafty.<p>It has an Android app too! I tried to submit it to F-Droid but they&#x27;re so swamped in spammy or low-quality apps that they&#x27;re not taking any brand new apps :-(\nA sad state of affairs, that.",
+  "time" : 1793568159,
+  "type" : "comment"
+}

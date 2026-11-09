@@ -1,0 +1,8 @@
+{
+  "by" : "angrybayblade",
+  "id" : 50329920,
+  "parent" : 50417407,
+  "text" : "A PR Review tool for ergonomics - <a href=\"https:&#x2F;&#x2F;bobby.viraj.computer\" rel=\"nofollow\">https:&#x2F;&#x2F;bobby.viraj.computer</a><p>* files in organised trees&#x2F;graphs generated using LSPs and symbol references instead of linear file list\n* keyboard shortcuts for everything from navigation, pan, zoom, comment, note, submit...\n* mostly github compatible with native features\n* LSP powered symbol resolution for inspecting definitions and references\n* LLM powered reviews supported\n* Inline LLM question answering",
+  "time" : 1793567331,
+  "type" : "comment"
+}

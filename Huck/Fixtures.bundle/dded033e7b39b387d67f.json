@@ -1,0 +1,8 @@
+{
+  "by" : "serifsadi",
+  "id" : 50348920,
+  "parent" : 50417407,
+  "text" : "GeoPeek, a small macOS Quick Look extension for GeoJSON. I work with geospatial data and wanted to press Space on a .geojson in Finder and see a map instead of raw JSON. It also shows an attribute table and basic stats. <a href=\"https:&#x2F;&#x2F;github.com&#x2F;serifsadi&#x2F;geopeek\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;serifsadi&#x2F;geopeek</a>",
+  "time" : 1793689041,
+  "type" : "comment"
+}

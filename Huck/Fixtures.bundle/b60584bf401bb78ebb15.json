@@ -1,0 +1,11 @@
+{
+  "by" : "koeseo",
+  "descendants" : 0,
+  "id" : 50415821,
+  "kids" : [ 50415822 ],
+  "score" : 3,
+  "time" : 1794163421,
+  "title" : "Open dataset of prompt-injection CVEs with a monthly threat index",
+  "type" : "story",
+  "url" : "https://promptinjections.de/threat-index/zahlen/"
+}

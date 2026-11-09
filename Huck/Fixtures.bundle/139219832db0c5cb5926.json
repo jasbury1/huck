@@ -1,0 +1,11 @@
+{
+  "by" : "frozenseven",
+  "descendants" : 60,
+  "id" : 50352518,
+  "kids" : [ 50413648, 50414366, 50413981, 50413785, 50414029, 50352583, 50413693 ],
+  "score" : 64,
+  "time" : 1793716637,
+  "title" : "Quadrillion-parameter transformers and how to train them",
+  "type" : "story",
+  "url" : "https://qlabs.sh/research/parameters"
+}

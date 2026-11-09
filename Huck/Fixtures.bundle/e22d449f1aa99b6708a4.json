@@ -1,0 +1,12 @@
+{
+  "by" : "jbspeakr",
+  "descendants" : 3,
+  "id" : 50393235,
+  "kids" : [ 50395079, 50395136, 50412556, 50403370, 50411453, 50402233, 50395498, 50402631, 50395746, 50402175 ],
+  "score" : 24,
+  "text" : "Hi HN, I’m Jan. I am co-author of the Agentic Identity Broker (AIB), an MIT-licensed OAuth2 broker in the Zalando Incubator, that lets a user give an AI agent scoped, revocable access to MCP services.<p>The broker solves three major challenges that are especially relevant in corporate environments: (A) Enable users to delegate workloads to agents without providing the agents all the user’s tokens. (B) Connect fragmented identity and authorization systems. (C) Centralize tool approvals and audit logging.<p>We built AIB to fill an infrastructure gap in our own agent platform. At this moment in time, IETF working groups are still finalizing standards for agent identity, and vendors are still turning the necessary infrastructure into off-the-shelf products. We needed that infrastructure today.<p>How it works: the user consents once per agent and service. The broker stores the third-party tokens encrypted. At request time a gateway (e.g. Agentgateway) does RFC 8693 token exchange. Agents never see user tokens and MCP servers only implement tools and don’t need to care about all the OAuth 2.1 plumbing.<p>AIB is v0.1 and runs in production, bringing together hundreds of our agents with dozens of internal and external MCP servers.<p>To try it locally: clone the repo, run &quot;just compose-up-detached&quot;.<p>The current features focus on on-behalf-of (OBO) use cases, where human actors delegate to agents. Next we are looking to also support headless agents, where agents are invoked by machines. Intent-based authorization is yet another package on our roadmap. If you’ve built either, or have feedback on the UI&#x2F;UX, I’d like to hear from you!",
+  "time" : 1793977667,
+  "title" : "Show HN: Agentic Identity Broker, OAuth Delegation for AI Agents",
+  "type" : "story",
+  "url" : "https://github.com/zalando-incubator/agentic-identity-broker"
+}

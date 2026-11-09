@@ -1,0 +1,11 @@
+{
+  "by" : "Mattboxx",
+  "descendants" : 2,
+  "id" : 50403882,
+  "kids" : [ 50412492, 50404212, 50406346, 50410074 ],
+  "score" : 8,
+  "text" : "Hi, I’ve been working on ESP32 Tailnet Gateway, an open-source firmware that turns an ESP32-S3 into a small Tailscale&#x2F;Headscale gateway\nThe main use case is connecting IoT devices that can’t run a VPN client to services on another network with a low cost device.\nThe idea is to have a small, independently powered device that can provide connectivity and help recover a NAS or PC when the main server is offline.",
+  "time" : 1794053771,
+  "title" : "I turned an ESP32-S3 into a Tailscale gateway with recovery functions",
+  "type" : "story"
+}

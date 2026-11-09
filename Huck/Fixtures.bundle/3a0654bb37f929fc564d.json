@@ -1,0 +1,11 @@
+{
+  "by" : "hashfunction",
+  "descendants" : 0,
+  "id" : 50417585,
+  "score" : 1,
+  "text" : "I own a reMarkable 2 and wanted more to read on it than my own PDFs, so I built a free web app. You connect your tablet once with the official one-time code, then:<p>- Send any of 79,000+ public-domain books (Standard Ebooks first, plus Project Gutenberg, Wikisource and OpenStax textbooks).<p>- Get comics (xkcd volumes with the hover text, Pepper&amp;Carrot, pre-1931 strips) and 33,000+ magazine issues from 1930 and earlier, re-rendered for e-ink.<p>- Get puzzle books (sudoku with unique solutions, mazes, nonograms) to solve with the pen.<p>- Subscribe to 160+ blogs and news sites; it builds one EPUB edition every morning or every six hours, and moves editions you&#x27;ve finished to the trash.<p>Each kind lands in its own folder, so notebooks are never touched. Built with Node and the reMarkable cloud API. No ads, no tracking, free. Feedback very welcome.",
+  "time" : 1794173945,
+  "title" : "Show HN: Fireside Folio – free books, comics and news editions for reMarkable",
+  "type" : "story",
+  "url" : "https://firesidefolio.com/"
+}

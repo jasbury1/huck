@@ -1,0 +1,8 @@
+{
+  "by" : "AlexITC",
+  "id" : 50391569,
+  "parent" : 50417407,
+  "text" : "An opensource personal expense tracker, I was a happy user from an offline expense tracker which wiped my data when playstore decided auto-updating it,<p>I&#x27;m at the point where I&#x27;m finally actively using it to register my activity, it is straightforward to register tickets by sending them to a telegram bot, then, reconcile those by uploading my bank statement.<p>I&#x27;m trying to get the lowest possible usage friction so that I keep using it.<p>So far the better built pieces related to the data ingestion. Once this is good enough I&#x27;ll build reports + anything coming to my head as a useful piece.<p>I&#x27;m leveraging AWS textract + bedrock + bda to parse bank statements. I expected this would have been easier but it is still a very complex problem which had required me to put many iterations (so far it works nicely with my own statements)<p>For ticket parsing, AWS textract + parsing rules has been enough.<p>I wrote a bit more on my blog <a href=\"https:&#x2F;&#x2F;alexitc.com&#x2F;blog&#x2F;2026-10-16-opensourcing-my-expense-tracker&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;alexitc.com&#x2F;blog&#x2F;2026-10-16-opensourcing-my-expense-...</a><p>Repo at <a href=\"https:&#x2F;&#x2F;github.com&#x2F;AlexITC&#x2F;expense-tracker&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;AlexITC&#x2F;expense-tracker&#x2F;</a>",
+  "time" : 1793968169,
+  "type" : "comment"
+}

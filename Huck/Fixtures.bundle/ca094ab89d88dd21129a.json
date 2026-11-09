@@ -1,0 +1,9 @@
+{
+  "by" : "sadilek",
+  "id" : 50390534,
+  "kids" : [ 50390656 ],
+  "parent" : 50417407,
+  "text" : "I&#x27;m building an open-source &quot;spatial workspace for directing AI coding agents like an engineering director&quot;.<p>I got overwhelmed by walls of text of parallel Claude Code sessions. This limited the sessions I could steer in parallel to maybe 5 or 6. I knew there had to be a better way, and I found one: A canvas per project. Work laid out as cards. An agent in a worktree per card. Chat condensed to WhatsApp-style back and forth, not a litany of tool calls. Result is usually a narrated demo video that I can comment on by voice to have the agent go another round. Remote-control from my phone. Remote workers to scale beyond my machine. Everyone I know who tried it has stuck with it so far.<p><a href=\"https:&#x2F;&#x2F;github.com&#x2F;sadilek&#x2F;obeya\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;sadilek&#x2F;obeya</a>",
+  "time" : 1793960562,
+  "type" : "comment"
+}

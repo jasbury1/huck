@@ -1,0 +1,12 @@
+{
+  "by" : "sanjevirau",
+  "descendants" : 30,
+  "id" : 50378643,
+  "kids" : [ 50387295, 50387324, 50387600, 50387123, 50393722, 50393447, 50390453, 50387099, 50391927, 50386754, 50388343, 50393796, 50382188, 50393461, 50397233, 50390152, 50391352, 50387256, 50389238, 50389111, 50394339 ],
+  "score" : 171,
+  "text" : "Hi HN, we have been developing with Firebase for a long time, and the only way Firebase developers can build apps without directly costing them is using the official Firebase Emulator Suite.<p>However, the issue with this suite is, it&#x27;s dependent and running on Java with a old Console UI (not updated in years), that was not built to support tons and millions of data and has pretty bad developer experience. For a long time, we were hitting Out of Memory on even high specs laptop while developing and the worst part is while this happens all the persists data keep getting lost.<p>We were honestly frustrated with this, and thought what if we built the Firebase Emulator Suite the right way, as it always should have been.<p>Introducing Firenook, a faster drop-in replacement for Firebase Emulator Suite for Firebase developers. It&#x27;s 40x faster writes and needs 10x less RAM to run it. We took the right approach of first building it Rust as a single engine, so that there will be no Java dependencies and built from scratch a new Console UI using modern web stacks.<p>The result is, now we were able to run 2 millions datas loaded to Firenook with only taking around 2GB ram compared to 22GB of the official suite. Things are way faster and rebuilt Console UI gives best developer experience from logging Firebase Functions, to editing Firestore documents in JSON and many more.<p>We developed this throughly for around 2 months now and ran this internally for a month before we decided it&#x27;s time to release it to public so that other devs can make use of Firenook and also contribute it to make it better.<p>Firenook is still new and I&#x27;m sure it misses things. So please try it our on your project and let us if there are any issues.<p>Thank you.",
+  "time" : 1793884049,
+  "title" : "Show HN: Firenook – Firebase emulators in Rust: 40× faster writes, 10× less RAM",
+  "type" : "story",
+  "url" : "https://firenook.dev/"
+}

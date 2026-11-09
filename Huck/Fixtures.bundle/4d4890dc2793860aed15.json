@@ -1,0 +1,11 @@
+{
+  "by" : "fkem01",
+  "descendants" : 0,
+  "id" : 50414112,
+  "kids" : [ 50414113 ],
+  "score" : 2,
+  "time" : 1794151885,
+  "title" : "Byward – put any MCP server behind OAuth 2.1 and Entra ID",
+  "type" : "story",
+  "url" : "https://github.com/byward-dev/byward"
+}

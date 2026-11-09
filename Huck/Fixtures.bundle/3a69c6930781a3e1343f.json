@@ -1,0 +1,8 @@
+{
+  "by" : "Oreb",
+  "id" : 50418301,
+  "parent" : 50417407,
+  "text" : "Just like the last time I posted in this thread, I’m working on The Marvelous Brass Chessplaying Automaton, a chess database&#x2F;playing&#x2F;opening training app for Apple platforms:<p><a href=\"https:&#x2F;&#x2F;testflight.apple.com&#x2F;join&#x2F;mqfhpmHY\" rel=\"nofollow\">https:&#x2F;&#x2F;testflight.apple.com&#x2F;join&#x2F;mqfhpmHY</a><p>The original goal was an alternative to ChessBase, but with an Apple-native GUI and iCloud sync between devices, and as an improved alternative to tools like chessbook.com for operating repertoire management and spaced repetition opening memorisation. In recent months I have focused more on the chess-playing parts of the app, trying to implement human-like computer opponents at all levels, using a transformer-based model (similar to the one described in the Maia 3 paper) combined with a very small search.<p>Recently I’ve also been working on chess variants. Since a while, the companion Apple Watch app plays 5x5 chess. More recently, I added a 10x10 chess as an Easter egg game inside the app, and I’m now working on hexagonal chess. With the current state of the art in computer chess, it’s almost trivial to implement vastly superhuman strength in all these variants, but implementing weaker levels that are enjoyable opponents is interesting and challenging. Unlike in normal chess, there are no big databases of human games to train on.",
+  "time" : 1794177982,
+  "type" : "comment"
+}

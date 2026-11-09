@@ -1,0 +1,9 @@
+{
+  "by" : "sandhya6",
+  "id" : 50418122,
+  "kids" : [ 50418181 ],
+  "parent" : 50417407,
+  "text" : "AI client for data analysis.<p>You can connect Claude desktop to databases using MCP servers, but Claude desktop is not great at displaying large volumes of data. A custom client can do a much better job.<p><a href=\"https:&#x2F;&#x2F;reportr.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;reportr.com&#x2F;</a>",
+  "time" : 1794177057,
+  "type" : "comment"
+}

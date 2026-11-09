@@ -1,0 +1,8 @@
+{
+  "by" : "gusco",
+  "id" : 50336437,
+  "parent" : 50417407,
+  "text" : "Still building the file manager I&#x27;ve always wanted: <a href=\"https:&#x2F;&#x2F;intestinate.com&#x2F;gusco&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;intestinate.com&#x2F;gusco&#x2F;</a><p>Added an audio player this past month for all fellow file hoarders out there.<p>Also, you can now choose if you want Gusco to live in your terminal or run as a native-yet-texty app.<p>Was pleasantly surprised how well turning a Bubble Tea TUI app into a GUI-ish bundle works with Gio UI.",
+  "time" : 1793625397,
+  "type" : "comment"
+}

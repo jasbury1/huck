@@ -1,0 +1,11 @@
+{
+  "by" : "hito",
+  "descendants" : 0,
+  "id" : 50392219,
+  "score" : 15,
+  "text" : "I am developing hardware products with NFC and BLE. I built this browser because I lack support of WebNFC and WebBluetooth in existing browsers.<p>Using a native app or a spare Android phone is not the fastest way to test a new feature &#x2F; integration in my hardware.<p>How it works: it uses WebKit and standard WebNFC&#x2F;WebBluetooth Javascript interfaces - so any existing js app will work.<p>How to try: github or app store<p>Plans: security&#x2F;privacy focus - isolation mode for specific websites to prevent XSS&#x2F;Prompt injection",
+  "time" : 1793972707,
+  "title" : "Show HN: An open source webbluetooth and NFC browser for iOS",
+  "type" : "story",
+  "url" : "https://github.com/hito-dev/wand-browser"
+}

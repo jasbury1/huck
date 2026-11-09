@@ -1,0 +1,12 @@
+{
+  "by" : "aliadelelroby",
+  "descendants" : 2,
+  "id" : 50414111,
+  "kids" : [ 50414122, 50414120 ],
+  "score" : 1,
+  "text" : "Hi HN! :)<p>I’ve been working as a fullstack freelancer for over 4 years now. I always wanted some kind of IDE where I could take designs, turn them into code, and not be restricted to using auto layout and all that stuff.<p>Back at the beginning of 2020, before LLMs and AI were a thing, I was sitting with a friend of mine trying to figure out how to take a design, even one built with absolute values, and turn it into a working web app. I tried and failed :(<p>Today I’m launching Velork! It’s meant to be the IDE for everything frontend. You can design UIs, work in 3D, add motion, share your designs, and convert them into actual code with your favorite stack in just one click.<p>It also works with your current subscription, so you can bring Claude, Codex &amp; more.<p>To help you get a feel for it, we’re giving away 2,000 free AI credits to every new user :)<p>I’m happy to answer anything about how it works under the hood. I’m also curious what you’d want an “IDE for everything frontend” to do that current tools don’t!",
+  "time" : 1794151879,
+  "title" : "Show HN: Velork – Design and Code, Together",
+  "type" : "story",
+  "url" : "https://velork.com"
+}

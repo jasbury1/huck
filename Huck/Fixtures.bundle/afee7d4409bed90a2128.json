@@ -1,0 +1,8 @@
+{
+  "by" : "elliottmoos",
+  "id" : 50418942,
+  "parent" : 50417407,
+  "text" : "For reasons, my team is pretty much limited to Argo Workflows for our CI.<p>Nothing against Argo Workflows, but I really wanted to get out of the business of building our own CI product on top of it.<p>So, I’ve been working on this CI “framework” on top of Hera (the Argo Workflows Python SDK, which is really neat) that will hopefully make it easier for our team to build CI pipelines, with CI “primitives.”<p>It’s called Stagecraft: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;elliottmoos&#x2F;stagecraft\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;elliottmoos&#x2F;stagecraft</a>",
+  "time" : 1794181247,
+  "type" : "comment"
+}

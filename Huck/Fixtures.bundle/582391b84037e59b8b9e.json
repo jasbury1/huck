@@ -1,0 +1,11 @@
+{
+  "by" : "quux",
+  "descendants" : 1,
+  "id" : 50393233,
+  "kids" : [ 50402574 ],
+  "score" : 3,
+  "time" : 1793977637,
+  "title" : "Show HN: A debug overlay for iPhone Duo apps that shows reserved screen areas",
+  "type" : "story",
+  "url" : "https://github.com/mikeakers/DuoDevOverlay"
+}

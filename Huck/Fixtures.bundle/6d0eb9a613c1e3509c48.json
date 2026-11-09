@@ -1,0 +1,11 @@
+{
+  "by" : "soloyo",
+  "descendants" : 16,
+  "id" : 50380273,
+  "kids" : [ 50381349, 50381354, 50381381, 50381852, 50381563, 50389631, 50381716 ],
+  "score" : 29,
+  "time" : 1793892336,
+  "title" : "Offline survival assistant – local LLM and Kiwix, runs from a USB stick",
+  "type" : "story",
+  "url" : "https://github.com/sdalberto/ia-da-sobrevivencia/blob/main/README.en.md"
+}

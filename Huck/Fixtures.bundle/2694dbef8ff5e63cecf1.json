@@ -1,0 +1,12 @@
+{
+  "by" : "namuorg",
+  "descendants" : 10,
+  "id" : 50369277,
+  "kids" : [ 50371353, 50371155, 50374873, 50370229, 50374750, 50388168 ],
+  "score" : 15,
+  "text" : "I liked the setting in HackerTube (<a href=\"https:&#x2F;&#x2F;news.ycombinator.com&#x2F;item?id=50319510\">https:&#x2F;&#x2F;news.ycombinator.com&#x2F;item?id=50319510</a>) that replaces the YouTube thumbnail with a frame from the middle of the video so I had Opus 5.5 build a browser extension to do it for all YouTube videos. Enjoy!",
+  "time" : 1793815542,
+  "title" : "Show HN: Unclickbait – Replace clickbait YouTube thumbnails",
+  "type" : "story",
+  "url" : "https://unclickbait.app/"
+}

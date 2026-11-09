@@ -1,0 +1,11 @@
+{
+  "by" : "Foe",
+  "descendants" : 7,
+  "id" : 50361765,
+  "kids" : [ 50402963, 50403806, 50403340, 50405183, 50402937 ],
+  "score" : 90,
+  "time" : 1793769763,
+  "title" : "PostgreSQL Internals [pdf] (2023)",
+  "type" : "story",
+  "url" : "https://edu.postgrespro.com/postgresql_internals-14_en.pdf"
+}

@@ -1,0 +1,8 @@
+{
+  "by" : "abejora",
+  "id" : 50417530,
+  "parent" : 50417407,
+  "text" : "<a href=\"https:&#x2F;&#x2F;www.abejora.com\" rel=\"nofollow\">https:&#x2F;&#x2F;www.abejora.com</a> - time tracking for freelancers and small teams<p>Lately we&#x27;ve been working on access for AI agents. A lot of people want their own agent to do the repetitive part of time tracking. Control remains important, which is why we rebuilt our core this month to support change history and full undo&#x2F;redo functionality. Feel free to try it with your own agent.<p>We built this after the timesheet tool we paid for raised its prices and moved some features that we used regularly behind more expensive plans. We had to add three new colleagues, and everything combined this would cost us $500 a year more for the same software.<p>We run Elixir and Phoenix LiveView on a Kubernetes cluster made of Talos instances.<p>We&#x27;re still looking for feedback on the product, so please let us know what you think!",
+  "time" : 1794173558,
+  "type" : "comment"
+}

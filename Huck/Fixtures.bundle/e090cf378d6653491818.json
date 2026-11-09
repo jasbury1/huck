@@ -1,0 +1,9 @@
+{
+  "by" : "bodhi_mind",
+  "id" : 50329769,
+  "kids" : [ 50329826, 50332727 ],
+  "parent" : 50417407,
+  "text" : "I’m making a digital real watercolor kit.<p>I’m a software developer and watercolor painter so my goal is to use real world painting techniques and have the results feel and look real.<p>Modeling the physics of paper, brush bristles, pigments, water, color mixing, drying in real time using gpu.<p>Built in rust using wgpu.<p>Currently looking for iPad beta testers if anyone is interested (supports Apple Pencil or finger).<p><a href=\"https:&#x2F;&#x2F;puddlewatercolor.com\" rel=\"nofollow\">https:&#x2F;&#x2F;puddlewatercolor.com</a>",
+  "time" : 1793566485,
+  "type" : "comment"
+}

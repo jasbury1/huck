@@ -1,0 +1,12 @@
+{
+  "by" : "ben_d",
+  "descendants" : 21,
+  "id" : 50351404,
+  "kids" : [ 50351969, 50352918, 50352426, 50396038, 50351999, 50352802, 50352398, 50391064, 50352111, 50353365 ],
+  "score" : 28,
+  "text" : "Hi HN! I&#x27;m Ben, the founder of Bema. I&#x27;ve been frustrated with the current state of work messaging software for a while now, and I&#x27;ve heard similar complaints from friends and coworkers. (Too many channels, easy to lose things, distracted from actual work.) I set out to build a platform that would encourage asynchronous communication with an option to break glass if needed. Here&#x27;s the result, let me know what you think.",
+  "time" : 1793710271,
+  "title" : "Show HN: Bema: Work messaging built for humans",
+  "type" : "story",
+  "url" : "https://getbema.app/"
+}

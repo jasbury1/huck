@@ -1,0 +1,11 @@
+{
+  "by" : "arbayi",
+  "descendants" : 63,
+  "id" : 50399695,
+  "kids" : [ 50408436, 50400282, 50401413, 50400722, 50400458, 50400758, 50400702, 50401160, 50400432, 50401330, 50400249, 50400791, 50400786, 50400889, 50400823, 50401048, 50401001, 50401178, 50401202, 50401091, 50407559 ],
+  "score" : 75,
+  "time" : 1794006235,
+  "title" : "Outbound SIP calling is now available to all organizations",
+  "type" : "story",
+  "url" : "https://developers.openai.com/api/docs/guides/voice-sip"
+}

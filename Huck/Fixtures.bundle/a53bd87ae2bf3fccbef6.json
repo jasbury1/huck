@@ -1,0 +1,11 @@
+{
+  "by" : "pretext",
+  "descendants" : 18,
+  "id" : 50402369,
+  "kids" : [ 50411148, 50402553, 50402605, 50402547, 50402552, 50402496, 50402473, 50402678, 50402492, 50402502, 50403982 ],
+  "score" : 12,
+  "time" : 1794035681,
+  "title" : "Arete-27B: Qwen3.8-27B, post-trained to reinforce Western values",
+  "type" : "story",
+  "url" : "https://nousresearch.com/arete"
+}

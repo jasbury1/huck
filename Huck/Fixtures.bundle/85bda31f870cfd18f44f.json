@@ -1,0 +1,11 @@
+{
+  "by" : "roliver",
+  "descendants" : 2,
+  "id" : 50391125,
+  "kids" : [ 50397061 ],
+  "score" : 7,
+  "time" : 1793965046,
+  "title" : "Towards formal verification: mbrotli and mzstd",
+  "type" : "story",
+  "url" : "https://m-compressors.github.io/2026/formal-verification-mbrotli-mzstd/"
+}

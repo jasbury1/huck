@@ -1,0 +1,11 @@
+{
+  "by" : "tharun208",
+  "descendants" : 7,
+  "id" : 50397435,
+  "kids" : [ 50397436, 50398227, 50397977 ],
+  "score" : 31,
+  "time" : 1793994567,
+  "title" : "Show HN: CloneGuard – Scan a repo for credential-stealing tricks before it runs",
+  "type" : "story",
+  "url" : "https://github.com/tharun208/cloneguard"
+}

@@ -1,0 +1,11 @@
+{
+  "by" : "svemyh",
+  "descendants" : 0,
+  "id" : 50393394,
+  "score" : 2,
+  "text" : "hey hn, sven from Reason Machines (YC F26).<p>we&#x27;ve been experimenting with how fast we can push our ci&#x2F;cd and code storage systems when swarms of coding agents are all pushing at once. turns out giving 100 agents git push basically ddos&#x27;es normal git servers.<p>so we wrote aspen: an open-source git server (apache 2.0) that hits 567 pushes&#x2F;sec on a single 8-core box with stock git clients.<p>to stress test it live, we put up a shared canvas where every pixel is a real git push:\n<a href=\"https:&#x2F;&#x2F;place.reasonmachines.com\">https:&#x2F;&#x2F;place.reasonmachines.com</a><p>code &amp; how it works:\n- blog: <a href=\"https:&#x2F;&#x2F;reasonmachines.com&#x2F;blog&#x2F;aspen\">https:&#x2F;&#x2F;reasonmachines.com&#x2F;blog&#x2F;aspen</a>\n- github: <a href=\"https:&#x2F;&#x2F;github.com&#x2F;reason-machines&#x2F;aspen\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;reason-machines&#x2F;aspen</a>",
+  "time" : 1793978387,
+  "title" : "Show HN: R/place for Git – Open-source Git server sustaining 567 pushes/s",
+  "type" : "story",
+  "url" : "https://reasonmachines.com/blog/aspen"
+}

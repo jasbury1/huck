@@ -1,0 +1,12 @@
+{
+  "by" : "riksnel",
+  "descendants" : 1,
+  "id" : 50413568,
+  "kids" : [ 50414063 ],
+  "score" : 2,
+  "text" : "I saw a colleague log in to a website on my laptop by scanning a FIDO QR code. I wanted to do the same, but couldn&#x27;t find a way to use the passkeys stored in Bitwarden on my phone to log in.<p>So I asked Claude to build me an app. Claude found the task too daunting and only wanted to create a skeleton app. I was surprised by how complex the system actually is. Part of the process involves the phone sending an encrypted Bluetooth message as proof of presence, along with instructions on how to proceed.<p>With the help of DeepSeek&#x27;s free chat, I eventually managed to create a working implementation, after chasing quite a few hallucinations and dead ends... Claude then polished the app for me.<p>The repository includes a full specification with test vectors, and the website has a nice, accessible explanation of how the process works.",
+  "time" : 1794147387,
+  "title" : "Show HN: Cross-device passkey auth on Android 9, synced with Bitwarden",
+  "type" : "story",
+  "url" : "https://rsnel.github.io/passkeychain/"
+}

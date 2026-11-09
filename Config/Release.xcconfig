@@ -1,0 +1,15 @@
+//
+//  Release.xcconfig
+//  Huck
+//
+//  The app target's Release configuration. Release-only values go between the two
+//  includes, so Local.xcconfig can still override them.
+//
+
+#include "App.xcconfig"
+
+// The recorded API responses UI tests replay (see LaunchConfiguration) are a
+// debug-build tool, and never ship.
+EXCLUDED_SOURCE_FILE_NAMES = $(inherited) Fixtures.bundle
+
+#include? "Local.xcconfig"

@@ -1,0 +1,11 @@
+{
+  "by" : "fortran77",
+  "descendants" : 4,
+  "id" : 50379341,
+  "kids" : [ 50387802 ],
+  "score" : 32,
+  "time" : 1793888227,
+  "title" : "80k Hops per Second Measurement Confirm Starlink Up/Downlink Channel Pairing",
+  "type" : "story",
+  "url" : "https://sdr-x.github.io/starlink-ul-dl-pair-80k-hop-ad9361/"
+}

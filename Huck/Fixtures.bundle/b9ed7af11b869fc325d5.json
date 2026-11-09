@@ -1,0 +1,11 @@
+{
+  "by" : "handfuloflight",
+  "descendants" : 13,
+  "id" : 50395919,
+  "kids" : [ 50396599, 50399474, 50401119, 50400235, 50396346 ],
+  "score" : 123,
+  "time" : 1793988213,
+  "title" : "Memorilla: Latent Semantic Memory for LLMs",
+  "type" : "story",
+  "url" : "https://arxiv.org/abs/2610.21375"
+}

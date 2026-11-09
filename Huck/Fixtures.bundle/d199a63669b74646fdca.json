@@ -1,0 +1,8 @@
+{
+  "by" : "yuvadam",
+  "id" : 50417993,
+  "parent" : 50417407,
+  "text" : "Working on a modern implementation of a torrent client [1], it&#x27;s already pretty usable for most scenarios. Provides both a daemon + web UI out of the box as well as an embeddable engine for any Rust application.<p>[1] - <a href=\"https:&#x2F;&#x2F;spill.rs\" rel=\"nofollow\">https:&#x2F;&#x2F;spill.rs</a>",
+  "time" : 1794176318,
+  "type" : "comment"
+}

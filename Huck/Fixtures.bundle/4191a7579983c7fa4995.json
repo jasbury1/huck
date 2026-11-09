@@ -1,0 +1,11 @@
+{
+  "by" : "LaSombra",
+  "descendants" : 57,
+  "id" : 50394855,
+  "kids" : [ 50396513, 50402960, 50397705, 50400926, 50396790, 50399199, 50398967, 50400980, 50396963, 50404329, 50398594, 50398751, 50398141, 50395644, 50398906, 50398316, 50402155, 50402121, 50396553, 50395647 ],
+  "score" : 251,
+  "time" : 1793983829,
+  "title" : "First steps in bare-metal programming using UEFI",
+  "type" : "story",
+  "url" : "https://kevinboone.me/efitest_index.html"
+}

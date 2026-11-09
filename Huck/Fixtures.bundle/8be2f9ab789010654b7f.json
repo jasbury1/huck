@@ -1,0 +1,12 @@
+{
+  "by" : "Rucadi",
+  "descendants" : 1,
+  "id" : 50415219,
+  "kids" : [ 50416227 ],
+  "score" : 3,
+  "text" : "Hello HN!<p>I&#x27;ve always had a bad time redistributing programs that use shared libraries, AppImage in my opinion does too much, and a container is an overkill - not always integrates smoothly.<p>I&#x27;ve moved to nix since long ago, but redistributing between nix and other distros or vice versa it&#x27;s still a pain in the ass, more so if you want to run an alien app in nix or a nix app without the package manger in any other distro.<p>For that, with the help of Claude, I&#x27;ve implemented a format that deduces at pack-time all the shared libraries a program needs, puts them, together with its own glibc and a patched dynamic linker into a single executable.<p>This means that you don&#x27;t actually need a runtime nor any special capability, it can run inside a FROM SCRATCH docker, alpine linux etc... And it also supports coreutils-like multiple programs accessible via symlinks, so it is a good fit for that purpose.<p>You can just use:<p>&gt; felf pack $(which git) --output git.felf<p>and you&#x27;ll have already a git binary that works everywhere, no matter which distro you are building this from. This only packs the binary and their dependencies.<p>Essentially, the effect is similar as if you LD_PRELOAD&#x27;s all the libraries that it requires.<p>In the end, we have been fighting these demons since long long ago, chroots&#x2F;docker&#x2F;appimage&#x2F;flatpack&#x2F;nix etc...<p>So this xkcd applies: <a href=\"https:&#x2F;&#x2F;xkcd.com&#x2F;927&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;xkcd.com&#x2F;927&#x2F;</a><p>I&#x27;m happy to share the project, I hope it inspires new discoveries&#x2F;tools in this regard!",
+  "time" : 1794158805,
+  "title" : "Show HN: FELF – AppImage-like single binaries without FUSE, root, or a runtime",
+  "type" : "story",
+  "url" : "https://github.com/Rucadi/FELF"
+}

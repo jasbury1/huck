@@ -1,0 +1,11 @@
+{
+  "by" : "ozkl",
+  "descendants" : 0,
+  "id" : 50417467,
+  "score" : 1,
+  "text" : "Ruxis is a kernel written by Opus 5.5\nIt implements Linux syscalls so that Linux programs can run on it.\nCurrently, x86_64 and arm64 architectures are supported.",
+  "time" : 1794173154,
+  "title" : "Show HN: A kernel written in Rust that can boot Ubuntu with Plasma desktop",
+  "type" : "story",
+  "url" : "https://github.com/ozkl/ruxis"
+}

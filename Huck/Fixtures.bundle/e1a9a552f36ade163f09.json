@@ -1,0 +1,12 @@
+{
+  "by" : "xDaftTurtle",
+  "descendants" : 1,
+  "id" : 50390605,
+  "kids" : [ 50411952 ],
+  "score" : 13,
+  "text" : "Hi HN,<p>I&#x27;ve been fascinated by aviation for some time now. Inspired by Fugleramme, I wanted a framed print of a cluster of aircraft over my house or a busy airport. So I built Overhead. (Photos in the README)<p>The hero photo shows planes departing and landing in Changi, Singapore.<p>How it works<p>Flight data for a location is gathered from adsb.lol and adsb.fi as a fallback. (you can also point it to your own ADS-B receiver).<p>The photo of the exact aircraft is gathered from planespotters.net and the photographer is credited on the page.<p>The photo is then handed to an AI image gen service via fal.ai using your own key.<p>It&#x27;s then cut out and packed into a cluster on the page with packers adapted from Fugleramme.<p>It costs about US$0.04 a painting but images are painted once and kept for the next time that aircraft is seen.<p>You can also choose to only show photos.<p>This widget is built on my open source, self-hosted e-ink platform, Tesserae. \nIt&#x27;s a one click install from the widget catalog.<p>I&#x27;m looking for feedback and contributors.<p><a href=\"https:&#x2F;&#x2F;github.com&#x2F;arnegiacomo&#x2F;fugleramme\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;arnegiacomo&#x2F;fugleramme</a>\n<a href=\"https:&#x2F;&#x2F;github.com&#x2F;dmellok&#x2F;tesserae\" rel=\"nofollow\">https:&#x2F;&#x2F;github.com&#x2F;dmellok&#x2F;tesserae</a>",
+  "time" : 1793961015,
+  "title" : "Show HN: Overhead – the planes overhead, painted on an e-ink frame",
+  "type" : "story",
+  "url" : "https://github.com/dmellok/tesserae-widget-overhead"
+}

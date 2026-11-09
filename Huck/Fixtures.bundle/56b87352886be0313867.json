@@ -1,0 +1,11 @@
+{
+  "by" : "RenderBear",
+  "descendants" : 0,
+  "id" : 50371886,
+  "score" : 3,
+  "text" : "Hi HN,<p>I&#x27;ve been working on a bio &#x2F; visual cortex inspired edge detection algorithm. I released a preliminary version a couple of months ago, and I&#x27;ve been improving it since. Benchmark scores currently sit midway between old-school (Canny, Sobel), and modern deep nets, while having the former&#x27;s interpretability.<p>I&#x27;m planning to develop this further for downstream use cases, maybe try to improve FPS for video and performance on different hardware.<p>For anyone interested in a collaboration you can find my email in the Readme. Engineers interested in computer vision frameworks &#x2F; distributed systems, or anyone in academia following this line of research, feel free to reach out to me.",
+  "time" : 1793828089,
+  "title" : "Show HN: My compact, bio inspired distributed edge detection algorithm",
+  "type" : "story",
+  "url" : "https://github.com/RenderBear/haci"
+}

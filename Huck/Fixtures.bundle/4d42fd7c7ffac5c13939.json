@@ -1,0 +1,11 @@
+{
+  "by" : "matthias1232",
+  "descendants" : 0,
+  "id" : 50413709,
+  "kids" : [ 50413710 ],
+  "score" : 2,
+  "time" : 1794148492,
+  "title" : "SpiderFarmer GGS Controler – New ESP32 Controller Bridge",
+  "type" : "story",
+  "url" : "https://github.com/matthias1232/spider-farmer-homeassistant"
+}

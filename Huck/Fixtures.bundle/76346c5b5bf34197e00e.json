@@ -1,0 +1,9 @@
+{
+  "by" : "kidnoodle",
+  "id" : 50389863,
+  "kids" : [ 50390564 ],
+  "parent" : 50417407,
+  "text" : "Still working away on my book (and library book) recommendations service <a href=\"https:&#x2F;&#x2F;leafle.org\" rel=\"nofollow\">https:&#x2F;&#x2F;leafle.org</a><p>It has if nothing else been very useful for me (it has correctly deduced that I would get something out of borrowing Grief is the Thing With Feathers, the Dispossessed, and Cosmicomics, none of which I would have thought of reading). Plus it has been a fun opportunity to play around with LLMs as an interface and a research and reverse engineering tool; as well as Jev for non-user facing quality work like banning crap openrouter providers based on their output before putting it in front of a user.<p>Most recently I’ve been dropping off flyers for it at a few local libraries in my area.",
+  "time" : 1793955502,
+  "type" : "comment"
+}

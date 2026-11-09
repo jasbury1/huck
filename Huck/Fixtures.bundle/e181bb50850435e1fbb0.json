@@ -1,0 +1,8 @@
+{
+  "by" : "netshade",
+  "id" : 50336869,
+  "parent" : 50417407,
+  "text" : "Working on ZShot [1]. I&#x27;m about a year in on a local-only browser tuned specifically for CLI and API usage - kinda filling the gap for &quot;geez, I sure wish I had a browser, but not one to look at&quot;. You need a webpage as PNG, or an MP4, or a website as a WACZ or SQLite database. There&#x27;s a Mac app to help with discoverability of options, but I wanted for my local tooling and building services on top of it.<p>Along the way I ended up adding an internal agent framework to satisfy stuff like &quot;log in, click the button, and <i>then</i> take a screenshot&quot;, out of which fell stuff like automatically generating Playwright tests from that. It even runs the Playwright test suite and Puppeteer test suites ( a bit faster, and for a lot less memory ). I kinda love this bit because I can layer in multiple models that will bounce control of the web session between each other, to do stuff like let a Typesafe model choose to escalate to Opus when it needs higher minded behavior. It&#x27;s fun to watch it happen.<p>I&#x27;ve mentioned it a few times around here, I&#x27;ll probably do a Show HN soon when I feel like it&#x27;s ready for that. Hopefully soon.<p>[1] <a href=\"https:&#x2F;&#x2F;zshot-app.com&#x2F;\" rel=\"nofollow\">https:&#x2F;&#x2F;zshot-app.com&#x2F;</a>",
+  "time" : 1793627885,
+  "type" : "comment"
+}

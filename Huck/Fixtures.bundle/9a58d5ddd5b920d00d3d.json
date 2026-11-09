@@ -1,0 +1,11 @@
+{
+  "by" : "ColinWright",
+  "descendants" : 5,
+  "id" : 50363353,
+  "kids" : [ 50377775, 50376095, 50375657, 50375638, 50376426, 50376074 ],
+  "score" : 37,
+  "time" : 1793786263,
+  "title" : "11 Nanoseconds per Word: Over-Optimizing Anagrams",
+  "type" : "story",
+  "url" : "https://wiredream.com/anagram-fun/"
+}

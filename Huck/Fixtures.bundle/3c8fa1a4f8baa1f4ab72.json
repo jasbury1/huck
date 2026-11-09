@@ -1,0 +1,12 @@
+{
+  "by" : "jvll",
+  "descendants" : 1,
+  "id" : 50414079,
+  "kids" : [ 50414096 ],
+  "score" : 2,
+  "text" : "Hi HN, I&#x27;m Jeroen, and I built PlanFinder, which generates single-floor apartment layouts. You pick an outline, entrance, and walls that get daylight, and it generates layouts which you can edit.<p>It&#x27;s using a custom discrete diffusion model, trained on mostly European floor plans. Plans can afterwards be filtered on hard constraints like minimal area, or minimum width of a space.<p>Curious to hear your thoughts!",
+  "time" : 1794151684,
+  "title" : "Show HN: Apartment floor plan generator using discrete diffusion",
+  "type" : "story",
+  "url" : "https://playground.planfinder.xyz"
+}

@@ -1,0 +1,11 @@
+{
+  "by" : "simonpure",
+  "descendants" : 61,
+  "id" : 50366902,
+  "kids" : [ 50412979, 50416875, 50412295, 50411749, 50412762, 50411586, 50413363, 50412709, 50416162, 50411667, 50415875, 50412070, 50412091, 50412852 ],
+  "score" : 163,
+  "time" : 1793805796,
+  "title" : "Clj.rs – a Clojure dialect implemented in Rust",
+  "type" : "story",
+  "url" : "https://clj.rs/"
+}
