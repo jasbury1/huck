@@ -885,12 +885,19 @@ final class HackerNewsAPI: HackerNewsService {
             print("Success. Calling cookie handler")
             cookieHandler(.success(token))
         } else {
-            // No cookie means either a rejected password ("Bad login") or the
-            // captcha wall; they need different advice, so tell them apart.
+            // No cookie means a rejected password ("Bad login"), the captcha
+            // wall, or Hacker News not serving us at all (an outage, or its rate
+            // limiter). Each needs different advice, so tell them apart — above
+            // all, never blame the password for a server error.
             let body = String(data: data, encoding: .utf8) ?? ""
-            let error: APIError = body.contains("Validation required")
-                ? .loginValidationRequired
-                : .loginFailed
+            let error: APIError = if body.contains("Validation required") {
+                .loginValidationRequired
+            } else if !(200..<400).contains(response.statusCode)
+                        || body.contains("not able to serve your requests") {
+                .loginUnavailable
+            } else {
+                .loginFailed
+            }
             print("Failure. Calling cookie handler: \(error)")
             cookieHandler(.failure(error))
         }

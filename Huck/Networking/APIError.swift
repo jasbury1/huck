@@ -23,6 +23,9 @@ public enum APIError: Error, LocalizedError {
     /// accepting or rejecting the credentials. Distinct from `loginFailed` so
     /// we don't tell someone their correct password is wrong.
     case loginValidationRequired
+    /// Hacker News didn't evaluate the credentials at all — it errored, or
+    /// turned the request away for coming too fast.
+    case loginUnavailable
     case notLoggedIn
     case missingAuthToken
     case voteFailed
@@ -47,9 +50,11 @@ public enum APIError: Error, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .loginFailed: "Incorrect username and/or password."
+        case .loginFailed: "Incorrect username or password."
         case .loginValidationRequired:
             "Hacker News asked for additional verification. Sign in at news.ycombinator.com, then try again."
+        case .loginUnavailable:
+            "Hacker News isn't responding right now. Wait a moment and try again."
         case .notLoggedIn: "You must be logged in to do that."
         case .missingAuthToken: "Couldn't verify the action with Hacker News."
         case .voteFailed: "Vote Failed."
