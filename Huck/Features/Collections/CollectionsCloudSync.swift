@@ -64,7 +64,7 @@ enum CollectionsCloudSync {
     static func save(_ collection: StoryCollection) {
         guard isEnabled else { return }
         do {
-            store.set(try JSONEncoder().encode(collection), forKey: key(for: collection.id))
+            try store.set(JSONEncoder().encode(collection), forKey: key(for: collection.id))
         } catch {
             Logger.cloudSync.fault("Couldn't encode collection \(collection.id, privacy: .public) for iCloud: \(error, privacy: .public)")
         }

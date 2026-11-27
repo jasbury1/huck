@@ -573,7 +573,7 @@ struct NewsYCService {
     /// same way on every page: `/upvoted?comments=t` uses a bare `athing`,
     /// while `/threads` adds `comtr`.
     static func comments(in html: String) -> [UserComment] {
-        guard let rowRegex = Self.regex("<tr[^>]*class=['\"]athing[^'\"]*['\"][^>]*id=['\"](\\d+)['\"]") else {
+        guard let rowRegex = regex("<tr[^>]*class=['\"]athing[^'\"]*['\"][^>]*id=['\"](\\d+)['\"]") else {
             return []
         }
         let matches = rowRegex.matches(in: html, range: NSRange(html.startIndex..., in: html))

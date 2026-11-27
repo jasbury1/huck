@@ -895,7 +895,7 @@ final class HackerNewsAPI: HackerNewsService {
             let error: APIError = if body.contains("Validation required") {
                 .loginValidationRequired
             } else if !(200..<400).contains(response.statusCode)
-                        || body.contains("not able to serve your requests") {
+                || body.contains("not able to serve your requests") {
                 .loginUnavailable
             } else {
                 .loginFailed

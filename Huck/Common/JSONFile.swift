@@ -41,7 +41,7 @@ nonisolated enum JSONFile {
     }
 
     /// Writes `value` to `url` atomically, creating its directory if needed.
-    static func save<Value: Encodable>(_ value: Value, to url: URL, name: String) {
+    static func save(_ value: some Encodable, to url: URL, name: String) {
         do {
             try FileManager.default.createDirectory(
                 at: url.deletingLastPathComponent(),
