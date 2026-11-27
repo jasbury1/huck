@@ -127,8 +127,6 @@ nonisolated struct FixtureStore: Sendable {
 nonisolated struct FixtureTransport: HTTPTransport {
     let store: FixtureStore
 
-    private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Huck", category: "Fixtures")
-
     func data(
         for request: URLRequest,
         kind: RequestKind,
@@ -147,7 +145,7 @@ nonisolated struct FixtureTransport: HTTPTransport {
             // Thumbnails come from arbitrary article hosts and aren't
             // recorded; their absence isn't a gap worth reporting.
             if kind == .standard {
-                Self.log.error("No fixture for \(Self.describe(request), privacy: .public)")
+                Logger.fixtures.error("No fixture for \(Self.describe(request), privacy: .public)")
             }
             return (Data(), Self.response(url: url, status: 404))
         }

@@ -51,8 +51,6 @@ actor FixtureRecorder {
     let directory: URL
     private var manifest: FileHandle?
 
-    private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Huck", category: "Fixtures")
-
     /// Where a recording session writes: the app's Documents, from which
     /// `scripts/pull-fixtures.sh` copies it into the bundled fixtures.
     static var defaultDirectory: URL {
@@ -76,7 +74,7 @@ actor FixtureRecorder {
             line.append(UInt8(ascii: "\n"))
             try manifest.write(contentsOf: line)
         } catch {
-            Self.log.error("Couldn't record \(key, privacy: .public): \(error, privacy: .public)")
+            Logger.fixtures.error("Couldn't record \(key, privacy: .public): \(error, privacy: .public)")
         }
     }
 
@@ -91,7 +89,7 @@ actor FixtureRecorder {
         try handle.seekToEnd()
         manifest = handle
         let path = directory.path()
-        Self.log.info("Recording fixtures to \(path, privacy: .public)")
+        Logger.fixtures.info("Recording fixtures to \(path, privacy: .public)")
         return handle
     }
 }

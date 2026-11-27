@@ -234,14 +234,6 @@ final class HackerNewsAPI: HackerNewsService {
     /// from deleted/dead comments, which the two sources count differently.
     private static let commentStalenessTolerance = 2
 
-    /// Structured logging for the comment-source decision. Filter Console/Xcode by
-    /// this category to see, per story, whether Algolia was served or a Firebase walk
-    /// was taken and why.
-    private static let commentLog = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "Huck",
-        category: "CommentFetch"
-    )
-
     /// Which source to build a story's comment thread from, plus the counts behind the
     /// choice. Kept as a pure decision, separate from the fetching it drives, so the
     /// policy lives in one readable, testable place.
@@ -301,7 +293,7 @@ final class HackerNewsAPI: HackerNewsService {
         AsyncStream { continuation in
             let task = Task {
                 if let cached = await commentCache.thread(for: id) {
-                    Self.commentLog.info("Comments[\(id, privacy: .public)]: served \(cached.count, privacy: .public) comments from cache")
+                    Logger.commentFetch.info("Comments[\(id, privacy: .public)]: served \(cached.count, privacy: .public) comments from cache")
                     continuation.yield(cached)
                 } else {
                     let thread = await produceComments(for: id) { continuation.yield($0) }
@@ -338,18 +330,18 @@ final class HackerNewsAPI: HackerNewsService {
         switch Self.planCommentFetch(algoliaCount: algoliaThread.count, descendants: story?.descendants) {
         case let .algolia(count, descendants):
             let reported = descendants.map(String.init) ?? "unknown"
-            Self.commentLog.info("Comments[\(id, privacy: .public)]: serving \(count, privacy: .public) comments from Algolia (Firebase descendants: \(reported, privacy: .public)); index fresh")
+            Logger.commentFetch.info("Comments[\(id, privacy: .public)]: serving \(count, privacy: .public) comments from Algolia (Firebase descendants: \(reported, privacy: .public)); index fresh")
             emit(algoliaThread)
             return algoliaThread
         case .firebaseAlgoliaEmpty:
-            Self.commentLog.info("Comments[\(id, privacy: .public)]: Algolia has no comments yet; streaming realtime Firebase tree")
+            Logger.commentFetch.info("Comments[\(id, privacy: .public)]: Algolia has no comments yet; streaming realtime Firebase tree")
         case let .firebaseStale(algoliaCount, descendants):
-            Self.commentLog.info("Comments[\(id, privacy: .public)]: Algolia stale (\(algoliaCount, privacy: .public) of \(descendants, privacy: .public) comments); streaming realtime Firebase tree")
+            Logger.commentFetch.info("Comments[\(id, privacy: .public)]: Algolia stale (\(algoliaCount, privacy: .public) of \(descendants, privacy: .public) comments); streaming realtime Firebase tree")
         }
 
         // The Firebase walk needs the story's top-level `kids` to seed the frontier.
         guard let story, let rootKids = story.kids, !rootKids.isEmpty else {
-            Self.commentLog.warning("Comments[\(id, privacy: .public)]: Firebase story unavailable; serving \(algoliaThread.count, privacy: .public) Algolia comments instead")
+            Logger.commentFetch.warning("Comments[\(id, privacy: .public)]: Firebase story unavailable; serving \(algoliaThread.count, privacy: .public) Algolia comments instead")
             emit(algoliaThread)
             return algoliaThread
         }
@@ -360,11 +352,11 @@ final class HackerNewsAPI: HackerNewsService {
         // already had (e.g. a mid-walk network failure), fall back to Algolia so the
         // reader isn't left with less than we could show.
         if finalThread.count < algoliaThread.count {
-            Self.commentLog.warning("Comments[\(id, privacy: .public)]: Firebase walk yielded \(finalThread.count, privacy: .public) < Algolia's \(algoliaThread.count, privacy: .public); serving Algolia instead")
+            Logger.commentFetch.warning("Comments[\(id, privacy: .public)]: Firebase walk yielded \(finalThread.count, privacy: .public) < Algolia's \(algoliaThread.count, privacy: .public); serving Algolia instead")
             emit(algoliaThread)
             return algoliaThread
         }
-        Self.commentLog.info("Comments[\(id, privacy: .public)]: Firebase walk complete — \(finalThread.count, privacy: .public) comments")
+        Logger.commentFetch.info("Comments[\(id, privacy: .public)]: Firebase walk complete — \(finalThread.count, privacy: .public) comments")
         return finalThread
     }
 
@@ -527,7 +519,7 @@ final class HackerNewsAPI: HackerNewsService {
     }
 
     private func vote(itemId: Int, how: NewsYCService.VoteAction) async throws {
-        guard Self.hasAuthCookie else { throw APIError.notLoggedIn }
+        try Self.requireAuthCookie()
         // The vote requires the item's per-user `auth` token, which only lives in
         // the item page's HTML, so fetch it first, then cast the vote.
         guard let voteAuth = await newsYC.voteAuth(forItem: itemId) else {
@@ -593,7 +585,7 @@ final class HackerNewsAPI: HackerNewsService {
     /// Votes for, or withdraws a vote from, one of a poll's options. The token
     /// comes from the reader's `PollBallot`, so this costs a single request.
     func setPollVote(optionID: Int, voted: Bool, ballot: PollBallot) async throws {
-        guard Self.hasAuthCookie else { throw APIError.notLoggedIn }
+        try Self.requireAuthCookie()
         guard let auth = ballot.tokens[optionID] else { throw APIError.missingAuthToken }
         try await newsYC.castVote(id: optionID, how: voted ? .up : .unvote, auth: auth)
     }
@@ -611,7 +603,7 @@ final class HackerNewsAPI: HackerNewsService {
     }
 
     private func fave(storyId: Int, un: Bool) async throws {
-        guard Self.hasAuthCookie else { throw APIError.notLoggedIn }
+        try Self.requireAuthCookie()
         // Like voting, favoriting needs the item's per-user `auth` token from its
         // page HTML.
         guard let faveAuth = await newsYC.faveAuth(forItem: storyId) else {
@@ -643,7 +635,7 @@ final class HackerNewsAPI: HackerNewsService {
     /// Recovering the id Hacker News assigned is a separate, slower step — see
     /// `findPostedCommentId(username:parentId:)`.
     func postComment(parentId: Int, storyId: Int, text: String) async throws {
-        guard Self.hasAuthCookie else { throw APIError.notLoggedIn }
+        try Self.requireAuthCookie()
         // Like voting, posting needs a token that only exists in the form's
         // HTML, so scrape the form first and then send it back with the text.
         guard let form = await newsYC.commentForm(parentId: parentId, storyId: storyId) else {
@@ -671,7 +663,7 @@ final class HackerNewsAPI: HackerNewsService {
         text: String,
         username: String
     ) async throws -> SubmissionOutcome {
-        guard Self.hasAuthCookie else { throw APIError.notLoggedIn }
+        try Self.requireAuthCookie()
         guard let form = await newsYC.submitForm() else {
             throw APIError.missingAuthToken
         }
@@ -721,6 +713,7 @@ final class HackerNewsAPI: HackerNewsService {
             }
             return newest
         }
+        Logger.posting.warning("Couldn't confirm the id of the story just submitted after \(Self.submittedStoryIdDelays.count, privacy: .public) attempts")
         return nil
     }
 
@@ -739,7 +732,7 @@ final class HackerNewsAPI: HackerNewsService {
     /// Throws `APIError.deleteUnavailable` when HN no longer offers deletion —
     /// past the edit window, or once it has replies.
     func deleteComment(id: Int, storyId: Int) async throws {
-        guard Self.hasAuthCookie else { throw APIError.notLoggedIn }
+        try Self.requireAuthCookie()
         guard let form = await newsYC.deleteForm(commentId: id, storyId: storyId) else {
             throw APIError.deleteUnavailable
         }
@@ -800,6 +793,7 @@ final class HackerNewsAPI: HackerNewsService {
             }
             return newest
         }
+        Logger.posting.warning("Couldn't confirm the id of a comment just posted under \(parentID, privacy: .public)")
         return nil
     }
 
@@ -810,14 +804,13 @@ final class HackerNewsAPI: HackerNewsService {
         try await requestLoginCookie(username: username, password: password) { result in
             switch result {
             case let .success(token):
-                print("Storing cookie.")
+                Logger.auth.notice("Signed in; session expires \(token.expiresDate?.formatted() ?? "never", privacy: .public)")
                 HTTPCookieStorage.shared.setCookies(
                     [token],
                     for: Self.baseUri,
                     mainDocumentURL: nil
                 )
             case let .failure(error):
-                print("Will not store cookie. Failed to log in.")
                 loginError = error
             }
         }
@@ -835,10 +828,20 @@ final class HackerNewsAPI: HackerNewsService {
         readCookie(forURL: baseUri).contains { $0.name == "user" }
     }
 
+    /// Throws `APIError.notLoggedIn` unless there's a credential to send. Every
+    /// write starts here, so this is where a session that lapsed underneath the
+    /// app — the UI still showing someone signed in — becomes visible in the log.
+    private static func requireAuthCookie(function: StaticString = #function) throws {
+        guard hasAuthCookie else {
+            Logger.auth.warning("\(function, privacy: .public) attempted without a session cookie")
+            throw APIError.notLoggedIn
+        }
+    }
+
     func logout(username: String) {
         let cookies = readCookie(forURL: Self.baseUri)
             .filter { $0.name == "user" && $0.value.contains(username) }
-        print("User cookies: \(cookies)")
+        Logger.auth.notice("Signed out; removing \(cookies.count, privacy: .public) session cookie(s)")
         for cookie in cookies {
             HTTPCookieStorage.shared.deleteCookie(cookie)
         }
@@ -882,7 +885,6 @@ final class HackerNewsAPI: HackerNewsService {
         }
         let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: Self.baseUri)
         if let token = cookies.first(where: { $0.name == "user" }) {
-            print("Success. Calling cookie handler")
             cookieHandler(.success(token))
         } else {
             // No cookie means a rejected password ("Bad login"), the captcha
@@ -893,12 +895,12 @@ final class HackerNewsAPI: HackerNewsService {
             let error: APIError = if body.contains("Validation required") {
                 .loginValidationRequired
             } else if !(200..<400).contains(response.statusCode)
-                        || body.contains("not able to serve your requests") {
+                || body.contains("not able to serve your requests") {
                 .loginUnavailable
             } else {
                 .loginFailed
             }
-            print("Failure. Calling cookie handler: \(error)")
+            Logger.auth.error("Sign-in failed: \(String(describing: error), privacy: .public) (status \(response.statusCode, privacy: .public))")
             cookieHandler(.failure(error))
         }
     }

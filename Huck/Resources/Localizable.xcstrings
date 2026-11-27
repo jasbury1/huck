@@ -223,6 +223,9 @@
     "Counting since %@" : {
 
     },
+    "Crashes, hangs, and daily performance reports from MetricKit, kept on this device. They arrive only on a physical device; to test, run from Xcode and choose Debug › MetricKit › Simulate MetricKit Payloads." : {
+
+    },
     "Create" : {
 
     },
@@ -251,6 +254,9 @@
 
     },
     "Developer" : {
+
+    },
+    "Diagnostics" : {
 
     },
     "Discard" : {
@@ -471,6 +477,9 @@
 
     },
     "No Recently Viewed" : {
+
+    },
+    "No reports yet" : {
 
     },
     "No Results" : {

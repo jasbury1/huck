@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 /// Mirrors collections to the iCloud key-value store so they follow the user
 /// across their devices. The local file (`CollectionsPersistence`) stays the
@@ -49,14 +50,24 @@ enum CollectionsCloudSync {
         let decoder = JSONDecoder()
         return store.dictionaryRepresentation.compactMap { key, value in
             guard key.hasPrefix(keyPrefix), let data = value as? Data else { return nil }
-            return try? decoder.decode(StoryCollection.self, from: data)
+            do {
+                return try decoder.decode(StoryCollection.self, from: data)
+            } catch {
+                // Most likely written by a newer version on another device.
+                Logger.cloudSync.error("Skipping iCloud collection \(key, privacy: .public) that didn't decode: \(error, privacy: .public)")
+                return nil
+            }
         }
     }
 
     /// Uploads a collection, replacing any earlier version of it.
     static func save(_ collection: StoryCollection) {
-        guard isEnabled, let data = try? JSONEncoder().encode(collection) else { return }
-        store.set(data, forKey: key(for: collection.id))
+        guard isEnabled else { return }
+        do {
+            try store.set(JSONEncoder().encode(collection), forKey: key(for: collection.id))
+        } catch {
+            Logger.cloudSync.fault("Couldn't encode collection \(collection.id, privacy: .public) for iCloud: \(error, privacy: .public)")
+        }
     }
 
     /// Removes a collection from iCloud, which deletes it on the user's other
@@ -85,9 +96,10 @@ enum CollectionsCloudSync {
                 let reason = notification.userInfo?[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int
                 switch reason {
                 case NSUbiquitousKeyValueStoreAccountChange:
+                    Logger.cloudSync.notice("iCloud account changed")
                     return .accountChanged
                 case NSUbiquitousKeyValueStoreQuotaViolationChange:
-                    print("iCloud key-value quota exceeded while syncing collections")
+                    Logger.cloudSync.error("iCloud key-value quota exceeded while syncing collections")
                     return nil
                 default:
                     return .updated

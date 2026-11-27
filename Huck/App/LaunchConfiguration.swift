@@ -22,8 +22,6 @@ enum LaunchConfiguration {
     /// `RecordingTransport`.
     static let recordFixturesArgument = "-HuckRecordFixtures"
 
-    private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Huck", category: "Fixtures")
-
     /// The Hacker News this launch talks to.
     static func makeHackerNews(arguments: [String] = ProcessInfo.processInfo.arguments) -> any HackerNewsService {
         #if DEBUG
@@ -31,7 +29,7 @@ enum LaunchConfiguration {
             guard let store = FixtureStore.bundled else {
                 fatalError("\(fixturesArgument) was passed, but this build has no Fixtures.bundle.")
             }
-            log.notice("Serving \(store.count, privacy: .public) recorded responses; nothing goes to the network")
+            Logger.fixtures.notice("Serving \(store.count, privacy: .public) recorded responses; nothing goes to the network")
             return HackerNewsAPI(transport: FixtureTransport(store: store))
         }
         if arguments.contains(recordFixturesArgument) {

@@ -112,15 +112,6 @@ struct AlgoliaAPIService {
     /// scroll spends fewer of them.
     static let defaultHitsPerPage = 30
 
-    /// One line per search request sent. Filter Console/Xcode by this category
-    /// to audit what the hourly allowance is actually being spent on — the
-    /// debouncing and result reuse upstream are only as good as this is quiet.
-    /// The query text is deliberately absent: it's what someone typed.
-    private static let searchLog = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "Huck",
-        category: "AlgoliaSearch"
-    )
-
     /// An item with its whole comment tree.
     func getItemById(id: Int) async -> AlgoliaItemData? {
         await transport.json(fromURL: "\(Self.baseUri)/items/\(id)")
@@ -187,7 +178,7 @@ struct AlgoliaAPIService {
             URLQueryItem(name: "hitsPerPage", value: String(hitsPerPage)),
         ]
         guard let url = components.url?.absoluteString else { return [] }
-        Self.searchLog.info(
+        Logger.algoliaSearch.info(
             "Link search request: domain=\(domain, privacy: .public) minPoints=\(minPoints, privacy: .public) hitsPerPage=\(hitsPerPage, privacy: .public)"
         )
         let response: AlgoliaLinkSearchResponse? = await transport.json(fromURL: url)
@@ -257,7 +248,7 @@ struct AlgoliaAPIService {
 
         let tagList = tags.joined(separator: ",")
         let numericList = numericFilters.joined(separator: ",")
-        searchLog.info(
+        Logger.algoliaSearch.info(
             "Search request: tags=[\(tagList, privacy: .public)] numericFilters=[\(numericList, privacy: .public)] page=\(page, privacy: .public) hitsPerPage=\(hitsPerPage, privacy: .public)"
         )
         return components.url?.absoluteString

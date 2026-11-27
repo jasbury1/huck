@@ -46,21 +46,12 @@ enum InteractionPersistence {
 
     /// The stored interactions for a user, or empty state if nothing is saved yet.
     static func load(username: String) -> PersistedInteractions {
-        guard let data = try? Data(contentsOf: fileURL(username: username)),
-              let decoded = try? JSONDecoder().decode(PersistedInteractions.self, from: data) else {
-            return PersistedInteractions()
-        }
-        return decoded
+        JSONFile.load(PersistedInteractions.self, from: fileURL(username: username), name: "interactions")
+            ?? PersistedInteractions()
     }
 
     /// Writes the interactions for a user atomically.
     static func save(_ interactions: PersistedInteractions, username: String) {
-        do {
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let data = try JSONEncoder().encode(interactions)
-            try data.write(to: fileURL(username: username), options: [.atomic])
-        } catch {
-            print("Failed to persist interactions: \(error)")
-        }
+        JSONFile.save(interactions, to: fileURL(username: username), name: "interactions")
     }
 }

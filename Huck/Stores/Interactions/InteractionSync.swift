@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 /// Brings the user's interaction state back in line with the server.
 ///
@@ -85,7 +86,12 @@ final class InteractionSync {
     /// One reconciliation pass over both of the account's lists.
     private func sync(username: String) async {
         isSyncing = true
-        defer { isSyncing = false }
+        let started = ContinuousClock.now
+        Logger.interactions.info("Reconciling upvotes and favorites with Hacker News")
+        defer {
+            isSyncing = false
+            Logger.interactions.info("Reconciliation finished in \(started.duration(to: .now).formatted(), privacy: .public)")
+        }
 
         // Read through the store's paged readers rather than the API directly, so
         // each page lands in the same reconciliation the Likes and Favorites

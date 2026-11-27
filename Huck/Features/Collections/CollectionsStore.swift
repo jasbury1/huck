@@ -5,6 +5,7 @@
 //  Created by James Asbury on 8/29/26.
 //
 
+import OSLog
 import SwiftUI
 
 /// The single source of truth for the device's collections — named, ordered
@@ -143,11 +144,16 @@ final class CollectionsStore {
                     merged.append(local)
                 }
             } else if isAvailable, syncedIDs.contains(local.id) {
+                // The only path that deletes a collection on iCloud's word.
+                Logger.cloudSync.notice("Removing collection \(local.id, privacy: .public): deleted on another device")
                 continue
             } else {
                 CollectionsCloudSync.save(local)
                 merged.append(local)
             }
+        }
+        if !remote.isEmpty {
+            Logger.cloudSync.info("Adding \(remote.count, privacy: .public) collection(s) from iCloud")
         }
         merged.append(contentsOf: remote.values)
         merged.sort { $0.createdAt < $1.createdAt }

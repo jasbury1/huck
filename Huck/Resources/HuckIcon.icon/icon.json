@@ -1,24 +1,731 @@
 {
-  "fill" : {
-    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
-  },
+  "color-space-for-untagged-svg-colors" : "display-p3",
+  "fill-specializations" : [
+    {
+      "value" : {
+        "automatic-gradient" : "display-p3:1.00000,0.43333,0.15000,1.00000"
+      }
+    },
+    {
+      "appearance" : "dark",
+      "value" : "system-dark"
+    }
+  ],
   "groups" : [
     {
-      "blur-material" : null,
       "layers" : [
         {
-          "glass" : false,
-          "image-name" : "Huck.png",
-          "name" : "D0877487-4A98-4D6E-8EB8-733080849B18",
-          "position" : {
-            "scale" : 1.1,
-            "translation-in-points" : [
-              0,
-              -17.85417612003289
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.90484,0.75000,0.50000",
+              "display-p3:1.00000,0.85417,0.65000,0.50000"
             ]
-          }
+          },
+          "hidden" : false,
+          "image-name" : "Jaw.svg",
+          "name" : "Jaw"
         }
       ],
+      "name" : "Jaw",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.25
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    },
+    {
+      "hidden" : false,
+      "layers" : [
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.94290,0.85000,1.00000",
+              "display-p3:1.00000,0.83334,0.60000,0.75000"
+            ]
+          },
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Eye Pings.svg",
+          "name" : "Eye Pings"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.20000,0.10667,0.04000,1.00000",
+              "display-p3:0.40000,0.21333,0.08000,1.00000"
+            ]
+          },
+          "hidden" : false,
+          "image-name" : "Eyes.svg",
+          "name" : "Eyes"
+        },
+        {
+          "blend-mode" : "plus-lighter",
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:1.00000,1.00000,1.00000,0.00000",
+                  "display-p3:1.00000,0.85417,0.65000,0.25000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0.34832763671875
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "linear-gradient" : [
+                  "gray:1.00000,0.00000",
+                  "gray:1.00000,0.40000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0.34832763671875
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  }
+                }
+              }
+            }
+          ],
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Nostril Left.svg",
+          "name" : "Nostril Left"
+        },
+        {
+          "blend-mode" : "plus-lighter",
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:1.00000,1.00000,1.00000,0.00000",
+                  "display-p3:1.00000,0.85417,0.65000,0.25000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0.34832763671875
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "linear-gradient" : [
+                  "gray:1.00000,0.00000",
+                  "gray:1.00000,0.40000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0.34832763671875
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  }
+                }
+              }
+            }
+          ],
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Nostril Right.svg",
+          "name" : "Nostril Right"
+        },
+        {
+          "blend-mode" : "plus-lighter",
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:1.00000,1.00000,1.00000,0.00000",
+                  "display-p3:1.00000,0.85417,0.65000,0.25000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0.6711268371004054
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 1
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "linear-gradient" : [
+                  "gray:1.00000,0.00000",
+                  "gray:1.00000,0.40000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0.6711268371004054
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 1
+                  }
+                }
+              }
+            }
+          ],
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Nostril Left.svg",
+          "name" : "Nostril Left"
+        },
+        {
+          "blend-mode" : "plus-lighter",
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:1.00000,1.00000,1.00000,0.00000",
+                  "display-p3:1.00000,0.85417,0.65000,0.25000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0.6711268371004054
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 1
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "linear-gradient" : [
+                  "gray:1.00000,0.00000",
+                  "gray:1.00000,0.40000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0.6711268371004054
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 1
+                  }
+                }
+              }
+            }
+          ],
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Nostril Right.svg",
+          "name" : "Nostril Right"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.00000,0.00000,0.00000,1.00000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.3593072363938541
+              }
+            }
+          },
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Nostril Left Shadow.svg",
+          "name" : "Nostril Left Shadow"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.00000,0.00000,0.00000,1.00000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.3593072363938541
+              }
+            }
+          },
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Nostril Right Shadow.svg",
+          "name" : "Nostril Right Shadow"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.00000,0.00000,0.00000,0.75000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 1,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0,
+                "y" : 0.5
+              }
+            }
+          },
+          "glass" : false,
+          "image-name" : "Nostril Left Shadow.svg",
+          "name" : "Nostril Left Shadow"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.00000,0.00000,0.00000,0.75000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 1,
+                "y" : 0.5
+              }
+            }
+          },
+          "glass" : false,
+          "image-name" : "Nostril Right Shadow.svg",
+          "name" : "Nostril Right Shadow"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.40000,0.21333,0.08000,1.00000",
+              "display-p3:0.20000,0.10667,0.04000,1.00000"
+            ]
+          },
+          "hidden" : false,
+          "image-name" : "Nose.svg",
+          "name" : "Nose"
+        }
+      ],
+      "name" : "Features",
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    },
+    {
+      "layers" : [
+        {
+          "blend-mode" : "multiply",
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.59778,0.31882,0.11956,0.75000",
+              "display-p3:0.80000,0.56000,0.32000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 1,
+                "y" : 0.5
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.5
+              }
+            }
+          },
+          "glass" : false,
+          "image-name" : "Nose Bridge Left.svg",
+          "name" : "Nose Bridge Left"
+        },
+        {
+          "blend-mode" : "multiply",
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.59778,0.31882,0.11956,0.75000",
+              "display-p3:0.80000,0.56000,0.32000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0,
+                "y" : 0.5
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.5
+              }
+            }
+          },
+          "glass" : false,
+          "image-name" : "Nose Bridge Right.svg",
+          "name" : "Nose Bridge Right"
+        },
+        {
+          "blend-mode" : "plus-lighter",
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:1.00000,1.00000,1.00000,0.00000",
+                  "srgb:1.00000,1.00000,1.00000,0.30000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0,
+                    "y" : 0.5
+                  },
+                  "stop" : {
+                    "x" : 1,
+                    "y" : 0.5
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "linear-gradient" : [
+                  "gray:1.00000,0.00000",
+                  "gray:1.00000,0.60000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0,
+                    "y" : 0.5
+                  },
+                  "stop" : {
+                    "x" : 1,
+                    "y" : 0.5
+                  }
+                }
+              }
+            }
+          ],
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Nose Bridge Left.svg",
+          "name" : "Nose Bridge Left"
+        },
+        {
+          "blend-mode" : "plus-lighter",
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:1.00000,1.00000,1.00000,0.00000",
+                  "srgb:1.00000,1.00000,1.00000,0.30000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 1,
+                    "y" : 0.5
+                  },
+                  "stop" : {
+                    "x" : 0,
+                    "y" : 0.5
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "linear-gradient" : [
+                  "gray:1.00000,0.00000",
+                  "gray:1.00000,0.60000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 1,
+                    "y" : 0.5
+                  },
+                  "stop" : {
+                    "x" : 0,
+                    "y" : 0.5
+                  }
+                }
+              }
+            }
+          ],
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Nose Bridge Right.svg",
+          "name" : "Nose Bridge Right"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.53333,0.20000,0.25000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 1,
+                "y" : 0.5
+              },
+              "stop" : {
+                "x" : 0,
+                "y" : 0.5
+              }
+            }
+          },
+          "glass" : false,
+          "image-name" : "Nose Bridge Left Shadow.svg",
+          "name" : "Nose Bridge Left Shadow"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.53333,0.20000,0.25000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0,
+                "y" : 0.5
+              },
+              "stop" : {
+                "x" : 1,
+                "y" : 0.5
+              }
+            }
+          },
+          "glass" : false,
+          "image-name" : "Nose Bridge Right Shadow.svg",
+          "name" : "Nose Bridge Right Shadow"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.53333,0.20000,0.25000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5,
+                "y" : 1
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0
+              }
+            }
+          },
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Beard.svg",
+          "name" : "Beard"
+        },
+        {
+          "blend-mode" : "plus-lighter",
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,1.00000,1.00000,0.15000",
+              "display-p3:1.00000,1.00000,1.00000,0.05000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 1.0186360677083333
+              }
+            }
+          },
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Head.svg",
+          "name" : "Head"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.53333,0.20000,0.50000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0,
+                "y" : 1
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.5
+              }
+            }
+          },
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Head.svg",
+          "name" : "Head"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.53333,0.20000,0.50000",
+              "display-p3:1.00000,0.53333,0.20000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 1,
+                "y" : 1
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.5
+              }
+            }
+          },
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Head.svg",
+          "name" : "Head"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.90417,0.75000,1.00000",
+              "display-p3:1.00000,0.85417,0.65000,1.00000"
+            ]
+          },
+          "hidden" : false,
+          "image-name" : "Head.svg",
+          "name" : "Head"
+        }
+      ],
+      "name" : "Head",
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    },
+    {
+      "layers" : [
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.85417,0.65000,1.00000",
+              "display-p3:0.80000,0.56000,0.32000,0.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5,
+                "y" : 0.5
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 1
+              }
+            }
+          },
+          "glass" : false,
+          "image-name" : "Under-ear Head.svg",
+          "name" : "Under-ear Head"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.20000,0.10667,0.04000,1.00000",
+              "display-p3:0.40000,0.21333,0.08000,1.00000"
+            ]
+          },
+          "hidden" : false,
+          "image-name" : "Lip.svg",
+          "name" : "Lip"
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:0.30000,0.17750,0.09000,1.00000",
+              "display-p3:0.80000,0.56000,0.32000,0.00000"
+            ]
+          },
+          "glass" : false,
+          "image-name" : "Lip Corners.svg",
+          "name" : "Lip Corners"
+        },
+        {
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:0.30000,0.17750,0.09000,0.50000",
+                  "display-p3:0.30000,0.17750,0.09000,0.00000"
+                ]
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:1.00000,0.43333,0.15000,0.25000",
+                  "display-p3:1.00000,0.43333,0.15000,0.75000"
+                ]
+              }
+            },
+            {
+              "appearance" : "tinted",
+              "value" : {
+                "linear-gradient" : [
+                  "gray:1.00000,0.00000",
+                  "gray:1.00000,0.37000"
+                ]
+              }
+            }
+          ],
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "Mouth.svg",
+          "name" : "Mouth"
+        }
+      ],
+      "name" : "Inset Features",
       "shadow" : {
         "kind" : "neutral",
         "opacity" : 0.5
