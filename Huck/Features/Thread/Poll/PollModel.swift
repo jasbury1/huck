@@ -5,6 +5,7 @@
 //  Created by James Asbury on 10/3/26.
 //
 
+import OSLog
 import SwiftUI
 
 /// A poll's options and the reader's votes in it, for the poll shown above a
@@ -98,7 +99,7 @@ final class PollModel {
             try await api.setPollVote(optionID: id, voted: !wasVoted, ballot: ballot)
         } catch {
             setVoted(wasVoted, on: id)
-            print("Poll vote failed for \(id): \(error)")
+            Logger.interactions.error("Poll vote on option \(id, privacy: .public) failed, rolled back: \(error, privacy: .public)")
         }
     }
 

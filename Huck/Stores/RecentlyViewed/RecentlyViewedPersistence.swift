@@ -45,22 +45,11 @@ enum RecentlyViewedPersistence {
 
     /// The stored lists, or empty state if nothing is saved yet.
     static func load() -> RecentlyViewedStorage {
-        guard let data = try? Data(contentsOf: fileURL),
-              let decoded = try? JSONDecoder().decode(RecentlyViewedStorage.self, from: data) else {
-            return RecentlyViewedStorage()
-        }
-        return decoded
+        JSONFile.load(RecentlyViewedStorage.self, from: fileURL, name: "recently viewed") ?? RecentlyViewedStorage()
     }
 
     /// Writes the lists atomically.
     static func save(_ storage: RecentlyViewedStorage) {
-        do {
-            let directory = fileURL.deletingLastPathComponent()
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let data = try JSONEncoder().encode(storage)
-            try data.write(to: fileURL, options: [.atomic])
-        } catch {
-            print("Failed to persist recently viewed: \(error)")
-        }
+        JSONFile.save(storage, to: fileURL, name: "recently viewed")
     }
 }

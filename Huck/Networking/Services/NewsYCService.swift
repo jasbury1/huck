@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 // MARK: - Service
 
@@ -51,6 +52,7 @@ struct NewsYCService {
             in: html,
             pattern: "id=['\"](?:up|un)_\(id)['\"][^>]*?auth=([0-9a-fA-F]+)"
         ) else {
+            Logger.scraping.warning("No vote token for item \(id, privacy: .public) on its page (logged out, voting closed, or markup changed)")
             return nil
         }
         // When already upvoted, HN swaps the up arrow for an `un_<ID>` unvote link.
@@ -78,6 +80,9 @@ struct NewsYCService {
             ) else { continue }
             votes[id] = (auth, Self.contains(in: html, pattern: "id=['\"]un_\(id)['\"]"))
         }
+        if votes.isEmpty, !optionIDs.isEmpty {
+            Logger.scraping.info("No vote tokens for any of poll \(pollID, privacy: .public)'s \(optionIDs.count, privacy: .public) options (archived, or markup changed)")
+        }
         return votes
     }
 
@@ -96,6 +101,7 @@ struct NewsYCService {
         request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
         let (_, response) = try await transport.data(for: request)
         guard (200..<300).contains(response.statusCode) else {
+            Logger.scraping.error("Vote (\(how.rawValue, privacy: .public)) on item \(id, privacy: .public) refused with status \(response.statusCode, privacy: .public)")
             throw APIError.voteFailed
         }
     }
@@ -116,6 +122,7 @@ struct NewsYCService {
             in: html,
             pattern: "fave\\?id=\(id)[^'\"]*?auth=([0-9a-fA-F]+)"
         ) else {
+            Logger.scraping.warning("No favorite token for item \(id, privacy: .public) on its page (logged out, or markup changed)")
             return nil
         }
         let alreadyFavorited = Self.contains(in: html, pattern: "fave\\?id=\(id)[^'\"]*?un=t")
@@ -136,6 +143,7 @@ struct NewsYCService {
         request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
         let (_, response) = try await transport.data(for: request)
         guard (200..<300).contains(response.statusCode) else {
+            Logger.scraping.error("Favorite (un: \(un, privacy: .public)) on item \(id, privacy: .public) refused with status \(response.statusCode, privacy: .public)")
             throw APIError.favoriteFailed
         }
     }
@@ -175,6 +183,7 @@ struct NewsYCService {
             }
             return fields
         }
+        Logger.scraping.error("No comment form for parent \(parentId, privacy: .public) (logged out, thread locked, or markup changed)")
         return nil
     }
 
@@ -193,6 +202,9 @@ struct NewsYCService {
         // HN redirects on success and re-renders the form (200) on refusal, so
         // the status code is the whole answer — see `RequestKind.write`.
         guard let http = response as? HTTPURLResponse, http.statusCode == 302 else {
+            // A 200 is HN re-rendering the form: posting too fast, a duplicate,
+            // a stale `hmac`, or a locked thread.
+            Logger.scraping.error("Comment refused with status \(Self.statusCode(of: response), privacy: .public)")
             throw APIError.commentFailed
         }
     }
@@ -221,10 +233,14 @@ struct NewsYCService {
             return nil
         }
         // HN has written form actions both with and without a leading slash.
-        return ["r", "/r"]
+        let fields = ["r", "/r"]
             .lazy
             .map { Self.hiddenFields(inFormWithAction: $0, of: html) }
             .first { !$0.isEmpty }
+        if fields == nil {
+            Logger.scraping.error("No submit form on /submit (logged out, or markup changed)")
+        }
+        return fields
     }
 
     /// Submits a post, sending the scraped form fields back alongside its
@@ -258,20 +274,25 @@ struct NewsYCService {
         // `newest` for a new post, the existing story's page for a repost.
         guard let http = response as? HTTPURLResponse, http.statusCode == 302,
               let location = http.value(forHTTPHeaderField: "Location") else {
+            Logger.scraping.error("Submission refused with status \(Self.statusCode(of: response), privacy: .public)")
             throw APIError.submitFailed
         }
         if location.hasSuffix("newest") {
+            Logger.scraping.info("Submission accepted as a new post")
             return .posted
         }
         if let id = Self.firstMatch(in: location, pattern: "item\\?id=(\\d+)").flatMap(Int.init) {
+            Logger.scraping.info("Submission was a repost of item \(id, privacy: .public)")
             return .repost(storyID: id)
         }
         if location.contains("login") {
+            Logger.scraping.warning("Submission bounced to the login page; the session has lapsed")
             throw APIError.notLoggedIn
         }
         // Anywhere else is unexplained. Reporting it as a failure keeps the
         // draft, and a retry of a post that did go through is caught by HN's own
         // duplicate check for links.
+        Logger.scraping.error("Submission redirected somewhere unexpected: \(location)")
         throw APIError.submitFailed
     }
 
@@ -293,10 +314,14 @@ struct NewsYCService {
         }
         // `<span class="score" id="score_<ID>">12 points</span>`, scoped to this
         // id so a reply's score on the same page can't be picked up instead.
-        return Self.firstMatch(
+        let score = Self.firstMatch(
             in: html,
             pattern: "id=['\"]score_\(id)['\"][^>]*>\\s*(\\d+)\\s+points?"
         ).flatMap(Int.init)
+        if score == nil {
+            Logger.scraping.debug("No score shown for comment \(id, privacy: .public)")
+        }
+        return score
     }
 
     /// One page of the reader's `/threads` — their comments, newest first,
@@ -321,10 +346,7 @@ struct NewsYCService {
         }
 
         var scores: [Int: Int] = [:]
-        if let regex = try? NSRegularExpression(
-            pattern: "id=['\"]score_(\\d+)['\"][^>]*>\\s*(\\d+)\\s+points?",
-            options: [.caseInsensitive]
-        ) {
+        if let regex = Self.regex("id=['\"]score_(\\d+)['\"][^>]*>\\s*(\\d+)\\s+points?") {
             for match in regex.matches(in: html, range: NSRange(html.startIndex..., in: html)) {
                 guard let idRange = Range(match.range(at: 1), in: html),
                       let scoreRange = Range(match.range(at: 2), in: html),
@@ -400,6 +422,8 @@ struct NewsYCService {
         // As with replies, confirm the form names the comment we mean, so a
         // stray form can never delete the wrong one.
         guard fields.contains(where: { $0.name == "id" && $0.value == String(commentId) }) else {
+            // Usually the expected answer — past the edit window, or replied to.
+            Logger.scraping.info("No delete form for comment \(commentId, privacy: .public)")
             return nil
         }
         return fields
@@ -421,6 +445,7 @@ struct NewsYCService {
         let response = try await sendWrite(request)
         // Like the comment form, an accepted POST is answered with a redirect.
         guard let http = response as? HTTPURLResponse, http.statusCode == 302 else {
+            Logger.scraping.error("Delete refused with status \(Self.statusCode(of: response), privacy: .public)")
             throw APIError.deleteFailed
         }
     }
@@ -451,7 +476,8 @@ struct NewsYCService {
         }
 
         let accepts = !PostingMode.simulatesFailure
-        print("⚠️ Dry run — not sending \(request.url?.path() ?? "request"), answering as \(accepts ? "accepted" : "refused")")
+        let path = request.url?.path() ?? "request"
+        Logger.scraping.notice("Dry run: not sending \(path, privacy: .public), answering as \(accepts ? "accepted" : "refused", privacy: .public)")
         try await Task.sleep(for: .seconds(1))
 
         guard let url = request.url,
@@ -547,10 +573,7 @@ struct NewsYCService {
     /// same way on every page: `/upvoted?comments=t` uses a bare `athing`,
     /// while `/threads` adds `comtr`.
     static func comments(in html: String) -> [UserComment] {
-        guard let rowRegex = try? NSRegularExpression(
-            pattern: "<tr[^>]*class=['\"]athing[^'\"]*['\"][^>]*id=['\"](\\d+)['\"]",
-            options: [.caseInsensitive]
-        ) else {
+        guard let rowRegex = Self.regex("<tr[^>]*class=['\"]athing[^'\"]*['\"][^>]*id=['\"](\\d+)['\"]") else {
             return []
         }
         let matches = rowRegex.matches(in: html, range: NSRange(html.startIndex..., in: html))
@@ -630,10 +653,14 @@ struct NewsYCService {
         var request = URLRequest(url: url)
         request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
         let (data, response) = try await transport.data(for: request)
+        // Transport failures are logged by the transport; these are the answers
+        // that came back but can't be used. A 503 here is usually HN's rate limiter.
         guard (200..<300).contains(response.statusCode) else {
+            Logger.scraping.error("/\(url.lastPathComponent, privacy: .public) answered \(response.statusCode, privacy: .public) (\(url))")
             throw NetworkError.badStatus
         }
         guard let html = String(data: data, encoding: .utf8) else {
+            Logger.scraping.error("/\(url.lastPathComponent, privacy: .public) wasn't UTF-8 (\(url))")
             throw NetworkError.failedToDecodeResponse
         }
         return html
@@ -661,7 +688,7 @@ struct NewsYCService {
     /// attribute inline, so `action="comment"` can't be confused for a form
     /// whose action merely starts with it.
     private static func form(withAction action: String, in html: String) -> String? {
-        guard let regex = try? NSRegularExpression(pattern: "<form[^>]*>", options: [.caseInsensitive]) else {
+        guard let regex = Self.regex("<form[^>]*>") else {
             return nil
         }
         let range = NSRange(html.startIndex..., in: html)
@@ -702,9 +729,26 @@ struct NewsYCService {
 
     // MARK: - Regex helpers
 
+    /// A case-insensitive regex for a pattern written in this file, or `nil` —
+    /// logged as a fault, since a pattern that doesn't compile is a bug here,
+    /// not anything Hacker News did.
+    private static func regex(_ pattern: String) -> NSRegularExpression? {
+        do {
+            return try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+        } catch {
+            Logger.scraping.fault("Invalid pattern \(pattern, privacy: .public): \(error, privacy: .public)")
+            return nil
+        }
+    }
+
+    /// A write's status code for logging, or -1 if it somehow wasn't HTTP.
+    private static func statusCode(of response: URLResponse) -> Int {
+        (response as? HTTPURLResponse)?.statusCode ?? -1
+    }
+
     /// Every whole match of the pattern, for patterns with nothing to capture.
     private static func allTags(in text: String, pattern: String) -> [String] {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+        guard let regex = Self.regex(pattern) else {
             return []
         }
         let range = NSRange(text.startIndex..., in: text)
@@ -716,7 +760,7 @@ struct NewsYCService {
 
     /// The first capture group of the first match, or `nil`.
     private static func firstMatch(in text: String, pattern: String) -> String? {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+        guard let regex = Self.regex(pattern) else {
             return nil
         }
         let range = NSRange(text.startIndex..., in: text)
@@ -730,7 +774,7 @@ struct NewsYCService {
 
     /// The first capture group of every match.
     private static func allMatches(in text: String, pattern: String) -> [String] {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+        guard let regex = Self.regex(pattern) else {
             return []
         }
         let range = NSRange(text.startIndex..., in: text)
@@ -745,7 +789,7 @@ struct NewsYCService {
 
     /// Whether the pattern matches anywhere in the text.
     private static func contains(in text: String, pattern: String) -> Bool {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+        guard let regex = Self.regex(pattern) else {
             return false
         }
         let range = NSRange(text.startIndex..., in: text)

@@ -5,6 +5,7 @@
 //  Created by James Asbury on 12/22/25.
 //
 
+import OSLog
 import SwiftUI
 
 struct ContentView: View {
@@ -146,7 +147,7 @@ struct ContentView: View {
                     let isKeyboardResize = newSize.width == windowSize.width
                         && newSize.height < windowSize.height
                         && windowSize != .zero
-                    print("windowSize \(windowSize) -> \(newSize)\(isKeyboardResize ? " (ignored)" : "")")
+                    Logger.layout.debug("Window \(windowSize.debugDescription, privacy: .public) -> \(newSize.debugDescription, privacy: .public)\(isKeyboardResize ? " (keyboard, ignored)" : "", privacy: .public)")
                     if !isKeyboardResize { windowSize = newSize }
                 }
         }
@@ -172,6 +173,10 @@ struct ContentView: View {
         // Collections changed on the user's other devices, for the app's lifetime.
         .task {
             await collectionsStore.observeCloudChanges()
+        }
+        // MetricKit's crash and performance reports, for the app's lifetime.
+        .task {
+            await DiagnosticsStore.shared.observe()
         }
         // Returning to the foreground, where the drift most likely happened —
         // the user may have been on the HN site in between. Re-derive the session

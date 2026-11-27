@@ -5,6 +5,7 @@
 //  Created by James Asbury on 8/16/26.
 //
 
+import OSLog
 import SwiftUI
 
 /// A story's user-interaction state, read by views to drive their appearance
@@ -112,7 +113,7 @@ class InteractionStore {
             // Roll back to the pre-tap state.
             setUpvoted(wasUpvoted, for: id)
             adjustScoreDelta(by: wasUpvoted ? 1 : -1, for: id)
-            print("Vote failed for \(id): \(error)")
+            Logger.interactions.error("\(wasUpvoted ? "Unvote" : "Upvote", privacy: .public) on story \(id, privacy: .public) failed, rolled back: \(error, privacy: .public)")
         }
     }
 
@@ -169,7 +170,7 @@ class InteractionStore {
             persist()
         } catch {
             setCommentUpvoted(wasUpvoted, for: id)
-            print("Comment vote failed for \(id): \(error)")
+            Logger.interactions.error("\(wasUpvoted ? "Unvote" : "Upvote", privacy: .public) on comment \(id, privacy: .public) failed, rolled back: \(error, privacy: .public)")
         }
     }
 
@@ -243,7 +244,7 @@ class InteractionStore {
             persist()
         } catch {
             setFavorited(wasFavorited, for: id)
-            print("Favorite failed for \(id): \(error)")
+            Logger.interactions.error("\(wasFavorited ? "Unfavorite" : "Favorite", privacy: .public) on story \(id, privacy: .public) failed, rolled back: \(error, privacy: .public)")
         }
     }
 
@@ -300,6 +301,11 @@ class InteractionStore {
         walk.expectedPage = page + 1
 
         if inSequence, !result.hasMore {
+            // The one place local state is removed on the server's word, so
+            // it's logged: a wrong removal here would look like lost votes.
+            let onServer = walk.seen.count
+            let removed = interactions[keyPath: keyPath].subtracting(walk.seen).count
+            Logger.interactions.info("Walk of \(String(describing: keyPath), privacy: .public) complete at page \(page, privacy: .public): \(onServer, privacy: .public) on HN, \(removed, privacy: .public) removed locally")
             interactions[keyPath: keyPath] = walk.seen
         } else {
             interactions[keyPath: keyPath].formUnion(result.ids)

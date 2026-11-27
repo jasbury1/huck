@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 /// Which kind of session a request needs. Each kind has its own cookie and
 /// redirect behaviour, and the transport picks the session to match.
@@ -54,23 +55,40 @@ extension HTTPTransport {
     /// stories, which would otherwise all land on the main thread.
     @concurrent
     nonisolated func json<T: Decodable & Sendable>(from url: URL) async -> T? {
+        let endpoint = Self.logDescription(of: url)
         do {
             let (data, response) = try await data(for: URLRequest(url: url))
             guard (200..<300).contains(response.statusCode) else {
-                print("Status \(response.statusCode) from \(url)")
+                Logger.network.error("\(endpoint, privacy: .public) answered \(response.statusCode, privacy: .public) (\(url))")
                 return nil
             }
             return try JSONDecoder().decode(T.self, from: data)
+        } catch let error as DecodingError {
+            // The request worked but the body isn't the shape we expect: an
+            // upstream schema change, or a model that's wrong about it.
+            Logger.network.error("\(endpoint, privacy: .public) didn't decode as \(T.self, privacy: .public): \(error, privacy: .public)")
+            return nil
         } catch {
-            print("Couldn't load \(T.self) from \(url): \(error)")
+            // Transport failures are logged where they happen, by the transport.
             return nil
         }
     }
 
     /// `json(from:)` for a URL string, `nil` if it isn't a valid URL.
     nonisolated func json<T: Decodable & Sendable>(fromURL string: String) async -> T? {
-        guard let url = URL(string: string) else { return nil }
+        guard let url = URL(string: string) else {
+            Logger.network.fault("Not a valid URL: \(string)")
+            return nil
+        }
         return await json(from: url)
+    }
+
+    /// A request's source and endpoint, e.g. "Algolia search", safe to log
+    /// publicly. The whole URL can carry a username or a search, so it's only
+    /// ever logged privately alongside this.
+    nonisolated static func logDescription(of url: URL, endpoint: String? = nil) -> String {
+        let source = APISource(url: url)
+        return "\(source.title) \(endpoint ?? source.endpoint(for: url))"
     }
 }
 
@@ -94,9 +112,30 @@ nonisolated struct URLSessionTransport: HTTPTransport {
         case .write, .login: RedirectBlocker()
         case .standard, .thumbnail: nil
         }
-        let (data, response) = try await session.countedData(for: request, delegate: delegate, endpoint: endpoint)
-        guard let http = response as? HTTPURLResponse else { throw NetworkError.badResponse }
-        return (data, http)
+        do {
+            let (data, response) = try await session.countedData(for: request, delegate: delegate, endpoint: endpoint)
+            guard let http = response as? HTTPURLResponse else { throw NetworkError.badResponse }
+            return (data, http)
+        } catch {
+            Self.logFailure(error, of: request, kind: kind, endpoint: endpoint)
+            throw error
+        }
+    }
+
+    /// Logs a request that never got an HTTP answer. Cancellation is routine —
+    /// a view scrolled away or a search was retyped — so it isn't logged, and
+    /// thumbnail failures are only `debug`: arbitrary article hosts fail often,
+    /// and a missing thumbnail falls back gracefully.
+    private static func logFailure(_ error: any Error, of request: URLRequest, kind: RequestKind, endpoint: String?) {
+        if error is CancellationError || (error as? URLError)?.code == .cancelled { return }
+        guard let url = request.url else { return }
+        let description = Self.logDescription(of: url, endpoint: endpoint)
+        let method = request.httpMethod ?? "GET"
+        if kind == .thumbnail {
+            Logger.network.debug("\(method, privacy: .public) \(description, privacy: .public) failed: \(error.localizedDescription, privacy: .public) (\(url))")
+        } else {
+            Logger.network.error("\(method, privacy: .public) \(description, privacy: .public) failed: \(error.localizedDescription, privacy: .public) (\(url))")
+        }
     }
 
     /// Short timeouts, tuned for small assets: dead or slow hosts fail fast

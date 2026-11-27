@@ -58,22 +58,11 @@ enum CollectionsPersistence {
 
     /// The stored collections, or empty state if nothing is saved yet.
     static func load() -> PersistedCollections {
-        guard let data = try? Data(contentsOf: fileURL),
-              let decoded = try? JSONDecoder().decode(PersistedCollections.self, from: data) else {
-            return PersistedCollections()
-        }
-        return decoded
+        JSONFile.load(PersistedCollections.self, from: fileURL, name: "collections") ?? PersistedCollections()
     }
 
     /// Writes the collections atomically.
     static func save(_ collections: PersistedCollections) {
-        do {
-            let directory = fileURL.deletingLastPathComponent()
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let data = try JSONEncoder().encode(collections)
-            try data.write(to: fileURL, options: [.atomic])
-        } catch {
-            print("Failed to persist collections: \(error)")
-        }
+        JSONFile.save(collections, to: fileURL, name: "collections")
     }
 }
