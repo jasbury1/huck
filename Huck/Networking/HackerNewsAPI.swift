@@ -621,6 +621,23 @@ final class HackerNewsAPI: HackerNewsService {
         await newsYC.favoriteStoryIds(username: username, page: page + 1)
     }
 
+    // MARK: - Flagging
+
+    /// Flags a story or comment for Hacker News' moderators on behalf of the
+    /// logged-in user. Already flagged counts as done. Throws
+    /// `APIError.flagUnavailable` when Hacker News offers this account no flag
+    /// link — usually because it hasn't yet earned the karma flagging takes.
+    func flagItem(id: Int) async throws {
+        try Self.requireAuthCookie()
+        // Like voting, flagging needs the item's per-user `auth` token from its
+        // page HTML.
+        guard let flagAuth = await newsYC.flagAuth(forItem: id) else {
+            throw APIError.flagUnavailable
+        }
+        guard !flagAuth.alreadyFlagged else { return }
+        try await newsYC.castFlag(id: id, auth: flagAuth.auth)
+    }
+
     // MARK: - Commenting
 
     /// Posts a comment as the logged-in user and returns once Hacker News has

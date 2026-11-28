@@ -58,5 +58,10 @@ struct StoryOptions: View {
                 Label("Add to...", systemImage: "plus.rectangle.on.rectangle")
             }
         }
+        // Reporting the story, or never seeing its author again.
+        Section {
+            FlagMenuButton(target: .story(story.id), author: story.by)
+            BlockUserMenuButton(username: story.by)
+        }
     }
 }

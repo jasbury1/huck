@@ -34,6 +34,11 @@ struct ContentView: View {
     /// home feed's collections section and the story options menu's picker.
     @State private var collectionsStore: CollectionsStore
 
+    /// App-wide store of the users the reader has blocked — kept per device,
+    /// independent of the HN account — observed by the feeds and threads that
+    /// leave their posts out, and by Settings, where they're unblocked.
+    @State private var blockedUsersStore = BlockedUsersStore()
+
     /// The query driving the search tab. Held here, at the tab view, so the
     /// search tab can adopt the system's separated search-button appearance.
     @State private var searchText = ""
@@ -161,6 +166,7 @@ struct ContentView: View {
         .environment(interactionSync)
         .environment(recentlyViewedStore)
         .environment(collectionsStore)
+        .environment(blockedUsersStore)
         // Launch.
         .task {
             await interactionSync.refresh()

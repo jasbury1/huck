@@ -145,12 +145,15 @@ private struct StoryActionsModifier: ViewModifier {
 
 extension View {
     /// Enables `@Environment(\.upvote)`, `@Environment(\.favorite)`,
-    /// `@Environment(\.addToCollection)`, `@Environment(\.composeNewPost)`, and
-    /// `@Environment(\.requireLogin)` for
+    /// `@Environment(\.addToCollection)`, `@Environment(\.composeNewPost)`,
+    /// `@Environment(\.requireLogin)`, `@Environment(\.flag)`, and
+    /// `@Environment(\.blockUser)` for
     /// this view's subtree, routing taps through
     /// the interaction store and presenting login when signed out. Apply it once
     /// per navigation stack, above the story views that show these actions.
     func storyActionsEnabled() -> some View {
-        modifier(StoryActionsModifier())
+        // Moderation sits inside, so it reads the login gate set outside it.
+        modifier(ModerationModifier())
+            .modifier(StoryActionsModifier())
     }
 }

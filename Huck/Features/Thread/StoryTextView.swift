@@ -155,6 +155,12 @@ struct CommentCellView: View {
                     Label("Collapse Thread", systemImage: "arrow.up.to.line")
                 }
             }
+            // Someone else's comment can be reported, or its author blocked.
+            if let itemID = commentData.itemID, commentData.author != session.username {
+                Divider()
+                FlagMenuButton(target: .comment(itemID), author: commentData.author)
+                BlockUserMenuButton(username: commentData.author)
+            }
             if isDeletable {
                 Divider()
                 Button(role: .destructive) {
@@ -194,6 +200,9 @@ struct StoryTextView: View {
     /// Names the author of a comment posted from here, so it can be shown in
     /// the thread before the APIs have caught up.
     @Environment(UserSession.self) private var session
+
+    /// The users the reader has blocked, whose comments the thread leaves out.
+    @Environment(BlockedUsersStore.self) private var blockedUsers
 
     /// Records this story as recently viewed when its comments are opened — the
     /// single choke point for every route into a story's comments/text.
@@ -485,6 +494,11 @@ struct StoryTextView: View {
         .onChange(of: commentFetcher.comments.count) {
             scrollToPendingTarget(using: scrollProxy)
         }
+        // Blocking someone from a comment's menu takes their comments out
+        // straight away, as unblocking them in Settings brings them back.
+        .onChange(of: blockedUsers.usernames, initial: true) { _, usernames in
+            withAnimation(.easeInOut) { commentFetcher.blockedAuthors = usernames }
+        }
     }
 
     // MARK: - Deleting
@@ -741,5 +755,6 @@ private struct CommentCellGallery: View {
     StoryTextView(storyId: 46_391_572, path: .constant(NavigationPath()))
         .environment(session)
         .environment(InteractionStore(session: session))
+        .environment(BlockedUsersStore())
         .environment(RecentlyViewedStore(session: session))
 }

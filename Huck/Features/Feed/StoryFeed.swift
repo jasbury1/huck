@@ -176,6 +176,12 @@ final class StoryFeed {
         filterContext.hiddenIDs = ids
     }
 
+    /// Updates which users are blocked, and nothing else in the snapshot — as
+    /// `updateHiddenIDs(_:)` does for hidden stories.
+    func updateBlockedUsernames(_ usernames: Set<String>) {
+        filterContext.blockedUsernames = usernames
+    }
+
     /// Warms details and thumbnails for the window of stories following `id`.
     /// Called as each row appears; already-cached or in-flight work is skipped,
     /// so the overlapping windows from adjacent rows stay cheap. Follows the

@@ -38,4 +38,4 @@ SWIFT_APPROACHABLE_CONCURRENCY = YES
 SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES
 
 // The bundle identifier prefix every target's identifier starts with.
-HUCK_BUNDLE_ID_PREFIX = jasbury
+HUCK_BUNDLE_ID_PREFIX = com.jamesasbury

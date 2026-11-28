@@ -26,6 +26,8 @@ enum FeedFilter: String, CaseIterable, Identifiable {
     case hideRead
     /// Stories the reader has hidden, one at a time, with a swipe.
     case hidden
+    /// Stories submitted by users the reader has blocked.
+    case blockedUsers
 
     var id: Self { self }
 
@@ -34,7 +36,7 @@ enum FeedFilter: String, CaseIterable, Identifiable {
     var isToggleable: Bool {
         switch self {
         case .hideRead: true
-        case .hidden: false
+        case .hidden, .blockedUsers: false
         }
     }
 
@@ -49,6 +51,7 @@ enum FeedFilter: String, CaseIterable, Identifiable {
         switch self {
         case .hideRead: "Hide Read"
         case .hidden: "Hidden Stories"
+        case .blockedUsers: "Blocked Users"
         }
     }
 
@@ -56,6 +59,7 @@ enum FeedFilter: String, CaseIterable, Identifiable {
         switch self {
         case .hideRead: "eye.slash"
         case .hidden: "eye.slash"
+        case .blockedUsers: "person.slash"
         }
     }
 
@@ -64,6 +68,7 @@ enum FeedFilter: String, CaseIterable, Identifiable {
         switch self {
         case .hideRead: "Read stories hidden"
         case .hidden: "Hidden stories left out"
+        case .blockedUsers: "Blocked users left out"
         }
     }
 
@@ -72,6 +77,9 @@ enum FeedFilter: String, CaseIterable, Identifiable {
         switch self {
         case .hideRead: !context.readIDs.contains(story.id)
         case .hidden: !context.hiddenIDs.contains(story.id)
+        // A story's author arrives with its details, so one still loading
+        // shows until they do, then drops out if its author is blocked.
+        case .blockedUsers: !context.blockedUsernames.contains(story.by)
         }
     }
 }
@@ -83,22 +91,26 @@ enum FeedFilter: String, CaseIterable, Identifiable {
 /// from the list the moment the reader came back to it; as a snapshot, it
 /// stays — greyed, as read stories are — until the next refresh.
 ///
-/// Hiding is the exception, being something the reader does *to the feed*:
-/// a hidden story should go at once, so `hiddenIDs` is updated on its own as
-/// stories are hidden, leaving the rest of the snapshot as it was.
+/// Hiding and blocking are the exceptions, being things the reader does *to
+/// the feed*: a hidden story, or a blocked user's, should go at once, so
+/// `hiddenIDs` and `blockedUsernames` are updated on their own as they change,
+/// leaving the rest of the snapshot as it was.
 struct FeedFilterContext {
     /// Stories the reader has opened.
     var readIDs: Set<Int> = []
     /// Stories the reader has hidden.
     var hiddenIDs: Set<Int> = []
+    /// Users the reader has blocked.
+    var blockedUsernames: Set<String> = []
 }
 
 @MainActor
 extension FeedFilterContext {
     /// The current state of everything the filters can judge against.
-    init(recentlyViewed: RecentlyViewedStore, interactions: InteractionStore) {
+    init(recentlyViewed: RecentlyViewedStore, interactions: InteractionStore, blockedUsers: BlockedUsersStore) {
         readIDs = Set(recentlyViewed.viewedIDs)
         hiddenIDs = interactions.hiddenIDs
+        blockedUsernames = blockedUsers.usernames
     }
 }
 

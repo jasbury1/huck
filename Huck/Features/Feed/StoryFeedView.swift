@@ -45,6 +45,9 @@ struct StoryFeedView: View {
     /// upvoting.
     @Environment(\.requireLogin) private var requireLogin
 
+    /// The users the reader has blocked, whose stories the feed leaves out.
+    @Environment(BlockedUsersStore.self) private var blockedUsers
+
     /// The story just hidden, offered back for a few seconds — hiding is a
     /// swipe away, and there's nowhere else to undo it.
     @State private var lastHidden: StoryModel?
@@ -172,6 +175,10 @@ struct StoryFeedView: View {
         .onChange(of: interactionStore.hiddenIDs) { _, hiddenIDs in
             withAnimation { feed.updateHiddenIDs(hiddenIDs) }
         }
+        // Likewise for blocking, from a story's menu or Settings.
+        .onChange(of: blockedUsers.usernames) { _, usernames in
+            withAnimation { feed.updateBlockedUsernames(usernames) }
+        }
         // A small pull-down reveals the search field (it stays hidden while
         // scrolled, per the drawer's automatic display mode); pulling further
         // triggers the refresh below.
@@ -276,11 +283,15 @@ struct StoryFeedView: View {
     }
 
     /// Hands the feed the reader's filters, with a fresh snapshot of which
-    /// stories they've read and hidden.
+    /// stories they've read and hidden, and whom they've blocked.
     private func applyFilters() {
         feed.applyFilters(
             filters,
-            context: FeedFilterContext(recentlyViewed: recentlyViewedStore, interactions: interactionStore)
+            context: FeedFilterContext(
+                recentlyViewed: recentlyViewedStore,
+                interactions: interactionStore,
+                blockedUsers: blockedUsers
+            )
         )
     }
 

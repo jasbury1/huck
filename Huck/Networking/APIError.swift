@@ -30,6 +30,10 @@ public enum APIError: Error, LocalizedError {
     case missingAuthToken
     case voteFailed
     case favoriteFailed
+    /// Hacker News offers this account no flag link for the item — usually
+    /// because it hasn't yet earned the karma flagging takes.
+    case flagUnavailable
+    case flagFailed
     /// Hacker News refused the comment. It doesn't say why in a form we can
     /// read, and the reasons are varied — a duplicate, posting too fast, a
     /// stale form token, a thread that's been locked.
@@ -59,6 +63,9 @@ public enum APIError: Error, LocalizedError {
         case .missingAuthToken: "Couldn't verify the action with Hacker News."
         case .voteFailed: "Vote Failed."
         case .favoriteFailed: "Favorite Failed."
+        case .flagUnavailable:
+            "Hacker News lets accounts flag once they've earned some karma. You can report it to the moderators by email instead."
+        case .flagFailed: "Hacker News didn't accept the flag. Try again in a moment."
         case .commentFailed:
             "Hacker News wouldn't accept your comment. You may be posting too quickly — wait a moment and try again."
         case .unknownReplyTarget:

@@ -114,6 +114,12 @@ struct UserCommentRow: View {
                     Label("Open in Thread", systemImage: "arrow.turn.up.left")
                 }
             }
+            // Someone else's comment can be reported, or its author blocked.
+            if comment.author != session.username {
+                Divider()
+                FlagMenuButton(target: .comment(comment.id), author: comment.author)
+                BlockUserMenuButton(username: comment.author)
+            }
             if isDeletable {
                 Divider()
                 Button(role: .destructive) {
@@ -190,4 +196,5 @@ struct UserCommentRow: View {
     }
     .environment(UserSession())
     .environment(InteractionStore(session: UserSession()))
+    .environment(BlockedUsersStore())
 }

@@ -93,6 +93,11 @@ protocol HackerNewsService: Sendable {
     func favoriteStory(id: Int) async throws
     func unfavoriteStory(id: Int) async throws
 
+    // MARK: Flagging
+
+    /// Flags a story or comment for Hacker News' moderators.
+    func flagItem(id: Int) async throws
+
     // MARK: Polls
 
     func getPollOptions(ids: [Int]) async -> [PollOption]

@@ -42,7 +42,12 @@ struct SettingsView: View {
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
     /// Counts the hidden stories for their row.
     @Environment(InteractionStore.self) private var interactionStore
+    /// Counts the blocked users for their row.
+    @Environment(BlockedUsersStore.self) private var blockedUsers
     @Environment(\.dismiss) private var dismiss
+    /// Opens the support and guidelines pages, in the browser Settings sets
+    /// up for its own stack below.
+    @Environment(\.openInAppBrowser) private var openInAppBrowser
 
     /// Whether to offer Done. On for the sheet the Account tab presents; off
     /// when Settings is a tab of its own, with nothing to dismiss.
@@ -96,6 +101,14 @@ struct SettingsView: View {
                         }
                     }
                     .badge(interactionStore.hiddenIDs.count)
+                    NavigationLink(value: SettingsPage.blockedUsers) {
+                        Label {
+                            Text("Blocked Users")
+                        } icon: {
+                            SettingsIcon(systemImage: "person.slash", color: .red)
+                        }
+                    }
+                    .badge(blockedUsers.usernames.count)
                     SettingsRow(
                         title: "Clear Viewing History",
                         systemImage: "clock.arrow.circlepath",
@@ -176,6 +189,34 @@ struct SettingsView: View {
                     Text("Format Code shows code in a monospaced font, set apart from the text around it. Format Quotes outlines paragraphs quoted with “>”. Highlight New Users tints the names of recently created accounts green, as Hacker News does while you're signed in.")
                 }
 
+                Section {
+                    SettingsRow(
+                        title: "Help & Feedback",
+                        systemImage: "questionmark.bubble",
+                        iconColor: .blue
+                    ) {
+                        openInAppBrowser(SupportLinks.gitHub)
+                    }
+                    SettingsRow(
+                        title: "Community Guidelines",
+                        systemImage: "text.book.closed",
+                        iconColor: .orange
+                    ) {
+                        openInAppBrowser(SupportLinks.guidelines)
+                    }
+                    SettingsRow(
+                        title: "Terms of Use",
+                        systemImage: "doc.text",
+                        iconColor: .gray
+                    ) {
+                        openInAppBrowser(SupportLinks.legal)
+                    }
+                } header: {
+                    Text("Support")
+                } footer: {
+                    Text("Huck is open source. Report a problem or ask a question on GitHub.")
+                }
+
                 if DebugMode.isAvailable(for: session.username) {
                     Section {
                         Toggle(isOn: $isDebugModeEnabled) {
@@ -247,6 +288,8 @@ struct SettingsView: View {
                 switch page {
                 case .hiddenStories:
                     HiddenStoriesView(path: $path)
+                case .blockedUsers:
+                    BlockedUsersView()
                 }
             }
             .navigationDestination(for: ItemNavigation.self) { navigation in
@@ -265,6 +308,18 @@ struct SettingsView: View {
 /// The pages Settings pushes onto its own stack.
 private enum SettingsPage: Hashable {
     case hiddenStories
+    case blockedUsers
+}
+
+/// Where Settings' Support rows lead. Fixed, always-valid URLs.
+private enum SupportLinks {
+    /// Huck's repository, where issues and questions are filed.
+    static let gitHub = URL(string: "https://github.com/jasbury1/huck")!
+    /// Hacker News' community guidelines.
+    static let guidelines = URL(string: "https://news.ycombinator.com/newsguidelines.html")!
+    /// Y Combinator's terms of use and privacy policy, which cover Hacker
+    /// News — the "Legal" link in its footer.
+    static let legal = URL(string: "https://www.ycombinator.com/legal/")!
 }
 
 /// A single tappable settings row styled like the iOS Settings app: a colored
@@ -313,5 +368,6 @@ private struct SettingsIcon: View {
     SettingsView()
         .environment(RecentlyViewedStore(session: UserSession()))
         .environment(InteractionStore(session: UserSession()))
+        .environment(BlockedUsersStore())
         .environment(UserSession())
 }

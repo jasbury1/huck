@@ -142,6 +142,24 @@
     "Best" : {
 
     },
+    "Block" : {
+
+    },
+    "Block %@" : {
+
+    },
+    "Block %@?" : {
+
+    },
+    "Block someone from the menu on their stories, comments, or profile to stop seeing their posts." : {
+
+    },
+    "Blocked Users" : {
+
+    },
+    "Blocked users left out" : {
+
+    },
     "By" : {
 
     },
@@ -209,6 +227,9 @@
 
     },
     "Couldn't Delete Comment" : {
+
+    },
+    "Couldn't Flag" : {
 
     },
     "Couldn't Open Link" : {
@@ -295,6 +316,9 @@
     "Edit filters" : {
 
     },
+    "Email Moderators" : {
+
+    },
     "Enter a web address, like example.com/article." : {
 
     },
@@ -323,6 +347,21 @@
 
     },
     "Find stories, comments, polls, Show and Ask HN posts, and users." : {
+
+    },
+    "Flag" : {
+
+    },
+    "Flag This Comment?" : {
+
+    },
+    "Flag This Story?" : {
+
+    },
+    "Flagged" : {
+
+    },
+    "Flagging asks Hacker News' moderators to review it against the site guidelines." : {
 
     },
     "Format Code" : {
@@ -356,6 +395,9 @@
 
     },
     "Hot" : {
+
+    },
+    "Huck is open source. Report a problem or ask a question on GitHub." : {
 
     },
     "Huck's Collections" : {
@@ -450,6 +492,9 @@
       }
     },
     "No Account Needed" : {
+
+    },
+    "No Blocked Users" : {
 
     },
     "No Comments" : {
@@ -650,6 +695,9 @@
     "Story Hidden" : {
 
     },
+    "Support" : {
+
+    },
     "Swipe left on a story in a feed to hide it." : {
 
     },
@@ -663,6 +711,12 @@
 
     },
     "Text" : {
+
+    },
+    "Thanks. Hacker News' moderators will take a look." : {
+
+    },
+    "Their stories and comments are hidden in Huck on this device. Hacker News isn't told." : {
 
     },
     "Theme" : {
@@ -704,6 +758,12 @@
     "Total Requests" : {
 
     },
+    "Unblock" : {
+
+    },
+    "Unblock %@" : {
+
+    },
     "Undo" : {
 
     },
@@ -735,6 +795,9 @@
 
     },
     "You haven't created any collections yet." : {
+
+    },
+    "You won't see their stories or comments. You can unblock them in Settings." : {
 
     },
     "Your Collections" : {
