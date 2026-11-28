@@ -67,9 +67,14 @@ struct StoryDetailsView: View {
                 // Added here rather than by the page, as the account tab shows
                 // the same page with its own account menu in the overflow.
                 .toolbarOverflowMenu {
-                    ProfileOptions(username: user)
-                        // Icons match their text, not the app's orange tint.
-                        .tint(.primary)
+                    Group {
+                        ProfileOptions(username: user)
+                        Section {
+                            BlockUserMenuButton(username: user)
+                        }
+                    }
+                    // Icons match their text, not the app's orange tint.
+                    .tint(.primary)
                 }
         case let .favorites(user):
             FavoritesView(username: user, path: $path)

@@ -148,6 +148,51 @@ struct NewsYCService {
         }
     }
 
+    // MARK: - Flagging
+
+    /// Fetches an item's page and extracts the `auth` token needed to flag it,
+    /// along with whether the current user has already flagged it. Returns
+    /// `nil` if there's no flag link: logged out, an account without the karma
+    /// Hacker News requires to flag, the reader's own item, or changed markup.
+    func flagAuth(forItem id: Int) async -> (auth: String, alreadyFlagged: Bool)? {
+        guard let url = URL(string: "\(Self.baseUri)/item?id=\(id)"),
+              let html = try? await fetchHTML(from: url) else {
+            return nil
+        }
+        // The item's flag link is `flag?id=<ID>&auth=<TOKEN>` (and gains `un=t`
+        // once flagged, when it reads "unflag"). The `&` after the id scopes the
+        // match to exactly this item, so a reply's link — or item 1234's, when
+        // flagging 123 — isn't picked up instead.
+        guard let auth = Self.firstMatch(
+            in: html,
+            pattern: "flag\\?id=\(id)&[^'\"]*?auth=([0-9a-fA-F]+)"
+        ) else {
+            Logger.scraping.info("No flag token for item \(id, privacy: .public) on its page (logged out, too little karma, or markup changed)")
+            return nil
+        }
+        let alreadyFlagged = Self.contains(in: html, pattern: "flag\\?id=\(id)&[^'\"]*?un=t")
+        return (auth, alreadyFlagged)
+    }
+
+    /// Flags an item for Hacker News' moderators. Throws `APIError.flagFailed`
+    /// on a non-success response.
+    func castFlag(id: Int, auth: String) async throws {
+        var components = URLComponents(string: "\(Self.baseUri)/flag")!
+        components.queryItems = [
+            URLQueryItem(name: "id", value: String(id)),
+            URLQueryItem(name: "auth", value: auth),
+        ]
+        guard let url = components.url else { throw APIError.flagFailed }
+
+        var request = URLRequest(url: url)
+        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+        let (_, response) = try await transport.data(for: request)
+        guard (200..<300).contains(response.statusCode) else {
+            Logger.scraping.error("Flag on item \(id, privacy: .public) refused with status \(response.statusCode, privacy: .public)")
+            throw APIError.flagFailed
+        }
+    }
+
     // MARK: - Commenting
 
     /// The hidden fields Hacker News' comment form carries, in document order,

@@ -42,6 +42,8 @@ struct SettingsView: View {
     @Environment(RecentlyViewedStore.self) private var recentlyViewedStore
     /// Counts the hidden stories for their row.
     @Environment(InteractionStore.self) private var interactionStore
+    /// Counts the blocked users for their row.
+    @Environment(BlockedUsersStore.self) private var blockedUsers
     @Environment(\.dismiss) private var dismiss
 
     /// Whether to offer Done. On for the sheet the Account tab presents; off
@@ -66,7 +68,6 @@ struct SettingsView: View {
     /// See `PostingMode`.
     @AppStorage(PostingMode.dryRunKey) private var isPostingDryRun = false
     @AppStorage(PostingMode.simulatesFailureKey) private var simulatesPostingFailure = false
-    @Environment(UserSession.self) private var session
 
     @State private var isConfirmingClearHistory = false
 
@@ -96,6 +97,14 @@ struct SettingsView: View {
                         }
                     }
                     .badge(interactionStore.hiddenIDs.count)
+                    NavigationLink(value: SettingsPage.blockedUsers) {
+                        Label {
+                            Text("Blocked Users")
+                        } icon: {
+                            SettingsIcon(systemImage: "person.slash", color: .red)
+                        }
+                    }
+                    .badge(blockedUsers.usernames.count)
                     SettingsRow(
                         title: "Clear Viewing History",
                         systemImage: "clock.arrow.circlepath",
@@ -172,11 +181,17 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("Comments")
-                } footer: {
-                    Text("Format Code shows code in a monospaced font, set apart from the text around it. Format Quotes outlines paragraphs quoted with “>”. Highlight New Users tints the names of recently created accounts green, as Hacker News does while you're signed in.")
                 }
 
-                if DebugMode.isAvailable(for: session.username) {
+                HackerNewsAccountSection()
+
+                SupportSection()
+
+                Section("Acknowledgements") {
+                    HuckAcknowledgement()
+                }
+
+                if DebugMode.isAvailable {
                     Section {
                         Toggle(isOn: $isDebugModeEnabled) {
                             Label {
@@ -247,6 +262,8 @@ struct SettingsView: View {
                 switch page {
                 case .hiddenStories:
                     HiddenStoriesView(path: $path)
+                case .blockedUsers:
+                    BlockedUsersView()
                 }
             }
             .navigationDestination(for: ItemNavigation.self) { navigation in
@@ -265,6 +282,179 @@ struct SettingsView: View {
 /// The pages Settings pushes onto its own stack.
 private enum SettingsPage: Hashable {
     case hiddenStories
+    case blockedUsers
+}
+
+/// Where a Hacker News account is managed. Accounts are created, changed, and
+/// deleted on Hacker News, not in Huck — this mirrors the login screen's
+/// "Create an account" link with the way to manage or delete one. Its own view
+/// for the same reason as `SupportSection`.
+private struct HackerNewsAccountSection: View {
+    @Environment(\.openInAppBrowser) private var openInAppBrowser
+
+    var body: some View {
+        Section {
+            SettingsRow(
+                title: "Manage Account",
+                systemImage: "person.crop.circle",
+                iconColor: .orange
+            ) {
+                openInAppBrowser(SupportLinks.accountFAQ)
+            }
+        } header: {
+            Text("Hacker News Account")
+        } footer: {
+            footer
+                // The FAQ link opens in the in-app browser, as the row does,
+                // rather than leaving for Safari.
+                .environment(\.openURL, OpenURLAction { url in
+                    openInAppBrowser(url)
+                    return .handled
+                })
+        }
+    }
+
+    private var footer: Text {
+        var faq = AttributedString(localized: "Hacker News FAQ")
+        faq.link = SupportLinks.accountFAQ
+        return Text("Accounts are created and managed on Hacker News. To delete yours, email hn@ycombinator.com, as outlined in the \(faq).")
+    }
+}
+
+/// Where to get help, and the rules posting follows. Its own view so it reads
+/// `openInAppBrowser` from inside Settings' stack, where `.inAppBrowser(path:)`
+/// provides it — `SettingsView` itself sits above that modifier, so it would
+/// only see the default, which opens nothing.
+private struct SupportSection: View {
+    @Environment(\.openInAppBrowser) private var openInAppBrowser
+
+    var body: some View {
+        Section {
+            SettingsRow(
+                title: "Help & Feedback",
+                systemImage: "questionmark.bubble",
+                iconColor: .blue
+            ) {
+                openInAppBrowser(SupportLinks.gitHub)
+            }
+            SettingsRow(
+                title: "Privacy Policy",
+                systemImage: "hand.raised.fill",
+                iconColor: .blue
+            ) {
+                openInAppBrowser(SupportLinks.privacyPolicy)
+            }
+            SettingsRow(
+                title: "Community Guidelines",
+                systemImage: "text.book.closed",
+                iconColor: .orange
+            ) {
+                openInAppBrowser(SupportLinks.guidelines)
+            }
+            SettingsRow(
+                title: "Y Combinator's Terms",
+                systemImage: "doc.text",
+                iconColor: .gray
+            ) {
+                openInAppBrowser(SupportLinks.legal)
+            }
+        } header: {
+            Text("Support")
+        } footer: {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Huck is open source. Report a problem or ask a question on GitHub.")
+                Text("Huck is an independent app, not affiliated with Y Combinator or Hacker News in any way.")
+            }
+        }
+    }
+}
+
+/// Thanks to the dog the app is named after, with his photo — kept small, so
+/// it sits in a row like the rest of Settings rather than taking it over.
+/// Tapping the photo zooms it up to fill the screen.
+private struct HuckAcknowledgement: View {
+    @State private var isShowingPortrait = false
+    @Namespace private var namespace
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(.huck)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 64, height: 64)
+                .clipShape(.rect(cornerRadius: 14))
+                // The full-size photo grows out of this one, and shrinks back
+                // into it.
+                .matchedTransitionSource(id: Self.portraitID, in: namespace) { source in
+                    source.clipShape(.rect(cornerRadius: 14))
+                }
+                // A gesture rather than a button, so the row reads as a note
+                // rather than a link.
+                .onTapGesture { isShowingPortrait = true }
+                .accessibilityLabel("Huck, holding a pink ball")
+                .accessibilityHint("Shows a larger photo")
+                .accessibilityAddTraits(.isButton)
+            Text("A special thanks to the real Huck for letting me use his name and likeness.")
+                .font(.subheadline)
+        }
+        .padding(.vertical, 4)
+        .fullScreenCover(isPresented: $isShowingPortrait) {
+            HuckPortrait()
+                .navigationTransition(.zoom(sourceID: Self.portraitID, in: namespace))
+        }
+    }
+
+    private static let portraitID = "huck"
+}
+
+/// Huck's photo, as large as the screen allows, on black as in Photos. Closed
+/// with its button, a tap anywhere, or the zoom's own swipe down.
+private struct HuckPortrait: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black
+                .ignoresSafeArea()
+            Image(.huckPortrait)
+                .resizable()
+                .scaledToFit()
+                .clipShape(.rect(cornerRadius: 24))
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityLabel("Huck, holding a pink ball")
+            Button("Close", systemImage: "xmark") {
+                dismiss()
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+            .padding()
+        }
+        .contentShape(.rect)
+        .onTapGesture { dismiss() }
+        // Dark just here, for the glass button on black, without changing the
+        // app's appearance behind it.
+        .environment(\.colorScheme, .dark)
+    }
+}
+
+/// Where Settings' Support rows lead. Fixed, always-valid URLs.
+private enum SupportLinks {
+    /// Huck's repository, where issues and questions are filed.
+    static let gitHub = URL(string: "https://github.com/jasbury1/huck")!
+    /// Huck's privacy policy, `PRIVACY.md` at the repository's root, as GitHub
+    /// renders it on the main branch.
+    static let privacyPolicy = URL(string: "https://github.com/jasbury1/huck/blob/main/PRIVACY.md")!
+    /// Hacker News' FAQ, which covers changing an account and asking for one to
+    /// be deleted — there's no page that does either itself.
+    static let accountFAQ = URL(string: "https://news.ycombinator.com/newsfaq.html")!
+    /// Hacker News' community guidelines.
+    static let guidelines = URL(string: "https://news.ycombinator.com/newsguidelines.html")!
+    /// Y Combinator's terms of use and privacy policy, which cover Hacker
+    /// News — the "Legal" link in its footer.
+    static let legal = URL(string: "https://www.ycombinator.com/legal/")!
 }
 
 /// A single tappable settings row styled like the iOS Settings app: a colored
@@ -313,5 +503,18 @@ private struct SettingsIcon: View {
     SettingsView()
         .environment(RecentlyViewedStore(session: UserSession()))
         .environment(InteractionStore(session: UserSession()))
+        .environment(BlockedUsersStore())
         .environment(UserSession())
+}
+
+#Preview("Acknowledgements") {
+    List {
+        Section("Acknowledgements") {
+            HuckAcknowledgement()
+        }
+    }
+}
+
+#Preview("Huck Portrait") {
+    HuckPortrait()
 }

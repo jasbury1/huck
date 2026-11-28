@@ -7,12 +7,12 @@
 //  overrides every other xcconfig.
 //
 
-// A paid Apple Developer Program team, needed for iCloud and other paid
-// capabilities.
+// Your own signing team, in place of the one in Base.xcconfig.
 // DEVELOPMENT_TEAM = ABCDE12345
 
-// Sync collections through iCloud. Requires the paid team above.
-// HUCK_ICLOUD_SYNC = YES
+// Don't sync collections through iCloud — needed when the team above is a free
+// Personal Team, which can't provision the iCloud entitlement.
+// HUCK_ICLOUD_SYNC = NO
 
 // Never send comments, posts, or deletions to Hacker News, whatever the Dry
 // Run setting says.

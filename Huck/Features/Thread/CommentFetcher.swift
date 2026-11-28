@@ -18,8 +18,23 @@ class CommentFetcher {
     /// streamed Firebase thread fills in.
     private(set) var isLoading = false
 
+    /// Whether the first load has finished. Until it has, an empty `comments`
+    /// means nothing yet, not that there are none — the view may appear before
+    /// `fetchComments()` has even started.
+    private(set) var hasLoaded = false
+
+    /// Whether the thread is known to have no comments, as opposed to not
+    /// having loaded them yet.
+    var isEmpty: Bool { hasLoaded && !isLoading && comments.isEmpty }
+
     /// Ids of comments whose reply subtrees are collapsed (hidden).
     var collapsedIds: Set<Int> = []
+
+    /// Users the reader has blocked. Their comments are left out of
+    /// `visibleComments` along with the replies beneath them, which would read
+    /// as answers to nothing on their own. Set by the view from
+    /// `BlockedUsersStore`.
+    var blockedAuthors: Set<String> = []
 
     /// Commenters Hacker News marks as new accounts. Empty until
     /// `fetchNewUsers()` has run, so names simply start out plain.
@@ -48,6 +63,7 @@ class CommentFetcher {
             }
         }
         isLoading = false
+        hasLoaded = true
     }
 
     /// Re-reads the thread for pull-to-refresh. Call after
@@ -184,10 +200,11 @@ class CommentFetcher {
     }
 
     /// The comments currently on screen: the flat, pre-order list with the reply
-    /// subtree of every collapsed comment removed. Because the list is
-    /// depth-first and each comment carries its `nestingLevel`, a collapsed
-    /// comment's descendants are exactly the following run of deeper-nested
-    /// comments — so one linear pass is enough to drop them.
+    /// subtree of every collapsed comment removed, and every blocked author's
+    /// comment removed along with its subtree. Because the list is depth-first
+    /// and each comment carries its `nestingLevel`, a comment's descendants are
+    /// exactly the following run of deeper-nested comments — so one linear pass
+    /// is enough to drop them.
     var visibleComments: [Comment] {
         var result: [Comment] = []
         // While set, skip every comment nested deeper than this level.
@@ -195,8 +212,12 @@ class CommentFetcher {
         for comment in comments {
             if let threshold = hiddenBelowLevel {
                 if comment.nestingLevel > threshold { continue }
-                // Back at the collapsed comment's level or shallower: stop hiding.
+                // Back at the hidden comment's level or shallower: stop hiding.
                 hiddenBelowLevel = nil
+            }
+            if blockedAuthors.contains(comment.author) {
+                hiddenBelowLevel = comment.nestingLevel
+                continue
             }
             result.append(comment)
             if collapsedIds.contains(comment.id) {

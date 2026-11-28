@@ -64,10 +64,19 @@
     "1" : {
 
     },
+    "A special thanks to the real Huck for letting me use his name and likeness." : {
+
+    },
     "About Collections" : {
 
     },
     "Account" : {
+
+    },
+    "Accounts are created and managed on Hacker News. To delete yours, email hn@ycombinator.com, as outlined in the %@." : {
+
+    },
+    "Acknowledgements" : {
 
     },
     "Activity" : {
@@ -142,6 +151,24 @@
     "Best" : {
 
     },
+    "Block" : {
+
+    },
+    "Block %@" : {
+
+    },
+    "Block %@?" : {
+
+    },
+    "Block someone from the menu on their stories, comments, or profile to stop seeing their posts." : {
+
+    },
+    "Blocked Users" : {
+
+    },
+    "Blocked users left out" : {
+
+    },
     "By" : {
 
     },
@@ -161,6 +188,9 @@
 
     },
     "Clear Viewing History?" : {
+
+    },
+    "Close" : {
 
     },
     "Closed" : {
@@ -209,6 +239,9 @@
 
     },
     "Couldn't Delete Comment" : {
+
+    },
+    "Couldn't Flag" : {
 
     },
     "Couldn't Open Link" : {
@@ -295,6 +328,9 @@
     "Edit filters" : {
 
     },
+    "Email Moderators" : {
+
+    },
     "Enter a web address, like example.com/article." : {
 
     },
@@ -325,16 +361,34 @@
     "Find stories, comments, polls, Show and Ask HN posts, and users." : {
 
     },
-    "Format Code" : {
+    "Flag" : {
 
     },
-    "Format Code shows code in a monospaced font, set apart from the text around it. Format Quotes outlines paragraphs quoted with “>”. Highlight New Users tints the names of recently created accounts green, as Hacker News does while you're signed in." : {
+    "Flag This Comment?" : {
+
+    },
+    "Flag This Story?" : {
+
+    },
+    "Flagged" : {
+
+    },
+    "Flagging asks Hacker News' moderators to review it against the site guidelines." : {
+
+    },
+    "Format Code" : {
 
     },
     "Format Quotes" : {
 
     },
     "Hacker News" : {
+
+    },
+    "Hacker News Account" : {
+
+    },
+    "Hacker News FAQ" : {
 
     },
     "Hidden Stories" : {
@@ -356,6 +410,15 @@
 
     },
     "Hot" : {
+
+    },
+    "Huck is an independent app, not affiliated with Y Combinator or Hacker News in any way." : {
+
+    },
+    "Huck is open source. Report a problem or ask a question on GitHub." : {
+
+    },
+    "Huck, holding a pink ball" : {
 
     },
     "Huck's Collections" : {
@@ -450,6 +513,9 @@
       }
     },
     "No Account Needed" : {
+
+    },
+    "No Blocked Users" : {
 
     },
     "No Comments" : {
@@ -614,6 +680,9 @@
     "Show password" : {
 
     },
+    "Shows a larger photo" : {
+
+    },
     "Shrink composer" : {
 
     },
@@ -650,6 +719,9 @@
     "Story Hidden" : {
 
     },
+    "Support" : {
+
+    },
     "Swipe left on a story in a feed to hide it." : {
 
     },
@@ -663,6 +735,12 @@
 
     },
     "Text" : {
+
+    },
+    "Thanks. Hacker News' moderators will take a look." : {
+
+    },
+    "Their stories and comments are hidden in Huck on this device. Hacker News isn't told." : {
 
     },
     "Theme" : {
@@ -704,6 +782,12 @@
     "Total Requests" : {
 
     },
+    "Unblock" : {
+
+    },
+    "Unblock %@" : {
+
+    },
     "Undo" : {
 
     },
@@ -735,6 +819,9 @@
 
     },
     "You haven't created any collections yet." : {
+
+    },
+    "You won't see their stories or comments. You can unblock them in Settings." : {
 
     },
     "Your Collections" : {

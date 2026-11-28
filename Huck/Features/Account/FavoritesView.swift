@@ -66,5 +66,6 @@ struct FavoritesView: View {
     }
     .environment(session)
     .environment(InteractionStore(session: session))
+    .environment(BlockedUsersStore())
     .environment(RecentlyViewedStore(session: session))
 }

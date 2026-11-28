@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The launch screen: Huck's head from the app icon, centered on the
+	     system orange (iOS 27's light systemOrange, #FF8D28). Set here because build settings can't express its nested keys;
+	     everything else in Info.plist is generated from App.xcconfig. -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LaunchIcon</string>
+	</dict>
+</dict>
+</plist>

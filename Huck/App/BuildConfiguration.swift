@@ -31,9 +31,9 @@ nonisolated enum BuildConfiguration {
     #endif
 
     /// Whether collections sync through iCloud. Set by `HUCK_ICLOUD_SYNC`, which
-    /// also adds the iCloud entitlement, so the two can't get out of step. Off by
-    /// default because a Personal Team can't provision iCloud; turn it on in
-    /// `Local.xcconfig` when signing with a paid team.
+    /// also adds the iCloud entitlement, so the two can't get out of step. On by
+    /// default; turned off in `Local.xcconfig` when signing with a free
+    /// Personal Team, which can't provision iCloud.
     #if ICLOUD_SYNC
     static let isCloudSyncEnabled = true
     #else

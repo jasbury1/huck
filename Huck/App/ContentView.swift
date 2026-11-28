@@ -34,6 +34,11 @@ struct ContentView: View {
     /// home feed's collections section and the story options menu's picker.
     @State private var collectionsStore: CollectionsStore
 
+    /// App-wide store of the users the reader has blocked — kept per device,
+    /// independent of the HN account — observed by the feeds and threads that
+    /// leave their posts out, and by Settings, where they're unblocked.
+    @State private var blockedUsersStore = BlockedUsersStore()
+
     /// The query driving the search tab. Held here, at the tab view, so the
     /// search tab can adopt the system's separated search-button appearance.
     @State private var searchText = ""
@@ -54,11 +59,11 @@ struct ContentView: View {
     /// decides from `windowSize`.
     @AppStorage(ThumbnailPosition.storageKey) private var thumbnailPosition: ThumbnailPosition = .automatic
 
-    /// Debug mode, switched on in Settings. Re-checked against the session so
-    /// the tab goes away if the developer account signs out of a release build.
+    /// Debug mode, switched on in Settings. Re-checked against the build, so a
+    /// setting left on while developing never shows the tab in a release build.
     @AppStorage(DebugMode.enabledKey) private var isDebugModeEnabled = false
     private var showsDebugTab: Bool {
-        isDebugModeEnabled && DebugMode.isAvailable(for: session.username)
+        isDebugModeEnabled && DebugMode.isAvailable
     }
 
     /// Whether Settings gets a tab of its own, rather than living behind the
@@ -161,6 +166,7 @@ struct ContentView: View {
         .environment(interactionSync)
         .environment(recentlyViewedStore)
         .environment(collectionsStore)
+        .environment(blockedUsersStore)
         // Launch.
         .task {
             await interactionSync.refresh()

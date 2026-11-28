@@ -33,12 +33,17 @@ CURRENT_PROJECT_VERSION = 1
 // MARK: - Info.plist
 
 GENERATE_INFOPLIST_FILE = YES
+// Keys build settings can't express — the launch screen — merged into the
+// generated Info.plist.
+INFOPLIST_FILE = Config/Info.plist
 INFOPLIST_KEY_CFBundleDisplayName = Huck
 INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.news
 INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES
 INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES
-INFOPLIST_KEY_UILaunchScreen_Generation = YES
-INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+// Huck's only encryption is the HTTPS the system provides, which is exempt from
+// export compliance. Declaring it here answers App Store Connect's encryption
+// question for every upload.
+INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO
 INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
 
 // MARK: - Resources
@@ -50,6 +55,10 @@ SWIFT_EMIT_LOC_STRINGS = YES
 
 // Shipped only to previews, never to the App Store.
 DEVELOPMENT_ASSET_PATHS = "Huck/Preview Content"
+
+// Documentation that lives beside the code it describes (Networking/README.md)
+// is for developers, not the app bundle.
+EXCLUDED_SOURCE_FILE_NAMES = $(inherited) README.md
 ENABLE_PREVIEWS = YES
 
 LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks
@@ -58,9 +67,10 @@ LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks
 
 // iCloud sync for collections. Needs the iCloud key-value entitlement, which
 // only a paid Apple Developer Program team can provision, so this one switch
-// adds both the entitlement and the ICLOUD_SYNC compilation condition. Turn it
-// on in Local.xcconfig rather than here.
-HUCK_ICLOUD_SYNC = NO
+// adds both the entitlement and the ICLOUD_SYNC compilation condition. On for
+// every build, Xcode Cloud's included; a developer signing with a free Personal
+// Team turns it off in Local.xcconfig.
+HUCK_ICLOUD_SYNC = YES
 
 HUCK_ICLOUD_SYNC_ENTITLEMENTS_YES = Config/Huck-iCloud.entitlements
 HUCK_ICLOUD_SYNC_ENTITLEMENTS_NO =

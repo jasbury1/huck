@@ -97,7 +97,7 @@ struct UserView: View {
     /// The height of the scroll view's visible region (inside its insets).
     @State private var visibleHeight: CGFloat = 0
     /// Where the current list's laid-out rows sit, in the content space.
-    @State private var rowFrames = ListRowFrames(space: .named(UserView.contentSpace))
+    @State private var rowFrames = ListRowFrames(spaceName: UserView.contentSpace)
     /// Each tab's list scroll, saved as the tab is left while the bar is pinned.
     @State private var savedScrolls: [ContentTab: SavedScroll] = [:]
     /// An offset to scroll to once a tab switch has swapped the list in.
@@ -753,5 +753,6 @@ struct BioSheet: View {
     }
     .environment(session)
     .environment(InteractionStore(session: session))
+    .environment(BlockedUsersStore())
     .environment(RecentlyViewedStore(session: session))
 }

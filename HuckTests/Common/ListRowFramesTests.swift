@@ -9,7 +9,7 @@ import Testing
 
 struct ListRowFramesTests {
     private func rows(_ frames: [Int: CGFloat], height: CGFloat = 100) -> ListRowFrames {
-        let rowFrames = ListRowFrames(space: .named("test"))
+        let rowFrames = ListRowFrames(spaceName: "test")
         for (id, minY) in frames {
             rowFrames.update(id, frame: CGRect(x: 0, y: minY, width: 400, height: height))
         }

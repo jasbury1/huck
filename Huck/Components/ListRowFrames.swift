@@ -27,12 +27,14 @@ final class ListRowFrames {
         let frame: CGRect
     }
 
-    /// The coordinate space the rows report their frames in.
-    let space: NamedCoordinateSpace
+    /// The name of the coordinate space the rows report their frames in. Held
+    /// as the name rather than the `NamedCoordinateSpace`, which isn't
+    /// `Sendable`, so the geometry closures that measure rows can capture it.
+    let spaceName: String
     private var rows: [AnyHashable: Row] = [:]
 
-    init(space: NamedCoordinateSpace) {
-        self.space = space
+    init(spaceName: String) {
+        self.spaceName = spaceName
     }
 
     /// The first laid-out row that starts at or below `y`, if any.
@@ -68,9 +70,9 @@ private struct ListRowFrameReporting<ID: Hashable & Sendable>: ViewModifier {
 
     func body(content: Content) -> some View {
         if let rowFrames {
-            let space = rowFrames.space
+            let spaceName = rowFrames.spaceName
             content
-                .onGeometryChange(for: CGRect.self) { $0.frame(in: space) } action: {
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(spaceName)) } action: {
                     rowFrames.update(id, frame: $0)
                 }
                 // A row the list has let go of no longer sits anywhere.

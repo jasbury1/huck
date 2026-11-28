@@ -249,6 +249,7 @@ struct SearchView: View {
     SearchView(searchText: $searchText)
         .environment(session)
         .environment(InteractionStore(session: session))
+        .environment(BlockedUsersStore())
         .environment(RecentlyViewedStore(session: session))
         .environment(CollectionsStore())
 }
