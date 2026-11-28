@@ -7,18 +7,18 @@
 
 import Foundation
 
-/// Developer-only tooling: who may turn it on, and where the switch is stored.
-enum DebugMode {
+/// Developer-only tooling: whether it's offered, and where the switch is stored.
+///
+/// Fixed at build time, so readable from any isolation domain — `PostingMode`
+/// reads it off the main actor.
+nonisolated enum DebugMode {
     /// `@AppStorage` key for the Settings toggle.
     static let enabledKey = "debug.enabled"
 
-    /// The Hacker News account allowed to use debug mode in release builds.
-    private static let developerUsername = "jasbury"
-
-    /// Whether the debug mode toggle is offered. Always in debug builds, so it
-    /// can be used signed out or on a test account; in release builds, only to
-    /// the developer's account.
-    static func isAvailable(for username: String?) -> Bool {
-        BuildConfiguration.isDebugBuild || username == developerUsername
+    /// Whether the debug mode toggle, and the Dry Run settings beside it, are
+    /// offered. Debug builds only, so a release build has no developer tooling
+    /// for anyone — and no hidden features for App Review to question.
+    static var isAvailable: Bool {
+        BuildConfiguration.isDebugBuild
     }
 }

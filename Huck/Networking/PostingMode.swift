@@ -25,7 +25,9 @@ nonisolated enum PostingMode {
     static let simulatesFailureKey = "debug.postingSimulatesFailure"
 
     /// Whether writes are withheld: always in a build with posting disabled
-    /// (`HUCK_DISABLE_POSTING`), and otherwise when Dry Run is on.
+    /// (`HUCK_DISABLE_POSTING`), and otherwise when Dry Run is on. Dry Run is
+    /// only offered in debug builds, so a release build ignores the stored
+    /// setting — one left on while developing can't silently stop posting.
     static var isDryRun: Bool {
         isDryRun(dryRunSetting: UserDefaults.standard.bool(forKey: dryRunKey))
     }
@@ -39,6 +41,6 @@ nonisolated enum PostingMode {
     /// `isDryRun` for a given value of the Dry Run setting — for views, which
     /// read the setting through `@AppStorage` so they update as it changes.
     static func isDryRun(dryRunSetting: Bool) -> Bool {
-        BuildConfiguration.isPostingDisabled || dryRunSetting
+        BuildConfiguration.isPostingDisabled || (DebugMode.isAvailable && dryRunSetting)
     }
 }

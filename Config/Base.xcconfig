@@ -20,15 +20,20 @@
 
 // MARK: - Signing
 
-// The signing team. Free Personal Teams can't provision paid capabilities
-// such as iCloud; set a paid team in Local.xcconfig to use those.
+// The signing team: a paid Apple Developer Program team, which the iCloud sync
+// in App.xcconfig needs. Signing with your own team instead? Set it in
+// Local.xcconfig, and turn HUCK_ICLOUD_SYNC off there if it's a free Personal
+// Team.
 DEVELOPMENT_TEAM = E69X269LBT
 CODE_SIGN_STYLE = Automatic
 
 // MARK: - Platform
 
 IPHONEOS_DEPLOYMENT_TARGET = 27.1
-TARGETED_DEVICE_FAMILY = 1,2
+// iPhone only for now (1). Add iPad back with 1,2 — along with its
+// orientations, INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad, in
+// App.xcconfig.
+TARGETED_DEVICE_FAMILY = 1
 
 // MARK: - Swift
 

@@ -68,7 +68,6 @@ struct SettingsView: View {
     /// See `PostingMode`.
     @AppStorage(PostingMode.dryRunKey) private var isPostingDryRun = false
     @AppStorage(PostingMode.simulatesFailureKey) private var simulatesPostingFailure = false
-    @Environment(UserSession.self) private var session
 
     @State private var isConfirmingClearHistory = false
 
@@ -188,7 +187,11 @@ struct SettingsView: View {
 
                 SupportSection()
 
-                if DebugMode.isAvailable(for: session.username) {
+                Section("Acknowledgements") {
+                    HuckAcknowledgement()
+                }
+
+                if DebugMode.isAvailable {
                     Section {
                         Toggle(isOn: $isDebugModeEnabled) {
                             Label {
@@ -366,6 +369,77 @@ private struct SupportSection: View {
     }
 }
 
+/// Thanks to the dog the app is named after, with his photo — kept small, so
+/// it sits in a row like the rest of Settings rather than taking it over.
+/// Tapping the photo zooms it up to fill the screen.
+private struct HuckAcknowledgement: View {
+    @State private var isShowingPortrait = false
+    @Namespace private var namespace
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(.huck)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 64, height: 64)
+                .clipShape(.rect(cornerRadius: 14))
+                // The full-size photo grows out of this one, and shrinks back
+                // into it.
+                .matchedTransitionSource(id: Self.portraitID, in: namespace) { source in
+                    source.clipShape(.rect(cornerRadius: 14))
+                }
+                // A gesture rather than a button, so the row reads as a note
+                // rather than a link.
+                .onTapGesture { isShowingPortrait = true }
+                .accessibilityLabel("Huck, holding a pink ball")
+                .accessibilityHint("Shows a larger photo")
+                .accessibilityAddTraits(.isButton)
+            Text("A special thanks to the real Huck for letting me use his name and likeness.")
+                .font(.subheadline)
+        }
+        .padding(.vertical, 4)
+        .fullScreenCover(isPresented: $isShowingPortrait) {
+            HuckPortrait()
+                .navigationTransition(.zoom(sourceID: Self.portraitID, in: namespace))
+        }
+    }
+
+    private static let portraitID = "huck"
+}
+
+/// Huck's photo, as large as the screen allows, on black as in Photos. Closed
+/// with its button, a tap anywhere, or the zoom's own swipe down.
+private struct HuckPortrait: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black
+                .ignoresSafeArea()
+            Image(.huckPortrait)
+                .resizable()
+                .scaledToFit()
+                .clipShape(.rect(cornerRadius: 24))
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityLabel("Huck, holding a pink ball")
+            Button("Close", systemImage: "xmark") {
+                dismiss()
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.glass)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+            .padding()
+        }
+        .contentShape(.rect)
+        .onTapGesture { dismiss() }
+        // Dark just here, for the glass button on black, without changing the
+        // app's appearance behind it.
+        .environment(\.colorScheme, .dark)
+    }
+}
+
 /// Where Settings' Support rows lead. Fixed, always-valid URLs.
 private enum SupportLinks {
     /// Huck's repository, where issues and questions are filed.
@@ -431,4 +505,16 @@ private struct SettingsIcon: View {
         .environment(InteractionStore(session: UserSession()))
         .environment(BlockedUsersStore())
         .environment(UserSession())
+}
+
+#Preview("Acknowledgements") {
+    List {
+        Section("Acknowledgements") {
+            HuckAcknowledgement()
+        }
+    }
+}
+
+#Preview("Huck Portrait") {
+    HuckPortrait()
 }

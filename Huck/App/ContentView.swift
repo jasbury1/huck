@@ -59,11 +59,11 @@ struct ContentView: View {
     /// decides from `windowSize`.
     @AppStorage(ThumbnailPosition.storageKey) private var thumbnailPosition: ThumbnailPosition = .automatic
 
-    /// Debug mode, switched on in Settings. Re-checked against the session so
-    /// the tab goes away if the developer account signs out of a release build.
+    /// Debug mode, switched on in Settings. Re-checked against the build, so a
+    /// setting left on while developing never shows the tab in a release build.
     @AppStorage(DebugMode.enabledKey) private var isDebugModeEnabled = false
     private var showsDebugTab: Bool {
-        isDebugModeEnabled && DebugMode.isAvailable(for: session.username)
+        isDebugModeEnabled && DebugMode.isAvailable
     }
 
     /// Whether Settings gets a tab of its own, rather than living behind the

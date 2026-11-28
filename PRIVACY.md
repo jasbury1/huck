@@ -20,12 +20,14 @@ Huck saves the following on your device so the app works the way you left it:
 - The users you've blocked.
 - Cached stories, comments, and thumbnails, so pages load quickly.
 
-None of this is sent to the developer. Deleting Huck deletes it.
+None of this is sent to the developer. Deleting Huck deletes it from your
+device.
 
-If iCloud sync is turned on in your build of Huck, your collections are also
-stored in your own iCloud account so they appear on your other devices. Apple
-handles that data under [Apple's Privacy Policy](https://www.apple.com/legal/privacy/);
-the developer can't see it.
+If you're signed in to iCloud, your collections are also stored in your own
+iCloud account so they appear on your other devices. Apple handles that data
+under [Apple's Privacy Policy](https://www.apple.com/legal/privacy/); the
+developer can't see it. Deleting a collection in Huck removes it from iCloud
+too.
 
 ## Who Huck talks to
 

@@ -64,6 +64,9 @@
     "1" : {
 
     },
+    "A special thanks to the real Huck for letting me use his name and likeness." : {
+
+    },
     "About Collections" : {
 
     },
@@ -71,6 +74,9 @@
 
     },
     "Accounts are created and managed on Hacker News. To delete yours, email hn@ycombinator.com, as outlined in the %@." : {
+
+    },
+    "Acknowledgements" : {
 
     },
     "Activity" : {
@@ -182,6 +188,9 @@
 
     },
     "Clear Viewing History?" : {
+
+    },
+    "Close" : {
 
     },
     "Closed" : {
@@ -407,6 +416,9 @@
 
     },
     "Huck is open source. Report a problem or ask a question on GitHub." : {
+
+    },
+    "Huck, holding a pink ball" : {
 
     },
     "Huck's Collections" : {
@@ -666,6 +678,9 @@
 
     },
     "Show password" : {
+
+    },
+    "Shows a larger photo" : {
 
     },
     "Shrink composer" : {
