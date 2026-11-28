@@ -335,6 +335,13 @@ private struct SupportSection: View {
                 openInAppBrowser(SupportLinks.gitHub)
             }
             SettingsRow(
+                title: "Privacy Policy",
+                systemImage: "hand.raised.fill",
+                iconColor: .blue
+            ) {
+                openInAppBrowser(SupportLinks.privacyPolicy)
+            }
+            SettingsRow(
                 title: "Community Guidelines",
                 systemImage: "text.book.closed",
                 iconColor: .orange
@@ -363,6 +370,9 @@ private struct SupportSection: View {
 private enum SupportLinks {
     /// Huck's repository, where issues and questions are filed.
     static let gitHub = URL(string: "https://github.com/jasbury1/huck")!
+    /// Huck's privacy policy, `PRIVACY.md` at the repository's root, as GitHub
+    /// renders it on the main branch.
+    static let privacyPolicy = URL(string: "https://github.com/jasbury1/huck/blob/main/PRIVACY.md")!
     /// Hacker News' FAQ, which covers changing an account and asking for one to
     /// be deleted — there's no page that does either itself.
     static let accountFAQ = URL(string: "https://news.ycombinator.com/newsfaq.html")!
