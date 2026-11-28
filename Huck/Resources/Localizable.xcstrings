@@ -70,6 +70,9 @@
     "Account" : {
 
     },
+    "Accounts are created and managed on Hacker News. To delete yours, email hn@ycombinator.com, as outlined in the %@." : {
+
+    },
     "Activity" : {
 
     },
@@ -367,13 +370,16 @@
     "Format Code" : {
 
     },
-    "Format Code shows code in a monospaced font, set apart from the text around it. Format Quotes outlines paragraphs quoted with “>”. Highlight New Users tints the names of recently created accounts green, as Hacker News does while you're signed in." : {
-
-    },
     "Format Quotes" : {
 
     },
     "Hacker News" : {
+
+    },
+    "Hacker News Account" : {
+
+    },
+    "Hacker News FAQ" : {
 
     },
     "Hidden Stories" : {
@@ -395,6 +401,9 @@
 
     },
     "Hot" : {
+
+    },
+    "Huck is an independent app, not affiliated with Y Combinator or Hacker News in any way." : {
 
     },
     "Huck is open source. Report a problem or ask a question on GitHub." : {

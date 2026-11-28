@@ -8,41 +8,61 @@
 import SafariServices
 import SwiftUI
 
-/// A SwiftUI wrapper around `SFSafariViewController` -- Apple's standardized
-/// in-app browser. It shares Safari's networking and cache (so pages load fast)
-/// and provides the familiar chrome: a Reader-capable address bar plus the
-/// bottom toolbar with share, back/forward, and an "open in Safari" button.
+/// Presents `SFSafariViewController` -- Apple's standardized in-app browser --
+/// whenever `link` is set. It shares Safari's networking and cache (so pages
+/// load fast) and provides the familiar chrome: a Reader-capable address bar
+/// plus the bottom toolbar with share, back/forward, and an "open in Safari"
+/// button.
 ///
 /// Apple requires `SFSafariViewController` to be presented modally, never
-/// embedded in a view-controller hierarchy — so this is surfaced through the
-/// `.inAppBrowser()` modifier's full-screen cover rather than a navigation push.
-struct SafariView: UIViewControllerRepresentable {
-    let url: URL
-    /// Called when the user taps Done or swipes the browser away, so the
-    /// presenting cover can be dismissed.
-    let onFinish: () -> Void
+/// embedded, and it dismisses itself when its Done button is tapped. So it's
+/// presented the way UIKit expects, from an invisible anchor view controller,
+/// rather than inside a SwiftUI `fullScreenCover`. A cover would be dismissed
+/// twice — once by Safari, then again by SwiftUI when `link` is cleared — and
+/// the second dismissal closes whatever presented the cover, such as the
+/// Settings sheet.
+private struct SafariPresenter: UIViewControllerRepresentable {
+    @Binding var link: BrowserLink?
 
-    func makeUIViewController(context: Context) -> SFSafariViewController {
-        let controller = SFSafariViewController(url: url)
-        controller.delegate = context.coordinator
-        return controller
+    func makeUIViewController(context: Context) -> UIViewController {
+        UIViewController()
     }
 
-    func updateUIViewController(_ controller: SFSafariViewController, context: Context) {}
+    func updateUIViewController(_ anchor: UIViewController, context: Context) {
+        let coordinator = context.coordinator
+        coordinator.link = $link
+        if let link, coordinator.browser == nil {
+            let browser = SFSafariViewController(url: link.url)
+            browser.delegate = coordinator
+            browser.modalPresentationStyle = .fullScreen
+            coordinator.browser = browser
+            anchor.present(browser, animated: true)
+        } else if link == nil, let browser = coordinator.browser {
+            // Cleared from code rather than by Done, so it's still showing.
+            coordinator.browser = nil
+            browser.dismiss(animated: true)
+        }
+    }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onFinish: onFinish)
+        Coordinator(link: $link)
     }
 
     final class Coordinator: NSObject, SFSafariViewControllerDelegate {
-        let onFinish: () -> Void
+        var link: Binding<BrowserLink?>
+        /// The browser on screen, if any.
+        weak var browser: SFSafariViewController?
 
-        init(onFinish: @escaping () -> Void) {
-            self.onFinish = onFinish
+        init(link: Binding<BrowserLink?>) {
+            self.link = link
         }
 
+        /// Done was tapped or the browser swiped away. Safari has dismissed
+        /// itself, so this only catches the state up — and forgets the browser
+        /// first, so the update that follows doesn't dismiss it again.
         func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
-            onFinish()
+            browser = nil
+            link.wrappedValue = nil
         }
     }
 }
@@ -64,8 +84,7 @@ extension EnvironmentValues {
     @Entry var openInAppBrowser = OpenInAppBrowserAction { _ in }
 }
 
-/// Wraps a URL so it can drive a `fullScreenCover(item:)` without conforming
-/// `URL` itself to `Identifiable` app-wide.
+/// The page the in-app browser is showing.
 private struct BrowserLink: Identifiable {
     let url: URL
     var id: String { url.absoluteString }
@@ -89,9 +108,8 @@ private struct InAppBrowserModifier: ViewModifier {
             .environment(\.openURL, OpenURLAction { url in
                 navigate(to: url) ? .handled : .systemAction
             })
-            .fullScreenCover(item: $link) { link in
-                SafariView(url: link.url) { self.link = nil }
-                    .ignoresSafeArea()
+            .background {
+                SafariPresenter(link: $link)
             }
     }
 
@@ -112,7 +130,7 @@ private struct InAppBrowserModifier: ViewModifier {
 
 extension View {
     /// Enables `openInAppBrowser` for this view's subtree, presenting tapped
-    /// links in an `SFSafariViewController` full-screen cover. Links to Hacker
+    /// links full screen in an `SFSafariViewController`. Links to Hacker
     /// News itself — stories, comments, and profiles, whether a story's link or
     /// one inside a comment — are pushed onto `path` instead, to open in the
     /// app. Apply it once per navigation stack, above the content that opens

@@ -45,9 +45,6 @@ struct SettingsView: View {
     /// Counts the blocked users for their row.
     @Environment(BlockedUsersStore.self) private var blockedUsers
     @Environment(\.dismiss) private var dismiss
-    /// Opens the support and guidelines pages, in the browser Settings sets
-    /// up for its own stack below.
-    @Environment(\.openInAppBrowser) private var openInAppBrowser
 
     /// Whether to offer Done. On for the sheet the Account tab presents; off
     /// when Settings is a tab of its own, with nothing to dismiss.
@@ -185,37 +182,11 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("Comments")
-                } footer: {
-                    Text("Format Code shows code in a monospaced font, set apart from the text around it. Format Quotes outlines paragraphs quoted with “>”. Highlight New Users tints the names of recently created accounts green, as Hacker News does while you're signed in.")
                 }
 
-                Section {
-                    SettingsRow(
-                        title: "Help & Feedback",
-                        systemImage: "questionmark.bubble",
-                        iconColor: .blue
-                    ) {
-                        openInAppBrowser(SupportLinks.gitHub)
-                    }
-                    SettingsRow(
-                        title: "Community Guidelines",
-                        systemImage: "text.book.closed",
-                        iconColor: .orange
-                    ) {
-                        openInAppBrowser(SupportLinks.guidelines)
-                    }
-                    SettingsRow(
-                        title: "Terms of Use",
-                        systemImage: "doc.text",
-                        iconColor: .gray
-                    ) {
-                        openInAppBrowser(SupportLinks.legal)
-                    }
-                } header: {
-                    Text("Support")
-                } footer: {
-                    Text("Huck is open source. Report a problem or ask a question on GitHub.")
-                }
+                HackerNewsAccountSection()
+
+                SupportSection()
 
                 if DebugMode.isAvailable(for: session.username) {
                     Section {
@@ -311,10 +282,90 @@ private enum SettingsPage: Hashable {
     case blockedUsers
 }
 
+/// Where a Hacker News account is managed. Accounts are created, changed, and
+/// deleted on Hacker News, not in Huck — this mirrors the login screen's
+/// "Create an account" link with the way to manage or delete one. Its own view
+/// for the same reason as `SupportSection`.
+private struct HackerNewsAccountSection: View {
+    @Environment(\.openInAppBrowser) private var openInAppBrowser
+
+    var body: some View {
+        Section {
+            SettingsRow(
+                title: "Manage Account",
+                systemImage: "person.crop.circle",
+                iconColor: .orange
+            ) {
+                openInAppBrowser(SupportLinks.accountFAQ)
+            }
+        } header: {
+            Text("Hacker News Account")
+        } footer: {
+            footer
+                // The FAQ link opens in the in-app browser, as the row does,
+                // rather than leaving for Safari.
+                .environment(\.openURL, OpenURLAction { url in
+                    openInAppBrowser(url)
+                    return .handled
+                })
+        }
+    }
+
+    private var footer: Text {
+        var faq = AttributedString(localized: "Hacker News FAQ")
+        faq.link = SupportLinks.accountFAQ
+        return Text("Accounts are created and managed on Hacker News. To delete yours, email hn@ycombinator.com, as outlined in the \(faq).")
+    }
+}
+
+/// Where to get help, and the rules posting follows. Its own view so it reads
+/// `openInAppBrowser` from inside Settings' stack, where `.inAppBrowser(path:)`
+/// provides it — `SettingsView` itself sits above that modifier, so it would
+/// only see the default, which opens nothing.
+private struct SupportSection: View {
+    @Environment(\.openInAppBrowser) private var openInAppBrowser
+
+    var body: some View {
+        Section {
+            SettingsRow(
+                title: "Help & Feedback",
+                systemImage: "questionmark.bubble",
+                iconColor: .blue
+            ) {
+                openInAppBrowser(SupportLinks.gitHub)
+            }
+            SettingsRow(
+                title: "Community Guidelines",
+                systemImage: "text.book.closed",
+                iconColor: .orange
+            ) {
+                openInAppBrowser(SupportLinks.guidelines)
+            }
+            SettingsRow(
+                title: "Y Combinator's Terms",
+                systemImage: "doc.text",
+                iconColor: .gray
+            ) {
+                openInAppBrowser(SupportLinks.legal)
+            }
+        } header: {
+            Text("Support")
+        } footer: {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Huck is open source. Report a problem or ask a question on GitHub.")
+                Text("Huck is an independent app, not affiliated with Y Combinator or Hacker News in any way.")
+            }
+        }
+    }
+}
+
 /// Where Settings' Support rows lead. Fixed, always-valid URLs.
 private enum SupportLinks {
     /// Huck's repository, where issues and questions are filed.
     static let gitHub = URL(string: "https://github.com/jasbury1/huck")!
+    /// Hacker News' FAQ, which covers changing an account and asking for one to
+    /// be deleted — there's no page that does either itself.
+    static let accountFAQ = URL(string: "https://news.ycombinator.com/newsfaq.html")!
     /// Hacker News' community guidelines.
     static let guidelines = URL(string: "https://news.ycombinator.com/newsguidelines.html")!
     /// Y Combinator's terms of use and privacy policy, which cover Hacker
