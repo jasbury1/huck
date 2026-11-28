@@ -18,6 +18,15 @@ class CommentFetcher {
     /// streamed Firebase thread fills in.
     private(set) var isLoading = false
 
+    /// Whether the first load has finished. Until it has, an empty `comments`
+    /// means nothing yet, not that there are none — the view may appear before
+    /// `fetchComments()` has even started.
+    private(set) var hasLoaded = false
+
+    /// Whether the thread is known to have no comments, as opposed to not
+    /// having loaded them yet.
+    var isEmpty: Bool { hasLoaded && !isLoading && comments.isEmpty }
+
     /// Ids of comments whose reply subtrees are collapsed (hidden).
     var collapsedIds: Set<Int> = []
 
@@ -54,6 +63,7 @@ class CommentFetcher {
             }
         }
         isLoading = false
+        hasLoaded = true
     }
 
     /// Re-reads the thread for pull-to-refresh. Call after

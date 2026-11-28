@@ -478,8 +478,11 @@ struct StoryTextView: View {
         }
         .task {
             recentlyViewedStore.recordView(storyId)
-            await storyData.fetchData(using: api)
-            await commentFetcher.fetchComments(using: api)
+            // Side by side: the thread doesn't need the story's details, and
+            // waiting on them — its thumbnail included — only held it up.
+            async let story: Void = storyData.fetchData(using: api)
+            async let thread: Void = commentFetcher.fetchComments(using: api)
+            _ = await (story, thread)
         }
         // Runs alongside the thread rather than after it, so the names tint in
         // as soon as the page is read without ever delaying the comments.
@@ -542,18 +545,18 @@ struct StoryTextView: View {
 
     /// The loading indicator that trails the comment list. While loading it's a
     /// spinner — centred on its own before any comments arrive, then a footer as a
-    /// streamed Firebase thread fills in below. Once loading finishes with no comments,
-    /// it becomes a short empty-state note.
+    /// streamed Firebase thread fills in below. Only once loading has finished with
+    /// no comments does it become a short empty-state note.
     @ViewBuilder
     private var commentsStatus: some View {
-        if commentFetcher.isLoading {
-            ProgressView()
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
-        } else if commentFetcher.comments.isEmpty {
+        if commentFetcher.isEmpty {
             Text("No comments yet.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+        } else if !commentFetcher.hasLoaded || commentFetcher.isLoading {
+            ProgressView()
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
         }
